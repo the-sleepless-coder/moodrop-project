@@ -11,5 +11,6 @@
 
 void start_servos(struct Hole holes[]);
 void manufacture(struct Hole holes[]);
+int isFirstSecond(struct Hole hole);
 
 #endif

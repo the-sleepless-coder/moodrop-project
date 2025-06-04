@@ -91,7 +91,7 @@ void servo_init(ServoID id) {
     }
     else if(ch == SERVO_VALVE){
         printf("Servo %d (channel %d) will be set to 60 deg (center)...\n", id, ch);
-        set_pwm(fd, ch, 0, angle_to_pulse(0));
+        set_pwm(fd, ch, 0, angle_to_pulse(15));
         msleep(100);
     }
     printf("Servo motors initialized\n");
@@ -105,9 +105,14 @@ void servo_set_angle(ServoID id, int angle) {
     printf("Set servo %d angle to %d degrees\n", id, angle);
 }
 
-int get_angle(int src, int dst){
-    int relativeDist = dst - src;
-    return relativeDist * 30;
+
+int get_angle(int dst){
+    if(dst == 1) return 5;
+    else if(dst == 2) return 28;
+    else if(dst == 3) return 60;
+    else if(dst == 4) return 85;
+    else if(dst == 5) return 110;
+    return -1;
 }
 
 void plate_spin(int angle, bool flag){
@@ -126,6 +131,18 @@ void plate_spin(int angle, bool flag){
         }
     }
     else{
-        servo_set_angle(SERVO_ROTATE, curAngle);
+        if(angle < curAngle){
+            for(int i = angle; i <= curAngle; i++){
+                servo_set_angle(SERVO_ROTATE, i);
+                msleep(10);
+            }
+        }
+        else{
+            for(int i = angle; i >= curAngle; i--){
+                servo_set_angle(SERVO_ROTATE, i);
+                msleep(10);
+            }
+        }
+        //servo_set_angle(SERVO_ROTATE, curAngle);
     }
 }

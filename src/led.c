@@ -47,13 +47,26 @@ int led_init(const char *chip_name, unsigned int line_offset) {
 // Turn the LED on
 void led_on(void) {
     if (line) {
-        for(int i=0;i<50;i++){
-            gpiod_line_set_value(line, 1);
-            msleep(100);
-            gpiod_line_set_value(line, 0);
-            msleep(100);
+        for(int j=0;j<4;j++){
+            for(int i=0;i<1000;i++){
+                gpiod_line_set_value(line, 0);
+                usleep(1000-i);
+                gpiod_line_set_value(line, 1);
+                usleep(i);
+            }
+            for(int i=0;i<1000;i++){
+                gpiod_line_set_value(line, 1);
+                usleep(1000-i);
+                gpiod_line_set_value(line, 0);
+                usleep(i);
+            }
         }
-        gpiod_line_set_value(line, 1);
+        for(int i=0;i<1000;i++){
+            gpiod_line_set_value(line, 0);
+            usleep(1000-i);
+            gpiod_line_set_value(line, 1);
+            usleep(i);
+        }
         printf("LED turned on\n");
     } else {
         fprintf(stderr, "LED is not initialized.\n");

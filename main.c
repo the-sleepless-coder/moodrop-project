@@ -61,7 +61,7 @@ int main(void) {
                 printf("[MAIN] Manufacture complete. LED is on.\n");
                 
                 // 5. MQTT 모듈에 상태 보고 지시
-                mqtt_publish("perfume/feedback", "{\"CMD\":\"update\", \"data\":{\"status\":\"complete\"}}");
+                mqtt_publish("perfume/feedback", "{\"CMD\":\"status\", \"data\":{\"status\":\"complete\"}}");
 
                 // 모든 처리가 끝났으므로 깃발을 다시 내림
                 g_start_manufacturing_flag = 0;

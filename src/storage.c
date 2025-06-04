@@ -89,8 +89,10 @@ void update_base_storage(struct Hole recipe[], int recipe_count) {
     printf("Base storage file updated.\n");
 }
 
-void set_base_storage(const struct Storage updates[], int count) {
+int set_base_storage(const struct Storage updates[], int count) {
     printf("Setting base storage with new values...\n");
+    int all_updates_valid = 1;
+    
     for (int i = 0; i < count; i++) {
         int id_to_update = updates[i].num;
         int new_capacity = updates[i].capacity;
@@ -100,11 +102,12 @@ void set_base_storage(const struct Storage updates[], int count) {
             printf("  - Base ID %d has been updated to %d ml.\n", id_to_update, new_capacity);
         } else {
             fprintf(stderr, "Failed to set base capacity: Invalid ID %d\n", id_to_update);
+            all_updates_valid = 0;
         }
     }
     _write_storage_to_file();
     printf("Base storage file updated after setting new values.\n");
-    publish_base_status(); // 변경 후 상태 즉시 전파
+    return all_updates_valid;
 }
 
 int get_all_stock(struct Storage stock_out[], int max_items) {
@@ -113,26 +116,4 @@ int get_all_stock(struct Storage stock_out[], int max_items) {
         stock_out[i] = g_base_stock[i];
     }
     return items_to_copy;
-}
-
-void publish_base_status() {
-    cJSON *root = cJSON_CreateObject();
-    cJSON_AddStringToObject(root, "CMD", "check_response");
-    
-    cJSON *data_array = cJSON_CreateArray();
-    for (int i = 0; i < MAX_BASE_INGREDIENTS; ++i) {
-        cJSON *item = cJSON_CreateObject();
-        cJSON_AddNumberToObject(item, "num", g_base_stock[i].num);
-        cJSON_AddNumberToObject(item, "capacity", g_base_stock[i].capacity);
-        cJSON_AddItemToArray(data_array, item);
-    }
-    cJSON_AddItemToObject(root, "data", data_array);
-
-    char *json_string = cJSON_PrintUnformatted(root);
-    mqtt_publish("perfume/feedback", json_string); // PUB 토픽으로 발행
-
-    printf("[MQTT] Published base status: %s\n", json_string);
-
-    free(json_string);
-    cJSON_Delete(root);
 }

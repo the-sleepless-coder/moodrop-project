@@ -36,12 +36,7 @@ void update_base_storage(struct Hole recipe[], int recipe_count);
  * @param base_id 업데이트할 원료의 ID
  * @param new_capacity 새로운 원료량 (ml)
  */
-void set_base_storage(const struct Storage updates[], int new_capacity);
-
-/**
- * @brief 현재 모든 원료의 재고 상태를 MQTT 토픽으로 발행합니다.
- */
-void publish_base_status();
+int set_base_storage(const struct Storage updates[], int new_capacity);
 
 /**
  * @brief 현재 저장된 모든 재고 정보를 배열에 복사합니다.
