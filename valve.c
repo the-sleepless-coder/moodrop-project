@@ -23,6 +23,8 @@ void valve_open(void) {
 void valve_close(void) {
     servo_set_angle(SERVO_VALVE, 0); // Example closed angle
     msleep(100);
+    servo_set_angle(SERVO_VALVE, 5);
+    msleep(100);
 }
 
 void update_drop_sec(struct Hole holes[]){

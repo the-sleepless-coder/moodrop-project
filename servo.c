@@ -110,6 +110,22 @@ int get_angle(int src, int dst){
     return relativeDist * 30;
 }
 
-void plate_spin(int angle){
-    servo_set_angle(SERVO_ROTATE, angle);
+void plate_spin(int angle, bool flag){
+    if(flag){
+        if(angle < curAngle){
+            for(int i = angle; i <= curAngle; i++){
+                servo_set_angle(SERVO_ROTATE, i);
+                msleep(100);
+            }
+        }
+        else{
+            for(int i = curAngle; i <= angle; i++){
+                servo_set_angle(SERVO_ROTATE, i);
+                msleep(100);
+            }
+        }
+    }
+    else{
+        servo_set_angle(SERVO_ROTATE, curAngle);
+    }
 }

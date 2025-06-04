@@ -40,6 +40,6 @@ void pca9685_init(int fd);
 void servo_init(ServoID id);
 void servo_set_angle(ServoID id, int angle);
 int get_angle(int src, int dst);
-void plate_spin(int angle);
+void plate_spin(int angle, bool flag);
 
 #endif

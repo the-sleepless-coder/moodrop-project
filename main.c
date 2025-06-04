@@ -20,7 +20,7 @@ int main(void) {
     // 라즈베리파이5의 경우 "gpiochip0", 젯슨 오린 나노의 경우 "gpiochip0" 또는 "gpiochip1"일 수 있습니다.
     // 핀 번호는 젯슨 오린 나노 기준으로 GPIO22 (J41 핀 15번)을 예시로 사용합니다.
     const char *chip_name = "gpiochip0";
-    unsigned int led_pin = 23;
+    unsigned int led_pin = 144;
 
     // LED 초기화
     if (led_init(chip_name, led_pin) < 0) {
@@ -46,7 +46,7 @@ int main(void) {
 
             // 1. 제조 전 재고 확인인
             if (check_base_stock(g_perfume_recipe, g_recipe_count)) {
-                mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":{\"status\":\"possible\"}}");
+                mqtt_publish("perfume/feedback", "{\"CMD\":\"status\", \"data\":{\"status\":\"possible\"}}");
                 printf("[MAIN] All ingredients are in stock. Starting manufacture.\n");
                 led_off(); // 제조 시작 시 LED OFF
 
@@ -70,7 +70,7 @@ int main(void) {
                 // 재고 부족 시
                 fprintf(stderr, "[MAIN] Manufacture aborted due to insufficient ingredients.\n");
                 // 에러 상태를 알리기 위해 LED를 깜빡이거나 MQTT 메시지 전송
-                mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":{\"status\":\"impossible\"}}");
+                mqtt_publish("perfume/feedback", "{\"CMD\":\"status\", \"data\":{\"status\":\"impossible\"}}");
             }
 
             printf("[MAIN] Process finished. Returning to idle state.\n\n");

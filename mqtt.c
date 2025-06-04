@@ -56,7 +56,9 @@ void my_mqtt_callback(const char* topic, const char* payload) {
         if (cJSON_IsArray(data)) {
             cJSON* element = NULL;
             cJSON_ArrayForEach(element, data) {
-                if (g_recipe_count >= MAX_RECIPE_STEPS) break;
+                if (g_recipe_count >= MAX_RECIPE_STEPS) {
+                    break;
+                    }
                 g_perfume_recipe[g_recipe_count].num = cJSON_GetObjectItem(element, "SlotId")->valueint;
                 g_perfume_recipe[g_recipe_count].prop = cJSON_GetObjectItem(element, "prop")->valueint;
                 g_recipe_count++;
