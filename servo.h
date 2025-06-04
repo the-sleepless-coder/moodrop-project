@@ -3,6 +3,8 @@
 
 #ifndef SERVO_H
 #define SERVO_H
+#define ROTATE_ANGLE 30
+#define INIT_POS 3
 
 typedef enum {
     SERVO_ROTATE, // Servo controlling the rotation of 2nd tier

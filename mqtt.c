@@ -26,3 +26,5 @@ void mqtt_loop(void) {
     // Periodically handle MQTT events
     // For example, call mqtt_mock_receive() for testing
 }
+sdflkjsdlfjsdklgjvlkcxl
+dslkfjsdlkfjlsdkjflksdjflk
