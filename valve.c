@@ -19,3 +19,5 @@ void valve_open(void) {
 void valve_close(void) {
     servo_set_angle(SERVO_VALVE, 0); // Example closed angle
 }
+
+

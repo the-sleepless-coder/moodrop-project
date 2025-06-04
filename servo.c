@@ -15,3 +15,5 @@ void servo_set_angle(ServoID id, int angle) {
     printf("Set servo %d angle to %d degrees\n", id, angle);
     // TODO: Convert angle to PWM and send to PCA9685
 }
+
+void plate_rotate()

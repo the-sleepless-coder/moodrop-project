@@ -11,6 +11,11 @@ typedef enum {
     SERVO_VALVE   // Servo controlling the valve opening
 } ServoID;
 
+struct QUAN{
+    int num;
+
+}
+
 void servo_init(void);
 void servo_set_angle(ServoID id, int angle);
 
