@@ -1,6 +1,6 @@
 CMakeFiles/main_app.dir/src/led.c.o: \
- /home/a102/Desktop/S13P11A102/src/led.c /usr/include/stdc-predef.h \
- /home/a102/Desktop/S13P11A102/include/led.h /usr/include/gpiod.h \
+ /home/a102/test/S13P11A102_ver.3/src/led.c /usr/include/stdc-predef.h \
+ /home/a102/test/S13P11A102_ver.3/include/led.h /usr/include/gpiod.h \
  /usr/lib/gcc/aarch64-linux-gnu/11/include/stdbool.h \
  /usr/include/stdlib.h \
  /usr/include/aarch64-linux-gnu/bits/libc-header-start.h \

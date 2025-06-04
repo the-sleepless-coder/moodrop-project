@@ -1,4 +1,4 @@
-# Install script for directory: /home/a102/Desktop/S13P11A102
+# Install script for directory: /home/a102/test/S13P11A102_ver.3
 
 # Set the install prefix
 if(NOT DEFINED CMAKE_INSTALL_PREFIX)
@@ -50,5 +50,5 @@ endif()
 
 string(REPLACE ";" "\n" CMAKE_INSTALL_MANIFEST_CONTENT
        "${CMAKE_INSTALL_MANIFEST_FILES}")
-file(WRITE "/home/a102/Desktop/S13P11A102/build/${CMAKE_INSTALL_MANIFEST}"
+file(WRITE "/home/a102/test/S13P11A102_ver.3/build/${CMAKE_INSTALL_MANIFEST}"
      "${CMAKE_INSTALL_MANIFEST_CONTENT}")

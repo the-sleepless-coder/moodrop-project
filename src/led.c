@@ -47,6 +47,12 @@ int led_init(const char *chip_name, unsigned int line_offset) {
 // Turn the LED on
 void led_on(void) {
     if (line) {
+        for(int i=0;i<50;i++){
+            gpiod_line_set_value(line, 1);
+            msleep(100);
+            gpiod_line_set_value(line, 0);
+            msleep(100);
+        }
         gpiod_line_set_value(line, 1);
         printf("LED turned on\n");
     } else {

@@ -19,8 +19,8 @@ int main(void) {
     // 사용할 GPIO 핀에 맞게 설정하세요.
     // 라즈베리파이5의 경우 "gpiochip0", 젯슨 오린 나노의 경우 "gpiochip0" 또는 "gpiochip1"일 수 있습니다.
     // 핀 번호는 젯슨 오린 나노 기준으로 GPIO22 (J41 핀 15번)을 예시로 사용합니다.
-    const char *chip_name = "gpiochip0";
-    unsigned int led_pin = 144;
+    const char *chip_name = "gpiochip1";
+    unsigned int led_pin = 19;
 
     // LED 초기화
     if (led_init(chip_name, led_pin) < 0) {

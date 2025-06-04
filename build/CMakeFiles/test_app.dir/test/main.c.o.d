@@ -1,5 +1,5 @@
 CMakeFiles/test_app.dir/test/main.c.o: \
- /home/a102/Desktop/S13P11A102/test/main.c /usr/include/stdc-predef.h \
+ /home/a102/test/S13P11A102_ver.3/test/main.c /usr/include/stdc-predef.h \
  /usr/include/stdio.h \
  /usr/include/aarch64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -23,11 +23,11 @@ CMakeFiles/test_app.dir/test/main.c.o: \
  /usr/include/aarch64-linux-gnu/bits/stdio_lim.h \
  /usr/include/aarch64-linux-gnu/bits/floatn.h \
  /usr/include/aarch64-linux-gnu/bits/floatn-common.h \
- /home/a102/Desktop/S13P11A102/test/../include/valve.h \
- /home/a102/Desktop/S13P11A102/test/../include/mqtt.h \
- /home/a102/Desktop/S13P11A102/test/../include/shared_globals.h \
+ /home/a102/test/S13P11A102_ver.3/test/../include/valve.h \
+ /home/a102/test/S13P11A102_ver.3/test/../include/mqtt.h \
+ /home/a102/test/S13P11A102_ver.3/test/../include/shared_globals.h \
  /usr/lib/gcc/aarch64-linux-gnu/11/include/stdbool.h \
- /home/a102/Desktop/S13P11A102/test/../include/servo.h \
+ /home/a102/test/S13P11A102_ver.3/test/../include/servo.h \
  /usr/include/stdlib.h /usr/include/aarch64-linux-gnu/bits/waitflags.h \
  /usr/include/aarch64-linux-gnu/bits/waitstatus.h \
  /usr/include/aarch64-linux-gnu/sys/types.h \
@@ -61,6 +61,6 @@ CMakeFiles/test_app.dir/test/main.c.o: \
  /usr/include/aarch64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/aarch64-linux-gnu/bits/types/locale_t.h \
  /usr/include/aarch64-linux-gnu/bits/types/__locale_t.h \
- /home/a102/Desktop/S13P11A102/test/../include/valve.h \
- /home/a102/Desktop/S13P11A102/test/../include/mqtt.h \
- /home/a102/Desktop/S13P11A102/test/../include/shared_globals.h
+ /home/a102/test/S13P11A102_ver.3/test/../include/valve.h \
+ /home/a102/test/S13P11A102_ver.3/test/../include/mqtt.h \
+ /home/a102/test/S13P11A102_ver.3/test/../include/shared_globals.h

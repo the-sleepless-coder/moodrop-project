@@ -1,8 +1,9 @@
-CMakeFiles/main_app.dir/main.c.o: /home/a102/Desktop/S13P11A102/main.c \
- /usr/include/stdc-predef.h /home/a102/Desktop/S13P11A102/include/mqtt.h \
- /home/a102/Desktop/S13P11A102/include/shared_globals.h \
+CMakeFiles/main_app.dir/main.c.o: /home/a102/test/S13P11A102_ver.3/main.c \
+ /usr/include/stdc-predef.h \
+ /home/a102/test/S13P11A102_ver.3/include/mqtt.h \
+ /home/a102/test/S13P11A102_ver.3/include/shared_globals.h \
  /usr/lib/gcc/aarch64-linux-gnu/11/include/stdbool.h \
- /home/a102/Desktop/S13P11A102/include/servo.h /usr/include/stdlib.h \
+ /home/a102/test/S13P11A102_ver.3/include/servo.h /usr/include/stdlib.h \
  /usr/include/aarch64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/aarch64-linux-gnu/bits/wordsize.h \
@@ -50,8 +51,8 @@ CMakeFiles/main_app.dir/main.c.o: /home/a102/Desktop/S13P11A102/main.c \
  /usr/include/aarch64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/aarch64-linux-gnu/bits/types/locale_t.h \
  /usr/include/aarch64-linux-gnu/bits/types/__locale_t.h \
- /home/a102/Desktop/S13P11A102/include/mqtt.h \
- /home/a102/Desktop/S13P11A102/include/valve.h /usr/include/stdio.h \
+ /home/a102/test/S13P11A102_ver.3/include/mqtt.h \
+ /home/a102/test/S13P11A102_ver.3/include/valve.h /usr/include/stdio.h \
  /usr/lib/gcc/aarch64-linux-gnu/11/include/stdarg.h \
  /usr/include/aarch64-linux-gnu/bits/types/__fpos_t.h \
  /usr/include/aarch64-linux-gnu/bits/types/__mbstate_t.h \
@@ -60,12 +61,12 @@ CMakeFiles/main_app.dir/main.c.o: /home/a102/Desktop/S13P11A102/main.c \
  /usr/include/aarch64-linux-gnu/bits/types/FILE.h \
  /usr/include/aarch64-linux-gnu/bits/types/struct_FILE.h \
  /usr/include/aarch64-linux-gnu/bits/stdio_lim.h \
- /home/a102/Desktop/S13P11A102/include/valve.h \
- /home/a102/Desktop/S13P11A102/include/led.h /usr/include/gpiod.h \
- /home/a102/Desktop/S13P11A102/include/storage.h \
- /home/a102/Desktop/S13P11A102/include/shared_globals.h \
- /home/a102/Desktop/S13P11A102/include/servo_sync.h \
- /home/a102/Desktop/S13P11A102/include/servo.h /usr/include/unistd.h \
+ /home/a102/test/S13P11A102_ver.3/include/valve.h \
+ /home/a102/test/S13P11A102_ver.3/include/led.h /usr/include/gpiod.h \
+ /home/a102/test/S13P11A102_ver.3/include/storage.h \
+ /home/a102/test/S13P11A102_ver.3/include/shared_globals.h \
+ /home/a102/test/S13P11A102_ver.3/include/servo_sync.h \
+ /home/a102/test/S13P11A102_ver.3/include/servo.h /usr/include/unistd.h \
  /usr/include/aarch64-linux-gnu/bits/posix_opt.h \
  /usr/include/aarch64-linux-gnu/bits/environments.h \
  /usr/include/aarch64-linux-gnu/bits/confname.h \

@@ -119,7 +119,7 @@ void plate_spin(int angle, bool flag){
             }
         }
         else{
-            for(int i = curAngle; i <= angle; i++){
+            for(int i = angle; i >= curAngle; i--){
                 servo_set_angle(SERVO_ROTATE, i);
                 msleep(100);
             }

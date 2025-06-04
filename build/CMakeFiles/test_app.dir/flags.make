@@ -4,7 +4,7 @@
 # compile C with /usr/bin/cc
 C_DEFINES = 
 
-C_INCLUDES = -I/home/a102/Desktop/S13P11A102/include
+C_INCLUDES = -I/home/a102/test/S13P11A102_ver.3/include
 
 C_FLAGS = -std=gnu99
 

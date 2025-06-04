@@ -10,6 +10,7 @@ void start_servos(struct Hole holes[]){
     msleep(PLATE_SPIN_TIME * abs(INIT_POS - holes[0].num));
     valve_ctrl(holes[0]);
     msleep(500);
+    printf("%d\n", curAngle);
     for(int i = 1; i < g_recipe_count; i++){ // 1, 2, 3, 4번째 루트로 가기
         lastAngle = curAngle;
         curAngle += get_angle(holes[i - 1].num, holes[i].num);
@@ -17,7 +18,9 @@ void start_servos(struct Hole holes[]){
         msleep(PLATE_SPIN_TIME * abs(holes[i - 1].num - holes[i].num));
         valve_ctrl(holes[i]);
         msleep(500);
+        printf("%d\n", curAngle);
     }
+    printf("hi %d\n", curAngle);
     lastAngle = curAngle;
     curAngle = 60;
     plate_spin(lastAngle, true);

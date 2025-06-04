@@ -7,7 +7,7 @@
 #include "shared_globals.h"
 
 #define MAX_BASE_INGREDIENTS 12 // 관리할 최대 베이스 원료 종류 수
-#define BASE_STORAGE_FILE "base_storage.txt"
+#define BASE_STORAGE_FILE "../base_storage.txt"
 
 /**
  * @brief 텍스트 파일에서 원료량 정보를 읽어들여 초기화합니다.

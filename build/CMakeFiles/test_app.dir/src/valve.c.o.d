@@ -1,8 +1,8 @@
 CMakeFiles/test_app.dir/src/valve.c.o: \
- /home/a102/Desktop/S13P11A102/src/valve.c /usr/include/stdc-predef.h \
- /home/a102/Desktop/S13P11A102/include/valve.h \
- /home/a102/Desktop/S13P11A102/include/mqtt.h \
- /home/a102/Desktop/S13P11A102/include/shared_globals.h \
+ /home/a102/test/S13P11A102_ver.3/src/valve.c /usr/include/stdc-predef.h \
+ /home/a102/test/S13P11A102_ver.3/include/valve.h \
+ /home/a102/test/S13P11A102_ver.3/include/mqtt.h \
+ /home/a102/test/S13P11A102_ver.3/include/shared_globals.h \
  /usr/lib/gcc/aarch64-linux-gnu/11/include/stdbool.h /usr/include/stdio.h \
  /usr/include/aarch64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
@@ -26,7 +26,7 @@ CMakeFiles/test_app.dir/src/valve.c.o: \
  /usr/include/aarch64-linux-gnu/bits/stdio_lim.h \
  /usr/include/aarch64-linux-gnu/bits/floatn.h \
  /usr/include/aarch64-linux-gnu/bits/floatn-common.h \
- /home/a102/Desktop/S13P11A102/include/servo.h /usr/include/stdlib.h \
+ /home/a102/test/S13P11A102_ver.3/include/servo.h /usr/include/stdlib.h \
  /usr/include/aarch64-linux-gnu/bits/waitflags.h \
  /usr/include/aarch64-linux-gnu/bits/waitstatus.h \
  /usr/include/aarch64-linux-gnu/sys/types.h \
@@ -60,6 +60,6 @@ CMakeFiles/test_app.dir/src/valve.c.o: \
  /usr/include/aarch64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/aarch64-linux-gnu/bits/types/locale_t.h \
  /usr/include/aarch64-linux-gnu/bits/types/__locale_t.h \
- /home/a102/Desktop/S13P11A102/include/valve.h \
- /home/a102/Desktop/S13P11A102/include/mqtt.h \
+ /home/a102/test/S13P11A102_ver.3/include/valve.h \
+ /home/a102/test/S13P11A102_ver.3/include/mqtt.h \
  /usr/include/aarch64-linux-gnu/sys/time.h
