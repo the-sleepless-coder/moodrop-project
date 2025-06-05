@@ -1,0 +1,1 @@
+/usr/bin/cc CMakeFiles/main_app.dir/main.c.o CMakeFiles/main_app.dir/src/storage.c.o CMakeFiles/main_app.dir/src/led.c.o CMakeFiles/main_app.dir/src/mqtt.c.o CMakeFiles/main_app.dir/src/servo.c.o CMakeFiles/main_app.dir/src/servo_sync.c.o CMakeFiles/main_app.dir/src/valve.c.o -o main_app  -lmosquitto -lcjson -lgpiod 

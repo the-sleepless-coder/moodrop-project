@@ -1,0 +1,4 @@
+/home/a102/Desktop/S13P11A102/build/CMakeFiles/main_app.dir
+/home/a102/Desktop/S13P11A102/build/CMakeFiles/test_app.dir
+/home/a102/Desktop/S13P11A102/build/CMakeFiles/edit_cache.dir
+/home/a102/Desktop/S13P11A102/build/CMakeFiles/rebuild_cache.dir
