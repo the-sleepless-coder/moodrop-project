@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  <form action="/weather" method="post">
+    <h1>날씨 정보 불러오기</h1>
+    <button class="button" type="submit">Click</button>
+  </form>
+  {% if weather %}
+    <h2>날씨 정보</h2>
+    <p>기온: {{ weather.temperature }}°C</p>
+    <p>강수량: {{ weather.precipitation }}mm</p>
+  {% endif %}
+</body>
+
+</html>
