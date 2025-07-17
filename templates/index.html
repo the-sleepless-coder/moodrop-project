@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>IOT</title>
+    <link rel="stylesheet" href="static/css/styles.css">
+</head>
+
+<body>
+    <form action="/button" method="post">
+        <input type="text" id="inputText" name="inputText" placeholder="위치 입력">
+        <button class="button" type="submit">Click</button>
+        
+        <p>{{user_input|safe}}</p>
+    </form>
+</body>
+</html>
+
