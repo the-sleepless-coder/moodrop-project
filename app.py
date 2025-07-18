@@ -30,7 +30,7 @@ def get_current_hour_string():
     return base_time
 
 
-keys = '1TB56admXov7EJOyvUHA0Y9afFJtTC1jXACv4pix/tGV3v0y6dZmmA9SzpZTXZtSNxThhcaUTq2T01PSeoMoLg=='
+keys = '/=='
 url = 'http://apis.data.go.kr/1360000/VilageFcstInfoService_2.0/getUltraSrtFcst'
 params ={'serviceKey' : keys, 
          'numOfRows' : '1000',
