@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>단기예보</title>
+</head>
+<body>
+    <h1>🌦️ 집 갈때 비올까 (기온, 강수확률, 강수량)</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>시간</th>
+                <th>기온 (℃)</th>
+                <th>강수확률 (%)</th>
+                <th>강수량 (mm)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for time, values in forecast.items() %}
+            <tr>
+                <td>{{ time[9:11] }}:{{ time[11:13] }}</td>
+                <td>{{ values.get('TMP', '-') }}</td>
+                <td>{{ values.get('POP', '-') }}</td>
+                <td>{{ values.get('PCP', '-') }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
