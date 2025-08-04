@@ -6,7 +6,6 @@
 #include "servo.h"
 #include "valve.h"
 #include "led.h"
-#include "recipe.h"
 
 // Manufacturing state flag
 volatile int recipe_ready = 0;
