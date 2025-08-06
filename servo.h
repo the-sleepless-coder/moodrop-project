@@ -1,22 +1,13 @@
 // servo.h
-// Servo motor control interface
 
 #ifndef SERVO_H
 #define SERVO_H
-#define ROTATE_ANGLE 30
-#define INIT_POS 3
 
-typedef enum {
-    SERVO_ROTATE, // Servo controlling the rotation of 2nd tier
-    SERVO_VALVE   // Servo controlling the valve opening
-} ServoID;
+#include "shared_globals.h" // 데이터 구조체를 사용하기 위해 include
 
-struct QUAN{
-    int num;
+/**
+ * @brief 레시피에 따라 전체 제조 공정을 수행합니다.
+ */
+void manufacture_process(struct Hole recipe[], int count);
 
-}
-
-void servo_init(void);
-void servo_set_angle(ServoID id, int angle);
-
-#endif
+#endif // SERVO_H

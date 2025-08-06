@@ -1,103 +1,33 @@
 // main.c
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
 #include "mqtt.h"
-#include <cjson/cJSON.h>
+#include "servo.h"
+#include "shared_globals.h"
+#include <stdio.h>
+#include <unistd.h>
 
-#define MAX_RECIPE_STEPS 20 // 레시피에 포함될 수 있는 향료의 최대 개수
-
-// =================================================================
-// ## 1. 전역 변수 선언 ##
-// =================================================================
-// 어떤 함수에서든 접근할 수 있도록 바깥에 변수를 선언합니다.
-
-// 레시피 전체를 저장할 전역 구조체 배열
-struct Hole g_perfume_recipe[MAX_RECIPE_STEPS]; 
-
-// 수신된 레시피의 실제 개수를 저장할 전역 변수
-int g_recipe_count = 0;
-
-// 새로운 레시피가 도착했는지 알리는 깃발(flag) 역할의 전역 변수
-volatile int g_new_recipe_flag = 0; // 0: 새 레시피 없음, 1: 새 레시피 도착
-
-// =================================================================
-// ## 2. 서보모터 제어 함수 (예시) ##
-// =================================================================
-// 파라미터로 향료 번호와 비율을 받아 서보모터를 제어하는 함수입니다.
-void control_servo(int hole_num, int proportion) {
-    printf(">> 서보모터 제어: %d번 향료, %d%% 비율로 동작...\n", hole_num, proportion);
-    // TODO: 실제 서보모터 회전 각도 계산 및 제어 로직을 여기에 구현하세요.
-    // 예: sleep(2); // 서보 동작 시간만큼 대기
-}
-
-
-// =================================================================
-// ## 3. MQTT 콜백 함수 수정 ##
-// =================================================================
-// 이제 이 함수는 전역 변수에 데이터를 저장하고 깃발만 올리는 역할을 합니다.
-void my_mqtt_callback(const char* topic, const char* payload) {
-    printf("\n[MQTT] 메시지 수신! 파싱 시작...\n");
-
-    cJSON *json_array = cJSON_Parse(payload);
-    if (!json_array) return;
-
-    g_recipe_count = 0; // 새 레시피를 저장하기 전에 이전 개수를 초기화
-
-    if (cJSON_IsArray(json_array)) {
-        cJSON *element = NULL;
-        int i = 0;
-        cJSON_ArrayForEach(element, json_array) {
-            if (i >= MAX_RECIPE_STEPS) break;
-
-            const cJSON *num_json = cJSON_GetObjectItemCaseSensitive(element, "num");
-            const cJSON *prop_json = cJSON_GetObjectItemCaseSensitive(element, "prop");
-
-            if (cJSON_IsNumber(num_json) && cJSON_IsNumber(prop_json)) {
-                // 전역 변수 g_perfume_recipe에 직접 저장
-                g_perfume_recipe[i].num = num_json->valueint;
-                g_perfume_recipe[i].prop = prop_json->valueint;
-                g_recipe_count++;
-            }
-            i++;
-        }
-    }
-    cJSON_Delete(json_array);
-
-    if (g_recipe_count > 0) {
-        printf("[MQTT] 파싱 완료. %d개의 레시피 저장됨.\n", g_recipe_count);
-        g_new_recipe_flag = 1; // 새 레시피가 도착했음을 알리는 깃발을 올림
-    }
-}
-
-
-// =================================================================
-// ## 4. main 함수 수정 ##
-// =================================================================
 int main(void) {
+    // 1. MQTT 모듈 초기화
+    // 내부적으로 메시지 수신, 파싱, 명령어 처리까지 모두 준비됩니다.
     mqtt_init();
-    mqtt_set_callback(my_mqtt_callback);
-    printf("프로그램 시작. MQTT 메시지 수신 대기 중...\n");
+    printf("프로그램 시작. 명령 수신 대기 중...\n");
 
+    // 2. 메인 루프: 상태를 감시하고, 각 모듈에 작업 지시
     while (1) {
-        // g_new_recipe_flag가 1이 될 때까지 계속 확인
-        if (g_new_recipe_flag == 1) {
-            printf("\n[MAIN] 새 레시피 감지! 제조를 시작합니다.\n");
-
-            // 전역 변수에 저장된 레시피를 순서대로 처리
-            for (int i = 0; i < g_recipe_count; i++) {
-                printf("[MAIN] 단계 %d / %d\n", i + 1, g_recipe_count);
-                // 서보모터 제어 함수에 전역 변수 값을 파라미터로 전달
-                control_servo(g_perfume_recipe[i].num, g_perfume_recipe[i].prop);
-            }
-
-            printf("[MAIN] 제조 완료. 다시 대기 상태로 전환합니다.\n\n");
+        // g_start_manufacturing_flag는 MQTT 모듈이 'manufacture' 명령을 받으면 1로 변경합니다.
+        if (g_start_manufacturing_flag == 1) {
             
-            // 모든 처리가 끝났으므로 깃발을 다시 내림
-            g_new_recipe_flag = 0;
-        }
+            // 모터 제어 모듈에 작업 지시
+            manufacture_process(g_perfume_recipe, g_recipe_count);
 
+            // MQTT 모듈에 상태 보고 지시
+            mqtt_publish("perfume/feedback", "{\"CMD\":\"status\", \"data\":\"제조 완료\"}");
+            
+            // 상태 플래그를 다시 0으로 초기화
+            g_start_manufacturing_flag = 0;
+            printf("\n[MAIN] 작업 완료. 다시 대기 상태로 전환합니다.\n");
+        }
+        
         // CPU 자원을 너무 많이 사용하지 않도록 잠시 대기
         usleep(100000); // 0.1초
     }
