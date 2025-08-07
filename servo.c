@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <stdint.h>
 #include <time.h>
+#include <sys/time.h>
 #include "valve.h"
 
 int fd, curAngle;
@@ -82,11 +83,17 @@ void servo_init(ServoID id) {
     pca9685_init(fd);
 
     int ch = get_servo_channel(id);
-    printf("Servo %d (channel %d) will be set to 60 deg (center)...\n", id, ch);
-    msleep(1000);
-    set_pwm(fd, ch, 0, angle_to_pulse(60));
-    curAngle = 60;
-    msleep(1000);
+    if(ch == SERVO_ROTATE){
+        printf("Servo %d (channel %d) will be set to 60 deg (center)...\n", id, ch);
+        set_pwm(fd, ch, 0, angle_to_pulse(60));
+        curAngle = 60;
+        msleep(100);
+    }
+    else if(ch == SERVO_VALVE){
+        printf("Servo %d (channel %d) will be set to 60 deg (center)...\n", id, ch);
+        set_pwm(fd, ch, 0, angle_to_pulse(0));
+        msleep(100);
+    }
     printf("Servo motors initialized\n");
 }
 
@@ -103,19 +110,28 @@ int get_angle(int src, int dst){
     return relativeDist * 30;
 }
 
-void start_servos(struct Hole holes[], ServoID id){
+void plate_spin(int angle){
+    servo_set_angle(SERVO_ROTATE, angle);
+}
+
+void start_servos(struct Hole holes[]){
     curAngle += get_angle(INIT_POS, holes[0].num);
-    servo_set_angle(id, curAngle); // 첫번째 루트로 가기
+    get_drops(holes);
+    plate_spin(curAngle); // 첫번째 루트로 가기
+    msleep(PLATE_SPIN_TIME * abs(INIT_POS - holes[0].num));
     valve_ctrl(holes[0]);
-    msleep(1000);
+    msleep(200 + sec[holes[0].num]);
+    printf("기다릴 시간 : %d\n", sec[holes[0].num]);
     for(int i = 1; i < HOLE_CNT; i++){ // 2, 3, 4번째 루트로 가기
         curAngle += get_angle(holes[i - 1].num, holes[i].num);
-        servo_set_angle(id, curAngle);
-        msleep(1000);
+        plate_spin(curAngle);
+        msleep(PLATE_SPIN_TIME * abs(holes[i - 1].num - holes[i].num));
         valve_ctrl(holes[i]);
+        msleep(200 + sec[holes[i].num]);
+        printf("기다릴 시간 : %d\n", sec[holes[i].num]);
     }
-    servo_set_angle(id, 60);
-    msleep(1000);
+    plate_spin(60);
+    msleep(100);
 }
 
 // 2. plate 시간 맞춰서 멈추는 기능 구헌

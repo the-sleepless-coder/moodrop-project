@@ -58,7 +58,7 @@ void my_mqtt_callback(const char* topic, const char* payload) {
 void manufacture(struct Hole holes[]){
     servo_init(SERVO_ROTATE);
     servo_init(SERVO_VALVE);
-    start_servos(holes, SERVO_ROTATE);
+    start_servos(holes);
 }
 
 
@@ -72,10 +72,7 @@ int main(void) {
         if (g_new_recipe_flag == 1) {
             printf("\n[MAIN] 새 레시피 감지! 제조를 시작합니다.\n");
             servo_init(SERVO_ROTATE);
-            msleep(1000);
-            //servo_init(SERVO_VALVE);
-            // 전역 변수에 저장된 레시피를 순서대로 처리
-            //plate_spin(g_perfume_recipe, SERVO_ROTATE);
+            servo_init(SERVO_VALVE);
             manufacture(g_perfume_recipe);
             printf("[MAIN] 제조 완료. 다시 대기 상태로 전환합니다.\n\n");
             

@@ -16,6 +16,7 @@
 
 // PCA9685 각 채널 base address
 #define LED0_ON_L  0x06
+#define PLATE_SPIN_TIME 350
 
 // 서보용 PWM 값 (데이터시트 참고)
 #define SERVOMIN 120  // 0도
@@ -35,6 +36,7 @@ uint16_t angle_to_pulse(int angle);
 void pca9685_init(int fd);
 void servo_init(ServoID id);
 void servo_set_angle(ServoID id, int angle);
-void start_servos(struct Hole holes[], ServoID id);
+void plate_spin(int angle);
+void start_servos(struct Hole holes[]);
 
 #endif
