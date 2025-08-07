@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <time.h>
 #include "mqtt.h"
+#include "valve.h"
 
 // PCA9685 각 채널 base address
 #define LED0_ON_L  0x06
@@ -33,7 +34,7 @@ void set_pwm(int fd, uint8_t channel, uint16_t on, uint16_t off);
 uint16_t angle_to_pulse(int angle);
 void pca9685_init(int fd);
 void servo_init(ServoID id);
-void servo_set_angle(int angle, ServoID id);
-void plate_spin(struct Hole holes[], ServoID id);
+void servo_set_angle(ServoID id, int angle);
+void start_servos(struct Hole holes[], ServoID id);
 
 #endif

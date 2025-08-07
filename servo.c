@@ -10,6 +10,7 @@
 #include <sys/ioctl.h>
 #include <stdint.h>
 #include <time.h>
+#include "valve.h"
 
 int fd, curAngle;
 
@@ -22,7 +23,7 @@ int get_servo_channel(ServoID id) {
     switch (id) {
         case SERVO_ROTATE: return 0;  // 0번 채널
         case SERVO_VALVE:  return 1;  // 1번 채널
-        default: return 0;            // fallback
+        default: return -1;            // fallback
     }
 }
 
@@ -91,7 +92,7 @@ void servo_init(ServoID id) {
 
 
 // Set servo angle (convert to PWM signal and send to PCA9685)
-void servo_set_angle(int angle, ServoID id) {
+void servo_set_angle(ServoID id, int angle) {
     int ch = get_servo_channel(id);
     set_pwm(fd, ch, 0, angle_to_pulse(angle));
     printf("Set servo %d angle to %d degrees\n", id, angle);
@@ -102,15 +103,19 @@ int get_angle(int src, int dst){
     return relativeDist * 30;
 }
 
-void plate_spin(struct Hole holes[], ServoID id){
+void start_servos(struct Hole holes[], ServoID id){
     curAngle += get_angle(INIT_POS, holes[0].num);
-    servo_set_angle(curAngle, id);
+    servo_set_angle(id, curAngle); // 첫번째 루트로 가기
+    valve_ctrl(holes[0]);
     msleep(1000);
-    for(int i = 1; i < HOLE_CNT; i++){
+    for(int i = 1; i < HOLE_CNT; i++){ // 2, 3, 4번째 루트로 가기
         curAngle += get_angle(holes[i - 1].num, holes[i].num);
-        servo_set_angle(curAngle, id);
+        servo_set_angle(id, curAngle);
         msleep(1000);
+        valve_ctrl(holes[i]);
     }
-    servo_set_angle(60, id);
+    servo_set_angle(id, 60);
     msleep(1000);
 }
+
+// 2. plate 시간 맞춰서 멈추는 기능 구헌

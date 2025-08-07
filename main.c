@@ -1,39 +1,3 @@
-// // main.c
-// // Main control loop and MQTT message handling for perfume robot
-
-// #include <stdio.h>
-// #include "mqtt.h"
-// #include "servo.h"
-// #include "valve.h"
-// #include "led.h"
-// #include "recipe.h"
-
-// // Manufacturing state flag
-// volatile int recipe_ready = 0;
-// Recipe current_recipe;
-
-// int main(void) {
-//     printf("Fragrance manufacturing robot started\n");
-
-//     mqtt_init();
-//     mqtt_set_callback(on_mqtt_message);
-
-//     servo_init();
-//     valve_init();
-//     led_init();
-
-//     while(1) {
-//         mqtt_loop();   // Handle MQTT events
-//         manufacture();
-//         delay_ms(100);
-//     }
-
-//     return 0;
-// }
-
-
-// main.c
-// Main control loop and MQTT message handling for perfume robot
 
 #include <stdio.h>
 #include "mqtt.h"
@@ -91,11 +55,10 @@ void my_mqtt_callback(const char* topic, const char* payload) {
     }
 }
 
-void control_servo(int hole_num, int proportion) {
-    printf(">> 서보모터 제어: %d번 향료, %d%% 비율로 동작...\n", hole_num, proportion);
-
-    // TODO: 실제 서보모터 회전 각도 계산 및 제어 로직을 여기에 구현하세요.
-    // 예: sleep(2); // 서보 동작 시간만큼 대기
+void manufacture(struct Hole holes[]){
+    servo_init(SERVO_ROTATE);
+    servo_init(SERVO_VALVE);
+    start_servos(holes, SERVO_ROTATE);
 }
 
 
@@ -113,6 +76,7 @@ int main(void) {
             //servo_init(SERVO_VALVE);
             // 전역 변수에 저장된 레시피를 순서대로 처리
             //plate_spin(g_perfume_recipe, SERVO_ROTATE);
+            manufacture(g_perfume_recipe);
             printf("[MAIN] 제조 완료. 다시 대기 상태로 전환합니다.\n\n");
             
             // 모든 처리가 끝났으므로 깃발을 다시 내림
