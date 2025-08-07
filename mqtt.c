@@ -10,7 +10,7 @@
 #include <mosquitto.h>
 
 // --- MQTT 설정 ---
-#define MQTT_BROKER_ADDRESS   "70.12.247.88"
+#define MQTT_BROKER_ADDRESS   "70.12.245.101"
 #define MQTT_PORT             1883
 #define MQTT_CLIENT_ID        "jetson-nano-perfume-device"
 #define MQTT_SUB_TOPIC        "perfume/recipe"
@@ -52,10 +52,10 @@ static void _mqtt_message_handler(const char* payload) {
         }
         
         if (db_check_stock(g_perfume_recipe, g_recipe_count)) {
-            mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":\"possible\"}");
+            mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":{\"status\":\"possible\"}}");
             g_start_manufacturing_flag = 1;
         } else {
-            mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":\"impossible\"}");
+            mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":{\"status\":\"impossible\"}}");
         }
 
     } else if (strcmp(cmd, "update") == 0) {
@@ -72,7 +72,7 @@ static void _mqtt_message_handler(const char* payload) {
             }
         }
         db_update_stock(updates, count);
-        mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"update\", \"data\":\"완료\"}");
+        mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"update\", \"data\":{\"status\":\"complete\"}}");
         printf("\n[MAIN] 작업 완료. 다시 대기 상태로 전환합니다.\n");
 
     } else if (strcmp(cmd, "check") == 0) {
