@@ -21,7 +21,7 @@ int main(void) {
             manufacture_process(g_perfume_recipe, g_recipe_count);
 
             // MQTT 모듈에 상태 보고 지시
-            mqtt_publish("perfume/feedback", "{\"CMD\":\"status\", \"data\":\"제조 완료\"}");
+            mqtt_publish("perfume/feedback", "{\"CMD\":\"status\", \"data\":\"complete\"}");
             
             // 상태 플래그를 다시 0으로 초기화
             g_start_manufacturing_flag = 0;
