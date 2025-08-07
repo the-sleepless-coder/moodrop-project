@@ -10,7 +10,7 @@
 #include <mosquitto.h>
 
 // --- MQTT 설정 ---
-#define MQTT_BROKER_ADDRESS   "70.12.245.101"
+#define MQTT_BROKER_ADDRESS   "70.12.247.88"
 #define MQTT_PORT             1883
 #define MQTT_CLIENT_ID        "jetson-nano-perfume-device"
 #define MQTT_SUB_TOPIC        "perfume/recipe"
@@ -59,7 +59,7 @@ static void _mqtt_message_handler(const char* payload) {
         }
 
     } else if (strcmp(cmd, "update") == 0) {
-        struct StockUpdate updates[MAX_INVENTORY_ITEMS];
+        struct Storage updates[MAX_INVENTORY_ITEMS];
         int count = 0;
         cJSON* data = cJSON_GetObjectItem(root, "data");
         if (cJSON_IsArray(data)) {
@@ -72,9 +72,11 @@ static void _mqtt_message_handler(const char* payload) {
             }
         }
         db_update_stock(updates, count);
+        mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"update\", \"data\":\"완료\"}");
+        printf("\n[MAIN] 작업 완료. 다시 대기 상태로 전환합니다.\n");
 
     } else if (strcmp(cmd, "check") == 0) {
-        struct InventoryItem inventory[MAX_INVENTORY_ITEMS];
+        struct Storage inventory[MAX_INVENTORY_ITEMS];
         int count = db_get_all_stock(inventory, MAX_INVENTORY_ITEMS);
 
         cJSON *resp_root = cJSON_CreateObject();
@@ -83,7 +85,7 @@ static void _mqtt_message_handler(const char* payload) {
         for(int i=0; i<count; i++) {
             cJSON *item = cJSON_CreateObject();
             cJSON_AddNumberToObject(item, "num", inventory[i].num);
-            cJSON_AddNumberToObject(item, "stock", inventory[i].stock);
+            cJSON_AddNumberToObject(item, "capacity", inventory[i].capacity);
             cJSON_AddItemToArray(data_array, item);
         }
         cJSON_AddItemToObject(resp_root, "data", data_array);
@@ -93,10 +95,12 @@ static void _mqtt_message_handler(const char* payload) {
 
         cJSON_free(resp_payload);
         cJSON_Delete(resp_root);
+        printf("\n[MAIN] 작업 완료. 다시 대기 상태로 전환합니다.\n");
     }
     else if (strcmp(cmd, "connect") == 0) {
         printf("[CMD] 연결 확인 응답 전송...\n");
         mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"connect\"}");
+        printf("\n[MAIN] 작업 완료. 다시 대기 상태로 전환합니다.\n");
     }
     
     cJSON_Delete(root);
