@@ -8,8 +8,8 @@
 #include <stdio.h>
 #define VALVE_TIME 1300
 
-extern float drops[HOLE_CNT + 1];
-extern int sec[HOLE_CNT + 1];
+extern float drops[20];
+extern int sec[20];
 
 void valve_init(void);
 void valve_open(void);

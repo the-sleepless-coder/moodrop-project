@@ -6,8 +6,8 @@
 #include "mqtt.h"
 #include <sys/time.h>
 
-float drops[HOLE_CNT + 1];
-int sec[HOLE_CNT + 1];
+float drops[20];
+int sec[20];
 
 // Initialize valve servo (valve closed by default)
 void valve_init(void) {
@@ -29,7 +29,7 @@ int get_ms(int drop){ // 600ms 2 drop
 }
 
 void update_drop_sec(struct Hole holes[]){
-    for(int i = 0; i < HOLE_CNT; i++){
+    for(int i = 0; i < g_recipe_count; i++){
         int cur = holes[i].num;
         drops[cur] = holes[i].prop * 4 / 10;
         sec[cur] = get_ms(drops[cur]);
