@@ -34,7 +34,7 @@ services:
       MYSQL_USER: json
       MYSQL_PASSWORD: jsonsvalue!
     volumes:
-      - ./moodrop_dump.sql:/docker-entrypoint-initdb.d/moodrop_dump.sql:ro
+      - mysql-data:/var/lib/mysql
 
 volumes:
   mysql-data:
