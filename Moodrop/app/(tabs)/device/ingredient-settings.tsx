@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Dimensions, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlaskConical, Plus, Minus, RefreshCw, Save, X } from 'lucide-react-native';
-import Svg, { Polygon } from 'react-native-svg';
+import Svg, { Polygon, Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
-const CONTAINER_SIZE = Math.min(width - 32, 400); // 더 큰 컨테이너 크기
-const CENTER_SIZE = CONTAINER_SIZE * 0.25; // 중앙부 비율 조정
-const SLOT_SIZE = CONTAINER_SIZE * 0.15; // 슬롯 크기 비율 조정
+const CONTAINER_SIZE = Math.min(width, 400); // 더 큰 컨테이너 크기
+const CENTER_SIZE = CONTAINER_SIZE * 0.3; // 중앙부 비율 조정
+const SLOT_SIZE = CONTAINER_SIZE * 0.18; // 더 큰 슬롯 크기
 
 interface Ingredient {
   id: string;
@@ -169,6 +169,89 @@ export default function IngredientSettingsScreen() {
     };
   };
 
+  // const selectedIngredient = selectedSlot ? ingredients.find(ing => ing.id === selectedSlot) : null;
+
+  // 파이차트 원형 슬롯 컴포넌트
+  const PieChartSlot = ({ 
+    size, 
+    color, 
+    amount, 
+    maxAmount, 
+    isEmpty,
+    isSelected,
+    slotId 
+  }: { 
+    size: number, 
+    color: string, 
+    amount: number, 
+    maxAmount: number,
+    isEmpty: boolean,
+    isSelected: boolean,
+    slotId: string
+  }) => {
+    const radius = size * 0.4;
+    const strokeWidth = size * 0.1;
+    const center = size / 2;
+    
+    // 비율 계산 (0-1 사이)
+    const percentage = isEmpty ? 0 : amount / maxAmount;
+    
+    // 파이차트 경로 계산
+    const circumference = 2 * Math.PI * radius;
+    const strokeDasharray = circumference;
+    const strokeDashoffset = circumference * (1 - percentage);
+    
+    const gradientId = `pieGradient-${slotId}`;
+    
+    return (
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Defs>
+          <LinearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+            <Stop offset="0%" stopColor={color} stopOpacity="1" />
+            <Stop offset="100%" stopColor={color} stopOpacity="0.7" />
+          </LinearGradient>
+        </Defs>
+        
+        {/* 배경 원 */}
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius}
+          fill="none"
+          stroke="#f3f4f6"
+          strokeWidth={strokeWidth}
+        />
+        
+        {/* 진행률 원 (파이차트) */}
+        {!isEmpty && percentage > 0 && (
+          <Circle
+            cx={center}
+            cy={center}
+            r={radius}
+            fill="none"
+            stroke={`url(#${gradientId})`}
+            strokeWidth={strokeWidth}
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${center} ${center})`} // -90도 회전으로 12시 방향부터 시작
+          />
+        )}
+        
+        
+        {/* 중앙 원 */}
+        <Circle
+          cx={center}
+          cy={center}
+          r={radius - strokeWidth/2 - 2}
+          fill="#ffffff"
+          stroke={isEmpty ? "#e5e7eb" : color}
+          strokeWidth="2"
+        />
+      </Svg>
+    );
+  };
+
   const selectedIngredient = selectedSlot ? ingredients.find(ing => ing.id === selectedSlot) : null;
 
   // 6각형 좌표 계산 (슬롯들이 완전히 들어갈 수 있도록 훨씬 크게)
@@ -213,59 +296,121 @@ export default function IngredientSettingsScreen() {
               left: (CONTAINER_SIZE - CENTER_SIZE) / 2,
               top: (CONTAINER_SIZE - CENTER_SIZE) / 2,
             }]}>
-              <Text style={styles.centerText}>Moodrop</Text>
-              <Text style={styles.centerSubText}>Station</Text>
+              {selectedIngredient ? (
+                /* 선택된 슬롯 표시 */
+                <View style={styles.selectedSlotCenter}>
+                  <PieChartSlot
+                    size={CENTER_SIZE * 0.95}
+                    color={selectedIngredient.isEmpty ? '#e5e7eb' : selectedIngredient.color}
+                    amount={selectedIngredient.amount}
+                    maxAmount={selectedIngredient.maxAmount}
+                    isEmpty={selectedIngredient.isEmpty || false}
+                    isSelected={false}
+                    slotId={`center-${selectedIngredient.id}`}
+                  />
+                  
+                  {/* 중앙 슬롯 정보 및 컨트롤 */}
+                  <View style={styles.centerSlotInfo}>
+                    <Text style={styles.centerSlotNumber}>슬롯 {selectedIngredient.slot}</Text>
+                    {selectedIngredient.isEmpty ? (
+                      <View style={styles.centerEmptyActions}>
+                        <Text style={styles.centerEmptyText}>빈 슬롯</Text>
+                        <TouchableOpacity 
+                          style={styles.centerAddButton}
+                          onPress={() => setShowIngredientSelector(true)}
+                        >
+                          <Plus size={16} color="#ffffff" />
+                          <Text style={styles.centerAddButtonText}>향료 추가</Text>
+                        </TouchableOpacity>
+                      </View>
+                    ) : (
+                      <>
+                        <Text style={styles.centerSlotName}>{selectedIngredient.name}</Text>
+                        <Text style={styles.centerSlotAmount}>
+                          {selectedIngredient.amount}ml / {selectedIngredient.maxAmount}ml
+                        </Text>
+                        
+                        {/* 수량 조절 버튼 */}
+                        <View style={styles.centerControls}>
+                          <TouchableOpacity 
+                            style={styles.centerControlButton}
+                            onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount - 1)}
+                          >
+                            <Minus size={14} color="#737373" />
+                          </TouchableOpacity>
+                          
+                          <TouchableOpacity 
+                            style={styles.centerControlButton}
+                            onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount + 1)}
+                          >
+                            <Plus size={14} color="#737373" />
+                          </TouchableOpacity>
+                        </View>
+                        
+                        {/* 제거 버튼 */}
+                        <TouchableOpacity 
+                          style={styles.centerRemoveButton}
+                          onPress={() => removeIngredientFromSlot(selectedIngredient.id)}
+                        >
+                          <X size={12} color="#ef4444" />
+                          <Text style={styles.centerRemoveText}>제거</Text>
+                        </TouchableOpacity>
+                      </>
+                    )}
+                  </View>
+                </View>
+              ) : (
+                /* 기본 Moodrop Station 표시 */
+                <>
+                  <Text style={styles.centerText}>Moodrop</Text>
+                  <Text style={styles.centerSubText}>Station</Text>
+                </>
+              )}
             </View>
             
-            {/* 8개 원료 슬롯 */}
+            {/* 10개 파이차트 슬롯 */}
             {ingredients.map((ingredient) => {
               const position = getSlotPosition(ingredient.slot);
               const statusInfo = getAmountStatus(ingredient.amount, ingredient.maxAmount);
-              const percentage = (ingredient.amount / ingredient.maxAmount) * 100;
               
               return (
-                <TouchableOpacity
+                <View
                   key={ingredient.id}
                   style={[
-                    styles.ingredientSlot,
+                    styles.ingredientSlotContainer,
                     {
                       left: position.left,
                       top: position.top,
                       width: SLOT_SIZE,
                       height: SLOT_SIZE,
-                      borderColor: selectedSlot === ingredient.id ? '#171717' : ingredient.color,
-                      borderWidth: selectedSlot === ingredient.id ? 3 : 2,
                     }
                   ]}
-                  onPress={() => setSelectedSlot(selectedSlot === ingredient.id ? null : ingredient.id)}
                 >
-                  {/* 원료량 진행바 (원형) */}
-                  <View style={[styles.progressRing, { borderColor: ingredient.color }]}>
-                    <View 
-                      style={[
-                        styles.progressFill,
-                        { 
-                          backgroundColor: statusInfo.color,
-                          height: `${percentage}%`,
-                        }
-                      ]} 
+                  <TouchableOpacity
+                    style={styles.pieChartWrapper}
+                    onPress={() => setSelectedSlot(selectedSlot === ingredient.id ? null : ingredient.id)}
+                  >
+                    <PieChartSlot
+                      size={SLOT_SIZE}
+                      color={ingredient.isEmpty ? '#e5e7eb' : ingredient.color}
+                      amount={ingredient.amount}
+                      maxAmount={ingredient.maxAmount}
+                      isEmpty={ingredient.isEmpty || false}
+                      isSelected={selectedSlot === ingredient.id}
+                      slotId={ingredient.id}
                     />
-                  </View>
-                  
-                  <View style={styles.slotContent}>
-                    <Text style={styles.slotNumber}>{ingredient.slot}</Text>
-                    {ingredient.isEmpty ? (
-                      <Text style={styles.emptySlotText}>빈 슬롯</Text>
-                    ) : (
-                      <>
+                    
+                    {/* 슬롯 정보 중앙 표시 */}
+                    <View style={styles.slotCenterInfo}>
+                      <Text style={styles.slotNumber}>{ingredient.slot}</Text>
+                      {ingredient.isEmpty ? (
+                        <Text style={styles.emptySlotText}>빈 슬롯</Text>
+                      ) : (
                         <Text style={styles.slotName}>{ingredient.name}</Text>
-                        <Text style={[styles.slotAmount, { color: statusInfo.color }]}>
-                          {ingredient.amount}ml
-                        </Text>
-                      </>
-                    )}
-                  </View>
-                </TouchableOpacity>
+                      )}
+                    </View>
+                  </TouchableOpacity>
+                </View>
               );
             })}
           </View>
@@ -468,57 +613,140 @@ const styles = StyleSheet.create({
     fontSize: 12,
     opacity: 0.8,
   },
-  ingredientSlot: {
+  selectedSlotCenter: {
     position: 'absolute',
-    backgroundColor: '#ffffff',
-    borderRadius: 9999,
+    width: '120%',
+    height: '120%',
     justifyContent: 'center',
     alignItems: 'center',
+    backgroundColor: '#ffffff',
+    borderRadius: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 3,
+    shadowRadius: 4,
+    elevation: 4,
+    zIndex: 10,
   },
-  progressRing: {
+  centerSlotInfo: {
     position: 'absolute',
-    width: '90%',
-    height: '90%',
-    borderRadius: 9999,
-    borderWidth: 2,
-    backgroundColor: '#f3f4f6',
-    overflow: 'hidden',
-  },
-  progressFill: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderRadius: 9999,
-  },
-  slotContent: {
     alignItems: 'center',
-    zIndex: 1,
+    justifyContent: 'center',
+    width: '70%',
+    height: '70%',
   },
-  slotNumber: {
-    fontSize: 10,
-    color: '#737373',
-    fontWeight: '600',
+  centerSlotNumber: {
+    fontSize: 14,
+    color: '#171717',
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  slotName: {
-    fontSize: 11,
+  centerSlotName: {
+    fontSize: 14,
     color: '#171717',
     fontWeight: '600',
     textAlign: 'center',
+    marginBottom: 2,
   },
-  slotAmount: {
-    fontSize: 9,
+  centerSlotAmount: {
+    fontSize: 12,
+    color: '#737373',
     fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 8,
   },
-  emptySlotText: {
-    fontSize: 10,
+  centerEmptyActions: {
+    alignItems: 'center',
+  },
+  centerEmptyText: {
+    fontSize: 12,
     color: '#9ca3af',
     fontWeight: '500',
+    marginBottom: 8,
+  },
+  centerAddButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    gap: 4,
+  },
+  centerAddButtonText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '600',
+  },
+  centerControls: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 6,
+  },
+  centerControlButton: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#f3f4f6',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#d1d5db',
+  },
+  centerRemoveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    gap: 3,
+  },
+  centerRemoveText: {
+    color: '#ef4444',
+    fontSize: 10,
+    fontWeight: '500',
+  },
+  ingredientSlotContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pieChartWrapper: {
+    position: 'relative',
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  slotCenterInfo: {
+    position: 'absolute',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '60%',
+    height: '60%',
+    pointerEvents: 'none', // 터치 이벤트 통과
+  },
+  slotNumber: {
+    fontSize: 12,
+    color: '#737373',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  slotName: {
+    fontSize: 12,
+    color: '#171717',
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 1,
+  },
+  slotAmount: {
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  emptySlotText: {
+    fontSize: 12,
+    color: '#9ca3af',
+    fontWeight: '600',
     textAlign: 'center',
   },
   selectedIngredientSection: {
