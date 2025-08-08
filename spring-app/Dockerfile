@@ -8,8 +8,6 @@ WORKDIR /app
 # 자동으로 jar 파일 을 app.jar로 복사한다.
 COPY target/*.jar app.jar
 
-# 덤프 파일 복사
-COPY moodrop_dump_0808.sql /app/moodrop_dump.sql
 
 # 4. 실행 명령
 CMD ["java", "-jar", "app.jar"]
