@@ -2,75 +2,124 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Check } from 'lucide-react-native';
+import { Check, Brain, Heart, Palette, Eye, Users, MapPin, Layers, Sparkles } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+import { Mood } from '@/types/category';
 
 export default function SubcategoryScreen() {
   const { selectedCategory, setSelectedSubcategories } = useStore();
-  const [selectedSubs, setSelectedSubs] = useState<string[]>([]);
+  const [selectedMoods, setSelectedMoods] = useState<Mood[]>([]);
 
   if (!selectedCategory) {
     router.back();
     return null;
   }
 
-  const handleSubcategoryToggle = (subcategory: string) => {
-    setSelectedSubs(prev => {
-      if (prev.includes(subcategory)) {
-        return prev.filter(item => item !== subcategory);
+  // 카테고리별 아이콘 매핑
+  const getCategoryIcon = (categoryName: string) => {
+    const iconMap: { [key: string]: any } = {
+      '감각(Sensory)': Brain,
+      '정서(Emotion)': Heart,
+      '분위기(Ambience)': Palette,
+      '시각 이미지(Visual)': Eye,
+      '무게/질감(Texture)': Layers,
+      '스타일(Style)': Sparkles,
+      '장소(Space)': MapPin,
+      '기타(Misc)': Users,
+    };
+    
+    return iconMap[categoryName] || Brain;
+  };
+
+  // 카테고리별 색상 매핑
+  const getCategoryColor = (categoryName: string) => {
+    const colorMap: { [key: string]: string } = {
+      '감각(Sensory)': '#ef4444',
+      '정서(Emotion)': '#f97316',
+      '분위기(Ambience)': '#8b5cf6',
+      '시각 이미지(Visual)': '#3b82f6',
+      '무게/질감(Texture)': '#10b981',
+      '스타일(Style)': '#f59e0b',
+      '장소(Space)': '#06b6d4',
+      '기타(Misc)': '#6b7280',
+    };
+    
+    return colorMap[categoryName] || '#6b7280';
+  };
+
+  const handleMoodToggle = (mood: Mood) => {
+    setSelectedMoods(prev => {
+      if (prev.some(m => m.id === mood.id)) {
+        // 이미 선택된 항목이면 제거
+        return prev.filter(m => m.id !== mood.id);
       } else {
-        return [...prev, subcategory];
+        // 새로 선택하려는데 이미 3개가 선택된 경우
+        if (prev.length >= 3) {
+          return prev; // 추가하지 않음
+        }
+        return [...prev, mood];
       }
     });
   };
 
   const handleNext = () => {
-    if (selectedSubs.length === 0) return;
+    if (selectedMoods.length === 0) return;
     
-    setSelectedSubcategories(selectedSubs);
+    setSelectedSubcategories(selectedMoods.map(mood => mood.name));
     router.push('/category/recommendation');
   };
+
+  const CategoryIcon = getCategoryIcon(selectedCategory.name);
+  const categoryColor = getCategoryColor(selectedCategory.name);
 
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <View style={[styles.categoryBadge, { backgroundColor: selectedCategory.color }]}>
-            <selectedCategory.icon size={16} color="#ffffff" />
+          <View style={[styles.categoryBadge, { backgroundColor: categoryColor }]}>
+            <CategoryIcon size={16} color="#ffffff" />
             <Text style={styles.categoryBadgeText}>{selectedCategory.name}</Text>
           </View>
-          <Text style={styles.title}>세부 카테고리 선택</Text>
+          <Text style={styles.title}>무드 선택</Text>
           <Text style={styles.subtitle}>
-            {selectedCategory.name} 계열에서 선호하는 향을 모두 선택해주세요
+            {selectedCategory.name}에서 원하는 무드를 최대 3개까지 선택해주세요
           </Text>
         </View>
 
         <View style={styles.subcategoriesContainer}>
-          {selectedCategory.subcategories.map((subcategory: string, index: number) => {
-            const isSelected = selectedSubs.includes(subcategory);
+          {selectedCategory.moods.map((mood: Mood) => {
+            const isSelected = selectedMoods.some(m => m.id === mood.id);
+            const isDisabled = !isSelected && selectedMoods.length >= 3;
+            
             return (
               <TouchableOpacity
-                key={index}
+                key={mood.id}
                 style={[
                   styles.subcategoryCard,
-                  isSelected && { backgroundColor: selectedCategory.color + '15', borderColor: selectedCategory.color }
+                  isSelected && { backgroundColor: categoryColor + '15', borderColor: categoryColor },
+                  isDisabled && styles.subcategoryCardDisabled
                 ]}
-                onPress={() => handleSubcategoryToggle(subcategory)}
+                onPress={() => handleMoodToggle(mood)}
+                disabled={isDisabled}
               >
                 <View style={styles.subcategoryContent}>
                   <Text style={[
                     styles.subcategoryName,
-                    isSelected && { color: selectedCategory.color }
+                    isSelected && { color: categoryColor },
+                    isDisabled && styles.subcategoryNameDisabled
                   ]}>
-                    {subcategory}
+                    {mood.name}
                   </Text>
-                  <Text style={styles.subcategoryDescription}>
-                    {getSubcategoryDescription(subcategory)}
+                  <Text style={[
+                    styles.subcategoryDescription,
+                    isDisabled && styles.subcategoryDescriptionDisabled
+                  ]}>
+                    {mood.description || '특별한 무드를 표현하는 향'}
                   </Text>
                 </View>
                 <View style={[
                   styles.checkbox,
-                  isSelected && { backgroundColor: selectedCategory.color, borderColor: selectedCategory.color }
+                  isSelected && { backgroundColor: categoryColor, borderColor: categoryColor }
                 ]}>
                   {isSelected && <Check size={16} color="#ffffff" />}
                 </View>
@@ -81,10 +130,13 @@ export default function SubcategoryScreen() {
 
         <View style={styles.selectionInfo}>
           <Text style={styles.selectionText}>
-            {selectedSubs.length}개 선택됨
+            {selectedMoods.length}/3개 선택됨
           </Text>
           <Text style={styles.selectionHint}>
-            선택한 향을 바탕으로 맞춤 향수를 추천해드려요
+            {selectedMoods.length >= 3 
+              ? '최대 3개까지 선택할 수 있어요'
+              : '선택한 무드를 바탕으로 맞춤 향수를 추천해드려요'
+            }
           </Text>
         </View>
       </ScrollView>
@@ -93,16 +145,16 @@ export default function SubcategoryScreen() {
         <TouchableOpacity
           style={[
             styles.nextButton,
-            selectedSubs.length === 0 && styles.nextButtonDisabled
+            selectedMoods.length === 0 && styles.nextButtonDisabled
           ]}
           onPress={handleNext}
-          disabled={selectedSubs.length === 0}
+          disabled={selectedMoods.length === 0}
         >
           <Text style={[
             styles.nextButtonText,
-            selectedSubs.length === 0 && styles.nextButtonTextDisabled
+            selectedMoods.length === 0 && styles.nextButtonTextDisabled
           ]}>
-            다음 ({selectedSubs.length}개 선택)
+            다음 ({selectedMoods.length}개 선택)
           </Text>
         </TouchableOpacity>
       </View>
@@ -110,27 +162,7 @@ export default function SubcategoryScreen() {
   );
 }
 
-function getSubcategoryDescription(subcategory: string): string {
-  const descriptions: { [key: string]: string } = {
-    '장미': '우아하고 클래식한 장미 향',
-    '자스민': '달콤하고 관능적인 자스민 향',
-    '라벤더': '편안하고 진정시키는 라벤더 향',
-    '피오니': '부드럽고 상쾌한 작약 향',
-    '샌달우드': '따뜻하고 크리미한 백단향',
-    '시더우드': '신선하고 건조한 삼나무 향',
-    '패촐리': '흙내음이 나는 진한 허브 향',
-    '베티버': '스모키하고 우디한 향',
-    '시트러스': '상큼하고 활기찬 감귤 향',
-    '아쿠아틱': '바다와 같은 시원한 향',
-    '그린': '풀잎과 같은 자연스러운 향',
-    '오존': '깨끗하고 공기같은 향',
-    '앰버': '따뜻하고 달콤한 호박 향',
-    '바닐라': '부드럽고 달콤한 바닐라 향',
-    '머스크': '관능적이고 깊은 사향',
-    '스파이시': '따뜻하고 자극적인 향신료 향',
-  };
-  return descriptions[subcategory] || '특별한 향의 경험';
-}
+// getSubcategoryDescription 함수 제거 (더 이상 필요하지 않음)
 
 const styles = StyleSheet.create({
   container: {
@@ -245,5 +277,15 @@ const styles = StyleSheet.create({
   },
   nextButtonTextDisabled: {
     color: '#9ca3af',
+  },
+  subcategoryCardDisabled: {
+    opacity: 0.4,
+    backgroundColor: '#f8f8f8',
+  },
+  subcategoryNameDisabled: {
+    color: '#9ca3af',
+  },
+  subcategoryDescriptionDisabled: {
+    color: '#d1d5db',
   },
 });
