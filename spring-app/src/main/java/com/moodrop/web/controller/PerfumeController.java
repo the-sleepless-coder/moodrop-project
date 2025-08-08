@@ -31,7 +31,7 @@ public class PerfumeController {
 	
 	@GetMapping("/hithere")
 	public ResponseEntity<String> hello(){
-		return ResponseEntity.ok("Hi there");
+		return ResponseEntity.ok("안녕 새로운 레포지토리야");
 	}
 	
 	@GetMapping("/perfume/{perfumeId}")
