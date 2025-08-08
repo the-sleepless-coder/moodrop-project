@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Dimensions, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FlaskConical, Plus, Minus, RefreshCw, Save, X } from 'lucide-react-native';
+import Svg, { Polygon } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
-const CONTAINER_SIZE = Math.min(width - 48, 350);
-const CENTER_SIZE = CONTAINER_SIZE * 0.3;
-const SLOT_SIZE = CONTAINER_SIZE * 0.15;
+const CONTAINER_SIZE = Math.min(width - 32, 400); // 더 큰 컨테이너 크기
+const CENTER_SIZE = CONTAINER_SIZE * 0.25; // 중앙부 비율 조정
+const SLOT_SIZE = CONTAINER_SIZE * 0.15; // 슬롯 크기 비율 조정
 
 interface Ingredient {
   id: string;
@@ -15,21 +16,51 @@ interface Ingredient {
   amount: number;
   maxAmount: number;
   color: string;
+  isEmpty?: boolean;
+}
+
+interface AvailableIngredient {
+  id: string;
+  name: string;
+  color: string;
+  category: string;
 }
 
 export default function IngredientSettingsScreen() {
+  // 사용 가능한 향료 라이브러리
+  const [availableIngredients] = useState<AvailableIngredient[]>([
+    { id: 'rose', name: '장미', color: '#d97066', category: '플로럴' },
+    { id: 'jasmine', name: '자스민', color: '#8b5cf6', category: '플로럴' },
+    { id: 'lavender', name: '라벤더', color: '#ec4899', category: '플로럴' },
+    { id: 'vanilla', name: '바닐라', color: '#f59e0b', category: '오리엔탈' },
+    { id: 'musk', name: '머스크', color: '#6b7280', category: '오리엔탈' },
+    { id: 'citrus', name: '시트러스', color: '#f97316', category: '프레시' },
+    { id: 'sandalwood', name: '샌달우드', color: '#8b6f47', category: '우디' },
+    { id: 'patchouli', name: '패촐리', color: '#7c2d12', category: '우디' },
+    { id: 'bergamot', name: '베르가못', color: '#10b981', category: '프레시' },
+    { id: 'cedarwood', name: '시더우드', color: '#92400e', category: '우디' },
+    { id: 'ylang', name: '일랑일랑', color: '#fbbf24', category: '플로럴' },
+    { id: 'amber', name: '앰버', color: '#d97706', category: '오리엔탈' },
+    { id: 'lemon', name: '레몬', color: '#eab308', category: '프레시' },
+    { id: 'neroli', name: '네롤리', color: '#06b6d4', category: '플로럴' },
+    { id: 'oakmoss', name: '오크모스', color: '#059669', category: '우디' },
+  ]);
+
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { id: '1', name: '장미', slot: 1, amount: 25, maxAmount: 30, color: '#d97066' },
     { id: '2', name: '자스민', slot: 2, amount: 22, maxAmount: 30, color: '#8b5cf6' },
-    { id: '3', name: '라벤더', slot: 3, amount: 27, maxAmount: 30, color: '#ec4899' },
-    { id: '4', name: '바닐라', slot: 4, amount: 23, maxAmount: 30, color: '#f59e0b' },
-    { id: '5', name: '머스크', slot: 5, amount: 18, maxAmount: 30, color: '#6b7280' },
-    { id: '6', name: '시트러스', slot: 6, amount: 21, maxAmount: 30, color: '#f97316' },
-    { id: '7', name: '샌달우드', slot: 7, amount: 15, maxAmount: 30, color: '#8b6f47' },
-    { id: '8', name: '패촐리', slot: 8, amount: 14, maxAmount: 30, color: '#7c2d12' },
+    { id: '4', name: '라벤더', slot: 4, amount: 27, maxAmount: 30, color: '#ec4899' },
+    { id: '5', name: '바닐라', slot: 5, amount: 23, maxAmount: 30, color: '#f59e0b' },
+    { id: '6', name: '머스크', slot: 6, amount: 18, maxAmount: 30, color: '#6b7280' },
+    { id: '7', name: '', slot: 7, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
+    { id: '8', name: '', slot: 8, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
+    { id: '10', name: '', slot: 10, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
+    { id: '11', name: '', slot: 11, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
+    { id: '12', name: '', slot: 12, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
   ]);
   
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
+  const [showIngredientSelector, setShowIngredientSelector] = useState(false);
 
   const updateIngredientAmount = (id: string, newAmount: number) => {
     setIngredients(prev => 
@@ -51,7 +82,11 @@ export default function IngredientSettingsScreen() {
           text: '보충', 
           onPress: () => {
             setIngredients(prev => 
-              prev.map(ingredient => ({ ...ingredient, amount: ingredient.maxAmount }))
+              prev.map(ingredient => 
+                ingredient.isEmpty 
+                  ? ingredient 
+                  : { ...ingredient, amount: ingredient.maxAmount }
+              )
             );
             Alert.alert('완료', '모든 원료가 보충되었습니다.');
           }
@@ -71,9 +106,60 @@ export default function IngredientSettingsScreen() {
     return { status: '부족', color: '#ef4444' };
   };
 
+  const addIngredientToSlot = (slotId: string, ingredient: AvailableIngredient) => {
+    setIngredients(prev => 
+      prev.map(slot => 
+        slot.id === slotId 
+          ? { 
+              ...slot, 
+              name: ingredient.name, 
+              color: ingredient.color, 
+              isEmpty: false,
+              amount: 30 // 새로 추가할 때 최대치로 설정
+            }
+          : slot
+      )
+    );
+    setShowIngredientSelector(false);
+    setSelectedSlot(null);
+  };
+
+  const removeIngredientFromSlot = (slotId: string) => {
+    setIngredients(prev => 
+      prev.map(slot => 
+        slot.id === slotId 
+          ? { 
+              ...slot, 
+              name: '', 
+              color: '#e5e7eb', 
+              isEmpty: true,
+              amount: 0
+            }
+          : slot
+      )
+    );
+    setSelectedSlot(null);
+  };
+
   const getSlotPosition = (slot: number) => {
-    const angle = ((slot - 1) * 45 - 90) * (Math.PI / 180); // 8개 슬롯, 상단부터 시작
-    const radius = (CONTAINER_SIZE - SLOT_SIZE) / 2 - 20;
+    // 12등분 원에서 3번, 9번 제외
+    // 6시 방향을 정면(0도)으로, 8번 슬롯 위치가 1번이 되도록 설정
+    // 8번 슬롯은 6시에서 반시계로 2칸 = 6시에서 60도 반시계 방향
+    const slotToAngleMap: { [key: number]: number } = {
+      1: 150,  // 11시 방향 (시계방향 90도 회전)
+      2: 120,  // 10시 방향 (시계방향 90도 회전)
+      4: 60,   // 8시 방향 (시계방향 90도 회전)
+      5: 30,   // 7시 방향 (시계방향 90도 회전)
+      6: 0,    // 6시 방향 (시계방향 90도 회전)
+      7: -30,  // 5시 방향 (시계방향 90도 회전)
+      8: -60,  // 4시 방향 (시계방향 90도 회전)
+      10: -120, // 2시 방향 (시계방향 90도 회전)
+      11: -150, // 1시 방향 (시계방향 90도 회전)
+      12: 180, // 12시 방향 (시계방향 90도 회전)
+    };
+    
+    const angle = (slotToAngleMap[slot] || 0) * (Math.PI / 180);
+    const radius = (CONTAINER_SIZE - SLOT_SIZE) / 2 - 30; // 반지름을 조금 줄여서 프레임 안쪽으로 배치
     const x = Math.cos(angle) * radius;
     const y = Math.sin(angle) * radius;
     
@@ -85,14 +171,41 @@ export default function IngredientSettingsScreen() {
 
   const selectedIngredient = selectedSlot ? ingredients.find(ing => ing.id === selectedSlot) : null;
 
+  // 6각형 좌표 계산 (슬롯들이 완전히 들어갈 수 있도록 훨씬 크게)
+  const getHexagonPoints = (size: number) => {
+    const points = [];
+    const hexRadius = size/2 - 2; // 거의 최대 크기로 설정
+    for (let i = 0; i < 6; i++) {
+      const angle = (i * 60 - 90) * (Math.PI / 180); // -90도로 시작해서 위쪽 꼭짓점이 맨 위
+      const x = size/2 + hexRadius * Math.cos(angle);
+      const y = size/2 + hexRadius * Math.sin(angle);
+      points.push(`${x},${y}`);
+    }
+    return points.join(' ');
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <Text style={styles.subtitle}>Moodrop Station의 8개 원료 슬롯을 관리하세요</Text>
+        <Text style={styles.subtitle}>Moodrop Station의 10개 원료 슬롯을 관리하세요</Text>
         
-        {/* 원통형 기기 시각화 */}
+        {/* 6각형 기기 시각화 */}
         <View style={styles.deviceContainer}>
-          <View style={[styles.deviceCircle, { width: CONTAINER_SIZE, height: CONTAINER_SIZE }]}>
+          <View style={[styles.deviceHexagon, { width: CONTAINER_SIZE, height: CONTAINER_SIZE }]}>
+            {/* 6각형 배경 */}
+            <Svg 
+              width={CONTAINER_SIZE} 
+              height={CONTAINER_SIZE} 
+              style={styles.hexagonSvg}
+            >
+              <Polygon
+                points={getHexagonPoints(CONTAINER_SIZE)}
+                fill="#fafafa"
+                stroke="#e5e7eb"
+                strokeWidth="4"
+              />
+            </Svg>
+            
             {/* 중앙부 */}
             <View style={[styles.centerCircle, { 
               width: CENTER_SIZE, 
@@ -141,10 +254,16 @@ export default function IngredientSettingsScreen() {
                   
                   <View style={styles.slotContent}>
                     <Text style={styles.slotNumber}>{ingredient.slot}</Text>
-                    <Text style={styles.slotName}>{ingredient.name}</Text>
-                    <Text style={[styles.slotAmount, { color: statusInfo.color }]}>
-                      {ingredient.amount}ml
-                    </Text>
+                    {ingredient.isEmpty ? (
+                      <Text style={styles.emptySlotText}>빈 슬롯</Text>
+                    ) : (
+                      <>
+                        <Text style={styles.slotName}>{ingredient.name}</Text>
+                        <Text style={[styles.slotAmount, { color: statusInfo.color }]}>
+                          {ingredient.amount}ml
+                        </Text>
+                      </>
+                    )}
                   </View>
                 </TouchableOpacity>
               );
@@ -152,14 +271,16 @@ export default function IngredientSettingsScreen() {
           </View>
         </View>
 
-        {/* 선택된 원료 상세 조절 */}
+        {/* 선택된 슬롯 상세 조절 */}
         {selectedIngredient && (
           <View style={styles.selectedIngredientSection}>
             <View style={styles.selectedHeader}>
               <View style={styles.selectedInfo}>
                 <View style={[styles.selectedDot, { backgroundColor: selectedIngredient.color }]} />
                 <View>
-                  <Text style={styles.selectedName}>{selectedIngredient.name}</Text>
+                  <Text style={styles.selectedName}>
+                    {selectedIngredient.isEmpty ? '빈 슬롯' : selectedIngredient.name}
+                  </Text>
                   <Text style={styles.selectedSlot}>슬롯 {selectedIngredient.slot}</Text>
                 </View>
               </View>
@@ -171,43 +292,69 @@ export default function IngredientSettingsScreen() {
               </TouchableOpacity>
             </View>
 
-            <View style={styles.amountSection}>
-              <Text style={styles.amountLabel}>
-                {selectedIngredient.amount}ml / {selectedIngredient.maxAmount}ml
-              </Text>
-              <View style={styles.progressBar}>
-                <View 
-                  style={[
-                    styles.progressBarFill, 
-                    { 
-                      width: `${(selectedIngredient.amount / selectedIngredient.maxAmount) * 100}%`, 
-                      backgroundColor: getAmountStatus(selectedIngredient.amount, selectedIngredient.maxAmount).color 
-                    }
-                  ]} 
-                />
+            {selectedIngredient.isEmpty ? (
+              /* 빈 슬롯일 때 향료 추가 버튼 */
+              <View style={styles.emptySlotActions}>
+                <TouchableOpacity 
+                  style={styles.addIngredientButton}
+                  onPress={() => setShowIngredientSelector(true)}
+                >
+                  <Plus size={20} color="#ffffff" />
+                  <Text style={styles.addIngredientButtonText}>향료 추가</Text>
+                </TouchableOpacity>
               </View>
-            </View>
+            ) : (
+              /* 향료가 있을 때 조절 및 제거 */
+              <>
+                <View style={styles.amountSection}>
+                  <Text style={styles.amountLabel}>
+                    {selectedIngredient.amount}ml / {selectedIngredient.maxAmount}ml
+                  </Text>
+                  <View style={styles.progressBar}>
+                    <View 
+                      style={[
+                        styles.progressBarFill, 
+                        { 
+                          width: `${(selectedIngredient.amount / selectedIngredient.maxAmount) * 100}%`, 
+                          backgroundColor: getAmountStatus(selectedIngredient.amount, selectedIngredient.maxAmount).color 
+                        }
+                      ]} 
+                    />
+                  </View>
+                </View>
 
-            <View style={styles.controls}>
-              <TouchableOpacity 
-                style={styles.controlButton}
-                onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount - 1)}
-              >
-                <Minus size={20} color="#737373" />
-              </TouchableOpacity>
-              
-              <View style={styles.controlDisplay}>
-                <Text style={styles.controlAmount}>{selectedIngredient.amount}</Text>
-                <Text style={styles.controlUnit}>ml</Text>
-              </View>
-              
-              <TouchableOpacity 
-                style={styles.controlButton}
-                onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount + 1)}
-              >
-                <Plus size={20} color="#737373" />
-              </TouchableOpacity>
-            </View>
+                <View style={styles.controls}>
+                  <TouchableOpacity 
+                    style={styles.controlButton}
+                    onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount - 1)}
+                  >
+                    <Minus size={20} color="#737373" />
+                  </TouchableOpacity>
+                  
+                  <View style={styles.controlDisplay}>
+                    <Text style={styles.controlAmount}>{selectedIngredient.amount}</Text>
+                    <Text style={styles.controlUnit}>ml</Text>
+                  </View>
+                  
+                  <TouchableOpacity 
+                    style={styles.controlButton}
+                    onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount + 1)}
+                  >
+                    <Plus size={20} color="#737373" />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.removeSection}>
+                  <TouchableOpacity 
+                    style={styles.removeButton}
+                    onPress={() => removeIngredientFromSlot(selectedIngredient.id)}
+                  >
+                    <X size={16} color="#ef4444" />
+                    <Text style={styles.removeButtonText}>슬롯에서 제거</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
           </View>
         )}
 
@@ -233,6 +380,46 @@ export default function IngredientSettingsScreen() {
           </View>
         </View>
       </ScrollView>
+
+      {/* 향료 선택 모달 */}
+      <Modal
+        visible={showIngredientSelector}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowIngredientSelector(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>향료 선택</Text>
+            <TouchableOpacity onPress={() => setShowIngredientSelector(false)}>
+              <X size={24} color="#737373" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.modalContent}>
+            {['플로럴', '우디', '프레시', '오리엔탈'].map(category => (
+              <View key={category} style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>{category}</Text>
+                <View style={styles.ingredientGrid}>
+                  {availableIngredients
+                    .filter(ingredient => ingredient.category === category)
+                    .filter(ingredient => !ingredients.some(slot => slot.name === ingredient.name && !slot.isEmpty))
+                    .map(ingredient => (
+                      <TouchableOpacity
+                        key={ingredient.id}
+                        style={[styles.ingredientCard, { borderColor: ingredient.color }]}
+                        onPress={() => selectedSlot && addIngredientToSlot(selectedSlot, ingredient)}
+                      >
+                        <View style={[styles.ingredientDot, { backgroundColor: ingredient.color }]} />
+                        <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </View>
+              </View>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </SafeAreaView>
   );
 }
@@ -256,12 +443,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  deviceCircle: {
+  deviceHexagon: {
     position: 'relative',
-    backgroundColor: '#fafafa',
-    borderRadius: 9999,
-    borderWidth: 4,
-    borderColor: '#e5e7eb',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hexagonSvg: {
+    position: 'absolute',
   },
   centerCircle: {
     position: 'absolute',
@@ -326,6 +514,12 @@ const styles = StyleSheet.create({
   slotAmount: {
     fontSize: 9,
     fontWeight: '500',
+  },
+  emptySlotText: {
+    fontSize: 10,
+    color: '#9ca3af',
+    fontWeight: '500',
+    textAlign: 'center',
   },
   selectedIngredientSection: {
     backgroundColor: '#f8f9fa',
@@ -461,5 +655,104 @@ const styles = StyleSheet.create({
     color: '#1e40af',
     marginLeft: 12,
     lineHeight: 20,
+  },
+  emptySlotActions: {
+    alignItems: 'center',
+    paddingVertical: 20,
+  },
+  addIngredientButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#3b82f6',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    gap: 8,
+  },
+  addIngredientButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  removeSection: {
+    alignItems: 'center',
+    marginTop: 16,
+    paddingTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#e5e7eb',
+  },
+  removeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    gap: 6,
+  },
+  removeButtonText: {
+    color: '#ef4444',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e5e7eb',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#171717',
+  },
+  modalContent: {
+    flex: 1,
+    padding: 24,
+  },
+  categorySection: {
+    marginBottom: 32,
+  },
+  categoryTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#171717',
+    marginBottom: 16,
+  },
+  ingredientGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  ingredientCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    minWidth: '45%',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  ingredientDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 8,
+  },
+  ingredientName: {
+    fontSize: 14,
+    color: '#171717',
+    fontWeight: '500',
   },
 });
