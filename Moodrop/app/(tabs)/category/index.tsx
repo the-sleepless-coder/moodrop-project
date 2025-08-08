@@ -1,51 +1,57 @@
 import { router } from 'expo-router';
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Flower2, Trees, Droplets, Sparkles, ChevronRight, Info } from 'lucide-react-native';
+import { Flower2, Trees, Droplets, Sparkles, ChevronRight, Info, Brain, Heart, Palette, Eye, Users, MapPin, Layers } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+import categoryService from '@/services/categoryService';
+import { Category } from '@/types/category';
 
 const { width } = Dimensions.get('window');
 
 export default function CategoryScreen() {
   const { setSelectedCategory } = useStore();
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const categories = [
-    {
-      id: 'floral',
-      name: '플로럴',
-      description: '꽃향기를 중심으로 한 향수',
-      color: '#d97066',
-      icon: Flower2,
-      subcategories: ['장미', '자스민', '라벤더', '피오니']
-    },
-    {
-      id: 'woody',
-      name: '우디',
-      description: '나무와 흙 냄새의 따뜻한 향수',
-      color: '#8b6f47',
-      icon: Trees,
-      subcategories: ['샌달우드', '시더우드', '패촐리', '베티버']
-    },
-    {
-      id: 'fresh',
-      name: '프레시',
-      description: '시원하고 깔끔한 향수',
-      color: '#4a90b8',
-      icon: Droplets,
-      subcategories: ['시트러스', '아쿠아틱', '그린', '오존']
-    },
-    {
-      id: 'oriental',
-      name: '오리엔탈',
-      description: '이국적이고 신비로운 향수',
-      color: '#b8860b',
-      icon: Sparkles,
-      subcategories: ['앰버', '바닐라', '머스크', '스파이시']
-    },
-  ];
+  // 카테고리별 아이콘 및 색상 매핑
+  const getCategoryStyle = (categoryName: string) => {
+    const styleMap: { [key: string]: { icon: any, color: string } } = {
+      '감각(Sensory)': { icon: Brain, color: '#ef4444' },
+      '정서(Emotion)': { icon: Heart, color: '#f97316' },
+      '분위기(Ambience)': { icon: Palette, color: '#8b5cf6' },
+      '시각 이미지(Visual)': { icon: Eye, color: '#3b82f6' },
+      '무게/질감(Texture)': { icon: Layers, color: '#10b981' },
+      '스타일(Style)': { icon: Sparkles, color: '#f59e0b' },
+      '장소(Space)': { icon: MapPin, color: '#06b6d4' },
+      '기타(Misc)': { icon: Users, color: '#6b7280' },
+    };
+    
+    return styleMap[categoryName] || { icon: Brain, color: '#6b7280' };
+  };
 
-  const handleCategorySelect = (category: any) => {
+  useEffect(() => {
+    loadCategories();
+  }, []);
+
+  const loadCategories = async () => {
+    try {
+      setLoading(true);
+      const response = await categoryService.getCategoriesWithMoods();
+      
+      if (response.success && response.data) {
+        setCategories(response.data.categories);
+      } else {
+        Alert.alert('오류', '카테고리 데이터를 불러올 수 없습니다.');
+      }
+    } catch (error) {
+      Alert.alert('네트워크 오류', '카테고리를 불러오는 중 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCategorySelect = (category: Category) => {
     setSelectedCategory(category);
     router.push('/category/subcategory');
   };
@@ -55,38 +61,52 @@ export default function CategoryScreen() {
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <Text style={styles.title}>향수 카테고리 선택</Text>
-          <Text style={styles.subtitle}>선호하는 향의 계열을 선택해주세요</Text>
+          <Text style={styles.subtitle}>선호하는 무드의 계열을 선택해주세요</Text>
         </View>
 
-        <View style={styles.categoriesContainer}>
-          {categories.map((category) => (
-            <TouchableOpacity
-              key={category.id}
-              style={styles.categoryCard}
-              onPress={() => handleCategorySelect(category)}
-            >
-              <View style={[styles.categoryIcon, { backgroundColor: category.color }]}>
-                <category.icon size={32} color="#ffffff" />
-              </View>
-              <View style={styles.categoryInfo}>
-                <Text style={styles.categoryName}>{category.name}</Text>
-                <Text style={styles.categoryDescription}>{category.description}</Text>
-                <View style={styles.subcategoriesPreview}>
-                  <Text style={styles.subcategoriesText}>
-                    {category.subcategories.slice(0, 2).join(', ')} 등
-                  </Text>
-                </View>
-              </View>
-              <ChevronRight size={20} color="#737373" />
-            </TouchableOpacity>
-          ))}
-        </View>
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color="#3b82f6" />
+            <Text style={styles.loadingText}>카테고리를 불러오는 중...</Text>
+          </View>
+        ) : (
+          <View style={styles.categoriesContainer}>
+            {categories.map((category) => {
+              const categoryStyle = getCategoryStyle(category.name);
+              const IconComponent = categoryStyle.icon;
+              
+              return (
+                <TouchableOpacity
+                  key={category.id}
+                  style={styles.categoryCard}
+                  onPress={() => handleCategorySelect(category)}
+                >
+                  <View style={[styles.categoryIcon, { backgroundColor: categoryStyle.color }]}>
+                    <IconComponent size={32} color="#ffffff" />
+                  </View>
+                  <View style={styles.categoryInfo}>
+                    <Text style={styles.categoryName}>{category.name}</Text>
+                    <Text style={styles.categoryDescription}>
+                      {category.description || '다양한 무드를 표현하는 향'}
+                    </Text>
+                    <View style={styles.subcategoriesPreview}>
+                      <Text style={styles.subcategoriesText}>
+                        {category.moods.slice(0, 2).map(mood => mood.name).join(', ')} 등 {category.moods.length}개
+                      </Text>
+                    </View>
+                  </View>
+                  <ChevronRight size={20} color="#737373" />
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
 
         <View style={styles.infoSection}>
           <View style={styles.infoCard}>
             <Info size={20} color="#3b82f6" />
             <Text style={styles.infoText}>
-              여러 카테고리가 혼합된 향수도 있어요. 가장 선호하는 계열을 선택해주세요.
+              각 카테고리에는 다양한 무드가 포함되어 있어요. 원하는 느낌의 카테고리를 선택해주세요.
             </Text>
           </View>
         </View>
@@ -180,5 +200,16 @@ const styles = StyleSheet.create({
     color: '#1e40af',
     marginLeft: 12,
     lineHeight: 20,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 80,
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: '#525252',
   },
 });
