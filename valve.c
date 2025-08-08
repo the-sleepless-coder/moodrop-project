@@ -28,7 +28,7 @@ int get_ms(int drop){ // 600ms 2 drop
     return drop / 2 * 600;
 }
 
-void get_drops(struct Hole holes[]){
+void update_drop_sec(struct Hole holes[]){
     for(int i = 0; i < HOLE_CNT; i++){
         int cur = holes[i].num;
         drops[cur] = holes[i].prop * 4 / 10;

@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <time.h>
 #include "mqtt.h"
+#include "shared_globals.h"
 #include "valve.h"
 
 // PCA9685 각 채널 base address
@@ -21,6 +22,8 @@
 // 서보용 PWM 값 (데이터시트 참고)
 #define SERVOMIN 120  // 0도
 #define SERVOMAX 620  // 180도
+
+extern int curAngle;
 
 typedef enum {
     SERVO_ROTATE, // Servo controlling the rotation of 2nd tier
@@ -36,7 +39,7 @@ uint16_t angle_to_pulse(int angle);
 void pca9685_init(int fd);
 void servo_init(ServoID id);
 void servo_set_angle(ServoID id, int angle);
+int get_angle(int src, int dst);
 void plate_spin(int angle);
-void start_servos(struct Hole holes[]);
 
 #endif
