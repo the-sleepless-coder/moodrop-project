@@ -1,15 +1,15 @@
 version: '3.8'
 
 services:
-  node_app1:
-    build: ./node-app1
-    ports:
-      - "3001:3000"
+  # node_app1:
+  #   build: ./node-app1
+  #   ports:
+  #     - "3001:3000"
 
-  node_app2:
-    build: ./node-app2
-    ports:
-      - "5001:5000"
+  # node_app2:
+  #   build: ./node-app2
+  #   ports:
+  #     - "5001:5000"
 
   spring_app:
     build: 
@@ -34,7 +34,7 @@ services:
       MYSQL_USER: json
       MYSQL_PASSWORD: jsonsvalue!
     volumes:
-      - mysql-data:/var/lib/mysql
+      - ./moodrop_dump.sql:/docker-entrypoint-initdb.d/moodrop_dump.sql:ro
 
 volumes:
   mysql-data:
