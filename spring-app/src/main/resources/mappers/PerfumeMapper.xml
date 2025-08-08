@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.moodrop.model.dao.PerfumeDao">
+	
+	<!-- Perfume Id로 perfume의 필요한 모든 정보 조회 -->
+	<!-- Perfume Basic 정보 -->
+	<select id="selectPerfumeBasicByPerfumeId" parameterType="int" resultType="PerfumeBasicDto">
+		SELECT
+			p.id,
+			p.name as perfume_name,
+			brand_info.name as brand_name,
+			p.description,
+			p.gender_id as gender,
+			country_info.country,
+			p.year,
+            rating_info.rating_val, 
+			rating_info.rating_count
+            
+		FROM
+			perfumes as p	 
+		
+		JOIN brand_info  ON p.brand_id = brand_info.id
+		JOIN rating_info  ON  p.rating_id = rating_info.id
+		JOIN country_info ON p.country_id = country_info.id
+		    
+		WHERE
+			p.id = #{id}
+		;  
+		  
+		
+	</select>
+		
+	<select id="selectSillageByPerfumeId" parameterType="int" resultType="SillageDto">
+		SELECT
+			si.strength,
+		    ps.vote_num
+		    
+		FROM perfumes as p
+		
+		JOIN perfume_sillage as ps ON p.id = ps.perfume_id
+		JOIN sillage_info as si ON ps.sillage_info_id = si.id
+		
+		WHERE
+			p.id = #{id}
+		
+		;    
+		
+	</select>
+	
+	
+	<select id="selectLongevityByPerfumeId" parameterType="int" resultType="LongevityDto">
+		SELECT
+			li.length,
+		    pl.vote_num
+		    
+		FROM perfumes as p
+		
+		JOIN perfume_longevity as pl ON p.id = pl.perfume_id
+		JOIN longevity_info as li ON pl.longevity_info_id = li.id
+		
+		WHERE
+			p.id = #{id}
+		;   
+	</select>
+		
+	
+	<select id="selectMainAccordByPerfumeId" parameterType="int" resultType="MainAccordDto">
+		SELECT
+			a.name,
+		    pma.weight
+		    
+		FROM perfumes as p
+		
+		JOIN perfume_main_accords as pma ON p.id = pma.perfume_id
+		JOIN accords as a ON pma.accord_id = a.id
+		
+		WHERE
+			p.id = #{id}
+		;
+	
+	</select>		
+		
+		
+	<select id="selectSeasonByPerfumeId" parameterType="int" resultType="SeasonDto">
+		SELECT
+			ps.season,
+		    ps.weight
+		    
+		FROM perfumes as p
+		
+		JOIN perfume_season as ps ON p.id = ps.perfume_id
+		
+		WHERE
+			p.id = #{id}
+		;  
+		
+	</select>
+	
+	
+	<select id="selectNotesByPerfumeId" parameterType="int" resultType="NotesDto">
+		SELECT
+			n.type,
+		    n.name
+		    
+		FROM perfumes as p
+		
+		JOIN perfume_notes as pn ON p.id = pn.perfume_id
+		JOIN notes as n ON pn.note_id = n.id
+		
+		WHERE
+			p.id = #{id}
+		;   
+			
+		
+	</select>
+	
+	<select id="selectDayNightByPerfumeId" parameterType="int" resultType="DayNightDto">
+		SELECT
+			pdn.day_night,
+		    pdn.weight
+		    
+		FROM perfumes as p
+		
+		JOIN perfume_day_night as pdn ON p.id = pdn.perfume_id
+		
+		WHERE
+			p.id = #{id}
+		;   
+		
+	</select>	
+		
+	<select id="selectCommentByPerfumeId" parameterType="int">
+		SELECT
+			ci.comment
+		    
+		FROM perfumes as p
+		
+		JOIN perfume_comment as pc ON p.id = pc.perfume_id
+        JOIN comments_info as ci ON pc.comment_id = ci.id
+		
+		WHERE
+			p.id = #{id}
+		; 
+		
+	</select>	
+		
+	<!-- 
+	각 Perfume 별로 Accord가 많이 있는 것 순으로 정렬한다.
+	perfume_id & count를 우선적으로 추출한다.
+	-->
+	<select id="searchByAccord" parameterType = "list">
+		SELECT 
+			p.id as perfume_id, 
+			COUNT(*) as match_count
+		FROM
+			 perfumes p
+		
+		JOIN perfume_main_accords as pma ON p.id = pma.perfume_id
+		JOIN accords as a ON pma.accord_id = a.id
+		
+		WHERE
+			a.name IN
+		<foreach item="item" collection="list" open="(" separator="," close=")">
+		    #{item}
+		</foreach>
+		GROUP BY p.id
+		ORDER BY match_count DESC
+		LIMIT 20
+		;
+		
+		
+	</select>
+
+
+	<select id = "selectCategoryInfo">
+		SELECT 
+			*
+		FROM
+			category as c
+		;	
+		
+	</select>
+	
+	<select id ="selectCategoryMoodInfo">
+		SELECT 
+			c.id as category_id,
+            c.description as category_description,
+            m.id as mood_id,
+            m.description as mood_description
+		FROM
+			mood as m
+		
+		JOIN category_mood as cm ON m.id = cm.mood_id
+		JOIN category as c ON cm.category_id = c.id
+		;		
+			
+	</select>
+	
+	<!-- <update id="updateArticleDetail" parameterType="ArticleDetail">
+		UPDATE 
+		   SET 
+		     
+		 WHERE 
+	</update>
+	
+	
+	<insert id="insertArticleMaster" parameterType="ArticleMaster" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+	</insert> -->
+	
+	
+	
+	
+	
+
+</mapper>

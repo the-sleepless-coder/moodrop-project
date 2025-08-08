@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  node_app1:
+    build: ./node-app1
+    ports:
+      - "3001:3000"
+
+  node_app2:
+    build: ./node-app2
+    ports:
+      - "5001:5000"
+
+  spring_app:
+    build: 
+      context: ./spring-app
+    ports:
+      - "8081:8080"
+    depends_on:
+      - mysql
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/moodrop
+      SPRING_DATASOURCE_USERNAME: json
+      SPRING_DATASOURCE_PASSWORD: jsonsvalue!
+
+  mysql:
+    image: mysql:8.0
+    container_name: my-mysql
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: jsonsvalue!
+      MYSQL_DATABASE: moodrop
+      MYSQL_USER: json
+      MYSQL_PASSWORD: jsonsvalue!
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:
