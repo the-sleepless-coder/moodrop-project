@@ -57,7 +57,7 @@ void my_mqtt_callback(const char* topic, const char* payload) {
             cJSON* element = NULL;
             cJSON_ArrayForEach(element, data) {
                 if (g_recipe_count >= MAX_RECIPE_STEPS) break;
-                g_perfume_recipe[g_recipe_count].num = cJSON_GetObjectItem(element, "num")->valueint;
+                g_perfume_recipe[g_recipe_count].num = cJSON_GetObjectItem(element, "SlotId")->valueint;
                 g_perfume_recipe[g_recipe_count].prop = cJSON_GetObjectItem(element, "prop")->valueint;
                 g_recipe_count++;
             }
@@ -72,7 +72,7 @@ void my_mqtt_callback(const char* topic, const char* payload) {
             cJSON* element = NULL;
              cJSON_ArrayForEach(element, data) {
                 if (count >= MAX_INVENTORY_ITEMS) break;
-                updates[count].num = cJSON_GetObjectItem(element, "num")->valueint;
+                updates[count].num = cJSON_GetObjectItem(element, "SlotId")->valueint;
                 updates[count].capacity = cJSON_GetObjectItem(element, "capacity")->valueint;
                 count++;
             }
@@ -88,7 +88,7 @@ void my_mqtt_callback(const char* topic, const char* payload) {
         cJSON *data_array = cJSON_CreateArray();
         for(int i=0; i<count; i++) {
             cJSON *item = cJSON_CreateObject();
-            cJSON_AddNumberToObject(item, "num", inventory[i].num);
+            cJSON_AddNumberToObject(item, "SlotId", inventory[i].num);
             cJSON_AddNumberToObject(item, "capacity", inventory[i].capacity);
             cJSON_AddItemToArray(data_array, item);
         }

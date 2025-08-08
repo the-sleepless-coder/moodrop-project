@@ -46,6 +46,7 @@ int main(void) {
 
             // 1. 제조 전 재고 확인인
             if (check_base_stock(g_perfume_recipe, g_recipe_count)) {
+                mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":{\"status\":\"possible\"}}");
                 printf("[MAIN] All ingredients are in stock. Starting manufacture.\n");
                 led_off(); // 제조 시작 시 LED OFF
 
@@ -60,7 +61,7 @@ int main(void) {
                 printf("[MAIN] Manufacture complete. LED is on.\n");
                 
                 // 5. MQTT 모듈에 상태 보고 지시
-                mqtt_publish("perfume/feedback", "{\"CMD\":\"status\", \"data\":\"제조 완료\"}");
+                mqtt_publish("perfume/feedback", "{\"CMD\":\"update\", \"data\":{\"status\":\"complete\"}}");
 
                 // 모든 처리가 끝났으므로 깃발을 다시 내림
                 g_start_manufacturing_flag = 0;
@@ -68,8 +69,8 @@ int main(void) {
             } else {
                 // 재고 부족 시
                 fprintf(stderr, "[MAIN] Manufacture aborted due to insufficient ingredients.\n");
-                // (선택) 에러 상태를 알리기 위해 LED를 깜빡이거나 MQTT 메시지 전송
-                // 예: led_blink_error();
+                // 에러 상태를 알리기 위해 LED를 깜빡이거나 MQTT 메시지 전송
+                mqtt_publish(MQTT_PUB_TOPIC, "{\"CMD\":\"status\", \"data\":{\"status\":\"impossible\"}}");
             }
 
             printf("[MAIN] Process finished. Returning to idle state.\n\n");
