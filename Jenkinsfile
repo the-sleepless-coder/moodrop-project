@@ -4,7 +4,7 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
-        git credentialsId: 'cc767be2-4e03-488f-bb28-ee1889028c7b', url: 'https://lab.ssafy.com/hellojaeseok/testproject.git'
+        git credentialsId: 'moodrop-gitlab-key-final', url: 'https://lab.ssafy.com/s13-webmobile3-sub1/S13P11A102.git'
       }
     }
 
