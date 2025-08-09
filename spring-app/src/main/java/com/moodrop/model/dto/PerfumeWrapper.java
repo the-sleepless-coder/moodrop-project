@@ -24,7 +24,7 @@ public class PerfumeWrapper {
 	private Map<String, Integer> dayNightInfo;
     private Map<String, Integer> longevityInfo;
     private List<MainAccordDto> mainAccord;
-    private List<NotesDto> notes;
+    private Map<String, List<String>> notes;
     private Map<String, Integer> seasonInfo;
     private Map<String, Integer> sillageInfo;
 

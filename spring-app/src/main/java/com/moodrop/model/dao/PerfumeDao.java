@@ -3,6 +3,8 @@ package com.moodrop.model.dao;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.ibatis.annotations.Param;
+
 import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.DayNightDto;
 import com.moodrop.model.dto.LongevityDto;
@@ -39,6 +41,10 @@ public interface PerfumeDao {
 	List<Map<Integer, String>> selectCategoryInfo();
 	
 	List<CategoryMoodDto> selectCategoryMoodInfo();
+	
+	// 사용자 보유 노트 가져오기
+	List<NotesDto> selectUserNotes(String userId);
+	
 	
 	
 }

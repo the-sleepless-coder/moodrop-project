@@ -13,5 +13,5 @@ import lombok.ToString;
 @NoArgsConstructor
 public class PerfumeMatchDto {
 	private int perfumeId;
-	private int matchCount;
+	private int accordMatchCount;
 }

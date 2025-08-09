@@ -11,9 +11,12 @@ import com.moodrop.model.dto.PerfumeWrapper;
 public interface PerfumeService {
 	PerfumeWrapper getPerfumeWrapper(int id) throws SQLException;
 	
-	List<PerfumeExtendedDto> filterByAccord(List<String> accords) throws SQLException;
-	
 	List<Map<Integer, String>> getCategory() throws SQLException;
 	
 	List<CategoryMoodDto>getCategoryMood() throws SQLException;
+
+	Map<String, Object> filterByAccordWithUserNotes(String userId, List<String> accords) throws SQLException;
+
+	//List<PerfumeExtendedDto> filterByAccord(List<String> accords) throws SQLException;
+	
 }

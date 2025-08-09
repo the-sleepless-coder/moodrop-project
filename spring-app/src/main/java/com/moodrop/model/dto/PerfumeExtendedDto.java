@@ -17,7 +17,8 @@ import lombok.ToString;
 @AllArgsConstructor
 @NoArgsConstructor
 public class PerfumeExtendedDto extends PerfumeBasicDto{
-	private int matchCount;
+	private int accordMatchCount;
 	private Map<String, Integer> sillage;
 	private Map<String, Integer> longevity;
+	private Map<String, List<String>> notes;
 }

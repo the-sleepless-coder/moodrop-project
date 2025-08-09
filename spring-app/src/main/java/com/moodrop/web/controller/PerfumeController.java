@@ -28,12 +28,13 @@ import jakarta.servlet.http.HttpServletResponse;
 public class PerfumeController {
 	@Autowired
 	PerfumeService service;
-	
-	@GetMapping("/hithere")
-	public ResponseEntity<String> hello(){
-		return ResponseEntity.ok("안녕 새로운 레포지토리야");
+	// Test
+	@GetMapping("/test")
+	public ResponseEntity<String> test(){
+		return ResponseEntity.ok("<h1>Hello there!</h1><br><h4><b><span style='color:red;'>WELCOME TO THE PAGE</b></h4>");
 	}
 	
+	// Perfume 전체 정보 가져오기
 	@GetMapping("/perfume/{perfumeId}")
 	public ResponseEntity<?> getPerfumeById(@PathVariable int perfumeId, HttpServletRequest request, HttpServletResponse response){
 		try {
@@ -47,17 +48,25 @@ public class PerfumeController {
 		
 	}
 	
-	@PostMapping("/perfume/accord")
-	public ResponseEntity<?> filterByAccord(HttpServletRequest request, HttpServletResponse response, @RequestBody Map<String, List<String>> body) {
-	    List<String> accordList = body.get("accords");
-	    try {
-	    	List<PerfumeExtendedDto> filteredPerfumes = service.filterByAccord(accordList);
-	    	return ResponseEntity.ok().body(filteredPerfumes);
+	/*
+	 * 사용자가 선택한 Accord 기준으로 Perfume 선택 및 user가 보유한 노트 기준으로 분류
+	 * Accord가 최대 12개까지 늘어날 수 있기 때문에, Body에 Accord 담에서 보냄. 
+	 * */
+	@PostMapping("/perfume/accord/{userId}")
+	public ResponseEntity<?> filterByAccordAndUserNotes(HttpServletRequest request, HttpServletResponse response, @PathVariable String userId, @RequestBody Map<String,List<String>> body) throws SQLException{
+		 List<String> accordList = body.get("accords");
+		try {
+			Map<String, Object> result = service.filterByAccordWithUserNotes(userId, accordList);
+			return ResponseEntity.ok(result);
 	    	
 	    }catch(Exception e) {
 	    	e.printStackTrace();
 	    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 	    }
+		
+		
+		
+		
 	}
 	
 	// 대분류 가져오기
@@ -87,5 +96,18 @@ public class PerfumeController {
 		
 	}
 	
+	// 사용자가 선택한 Accord 기준으로 Perfume 선택
+//	@PostMapping("/perfume/accord")
+//	public ResponseEntity<?> filterByAccord(HttpServletRequest request, HttpServletResponse response, @RequestBody Map<String, List<String>> body) {
+//	    List<String> accordList = body.get("accords");
+//	    try {
+//	    	List<PerfumeExtendedDto> filteredPerfumes = service.filterByAccord(accordList);
+//	    	return ResponseEntity.ok().body(filteredPerfumes);
+//	    	
+//	    }catch(Exception e) {
+//	    	e.printStackTrace();
+//	    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+//	    }
+//	}
 	
 }

@@ -153,7 +153,7 @@
 	<select id="searchByAccord" parameterType = "list">
 		SELECT 
 			p.id as perfume_id, 
-			COUNT(*) as match_count
+			COUNT(*) as accord_match_count
 		FROM
 			 perfumes p
 		
@@ -166,7 +166,7 @@
 		    #{item}
 		</foreach>
 		GROUP BY p.id
-		ORDER BY match_count DESC
+		ORDER BY accord_match_count DESC
 		LIMIT 20
 		;
 		
@@ -196,6 +196,25 @@
 		JOIN category as c ON cm.category_id = c.id
 		;		
 			
+	</select>
+	
+	
+	<select id ="selectUserNotes">
+		SELECT
+		 u.user_id,
+		 n.name,
+		 n.type
+		 
+		FROM
+			user as u
+		JOIN user_notes as un ON u.id = un.user_id
+		JOIN notes as n ON un.note_id = n.id
+		
+		WHERE
+			u.user_id = #{userId}
+		;
+		
+		
 	</select>
 	
 	<!-- <update id="updateArticleDetail" parameterType="ArticleDetail">

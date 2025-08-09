@@ -3,8 +3,12 @@ package com.moodrop.model.serviceImpl;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +23,7 @@ import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeBasicDto;
 import com.moodrop.model.dto.PerfumeExtendedDto;
 import com.moodrop.model.dto.PerfumeMatchDto;
+import com.moodrop.model.dto.PerfumeWithMatch;
 import com.moodrop.model.dto.PerfumeWrapper;
 import com.moodrop.model.dto.SeasonDto;
 import com.moodrop.model.dto.SillageDto;
@@ -29,6 +34,9 @@ public class PerfumeServiceImpl implements PerfumeService{
 	@Autowired
 	PerfumeDao dao;
 	
+	 /*
+	 Perfume에 대한 전체 정보 조회
+	 */
 	@Override
 	public PerfumeWrapper getPerfumeWrapper(int id) throws SQLException {
 		// perfumeId로 perfume 전체 정보 조회
@@ -70,58 +78,204 @@ public class PerfumeServiceImpl implements PerfumeService{
 		
 		List<MainAccordDto> mainAccord = dao.selectMainAccordByPerfumeId(id);
 		
-		List<NotesDto> notes = dao.selectNotesByPerfumeId(id);
-		
-		PerfumeWrapper perfumeWrapper = new PerfumeWrapper(basic, dayNightInfo, longevityInfo, mainAccord, notes, seasonInfo, sillageInfo);
+		List<NotesDto> notesList = dao.selectNotesByPerfumeId(id);
+		Map<String, List<String>> notesMap = new LinkedHashMap<>();
+        for(NotesDto n: notesList) {
+        	String key = n.getType().toLowerCase();
+        	
+        	if(!notesMap.containsKey(key)) {
+        		notesMap.put(key, new ArrayList<>());
+        	}
+        	
+        	notesMap.get(key).add(n.getName());
+        	
+        }
+        
+        
+		PerfumeWrapper perfumeWrapper = new PerfumeWrapper(basic, dayNightInfo, longevityInfo, mainAccord, notesMap, seasonInfo, sillageInfo);
 		
 		return perfumeWrapper;
 	}
 
+	
+	/* 사용자가 보유한 노트 기준으로 필터
+	Accord 로 걸러낸 향수를, 사용자가 갖고 있는 note기준으로 나눈다.
+	*/
 	@Override
-	public List<PerfumeExtendedDto> filterByAccord(List<String> accords) throws SQLException {
-		// Accord로 걸러낸 향수에 대한 기본 정보를 가져온다.
-		List<PerfumeMatchDto> filtered =  dao.searchByAccord(accords);
-		
-		List<PerfumeExtendedDto> result = new ArrayList<>();
-		
-			for(PerfumeMatchDto perfume : filtered) {
-				int pfId = perfume.getPerfumeId();
-				PerfumeBasicDto basicInfo = dao.selectPerfumeBasicByPerfumeId(pfId);
-				PerfumeExtendedDto extendedInfo = new PerfumeExtendedDto();
-				// 기존 정보 복사
-				BeanUtils.copyProperties(basicInfo, extendedInfo);
-					
-				// 추가 정보 더함
-				extendedInfo.setMatchCount(perfume.getMatchCount());
-				
-				List<SillageDto> sillageList = dao.selectSillageByPerfumeId(pfId);
-		        Map<String, Integer> sillageMap = new HashMap<>();
-		        for (SillageDto s : sillageList) {
-		            sillageMap.put(s.getStrength(), s.getVoteNum());
-		        }
-		        extendedInfo.setSillage(sillageMap);
+	public Map<String, Object> filterByAccordWithUserNotes(
+	        String userId,            
+	        List<String> accords
+	) throws SQLException {
 
-		        List<LongevityDto> longevityList = dao.selectLongevityByPerfumeId(pfId);
-		        Map<String, Integer> longevityMap = new HashMap<>();
-		        for (LongevityDto l : longevityList) {
-		            longevityMap.put(l.getLength(), l.getVoteNum());
-		        }
-		        extendedInfo.setLongevity(longevityMap);
-		        
-				result.add(extendedInfo);
-			}
+	    // 0) DB에서 사용자 노트 조회
+	    List<NotesDto> userNotesList = dao.selectUserNotes(userId);
 
-		return result;
+	    // Map<String, List<String>> 형태로 변환
+	    Map<String, List<String>> userNotes = new LinkedHashMap<>();
+	    for (NotesDto n : userNotesList) {
+	        if (n == null || n.getType() == null || n.getName() == null) continue;
+	        userNotes.computeIfAbsent(n.getType(), k -> new ArrayList<>()).add(n.getName());
+	    }
+
+	    // Set으로 변환(중복 제거만)
+	    Set<String> uTop    = new HashSet<>(userNotes.getOrDefault("top",    List.of()));
+	    Set<String> uMiddle = new HashSet<>(userNotes.getOrDefault("middle", List.of()));
+	    Set<String> uBase   = new HashSet<>(userNotes.getOrDefault("base",   List.of()));
+
+	    // 1) Accord로 후보 조회
+	    List<PerfumeMatchDto> filtered = dao.searchByAccord(accords);
+	    
+	    List<PerfumeWithMatch> matched = new ArrayList<>();
+	    List<PerfumeExtendedDto> noMatched = new ArrayList<>();
+
+	    for (PerfumeMatchDto p : filtered) {
+	        int pfId = p.getPerfumeId();
+
+	        // 기본 정보 + 부가 정보
+	        PerfumeBasicDto basic = dao.selectPerfumeBasicByPerfumeId(pfId);
+	        PerfumeExtendedDto dto = new PerfumeExtendedDto();
+	        BeanUtils.copyProperties(basic, dto);
+	        dto.setAccordMatchCount(p.getAccordMatchCount());
+	        
+	        Map<String, Integer> sillageMap = new HashMap<>();
+	        for (SillageDto s : dao.selectSillageByPerfumeId(pfId)) {
+	            sillageMap.put(s.getStrength(), s.getVoteNum());
+	        }
+	        dto.setSillage(sillageMap);
+
+	        Map<String, Integer> longevityMap = new HashMap<>();
+	        for (LongevityDto l : dao.selectLongevityByPerfumeId(pfId)) {
+	            longevityMap.put(l.getLength(), l.getVoteNum());
+	        }
+	        dto.setLongevity(longevityMap);
+
+	        // notes
+	        Map<String, List<String>> notesMap = new LinkedHashMap<>();
+	        for (NotesDto n : dao.selectNotesByPerfumeId(pfId)) {
+	            if (n == null || n.getType() == null || n.getName() == null) continue;
+	            notesMap.computeIfAbsent(n.getType(), k -> new ArrayList<>()).add(n.getName());
+	        }
+	        dto.setNotes(notesMap);
+
+	        // 2) 사용자 노트와 교집합
+	        Map<String, List<String>> hit = new LinkedHashMap<>();
+	        int hitCount = 0;
+
+	        List<String> topHit = notesMap.getOrDefault("top", List.of()).stream()
+	                .filter(uTop::contains)
+	                .collect(Collectors.toList());
+	        hit.put("top", topHit);
+	        hitCount += topHit.size();
+
+	        List<String> midHit = notesMap.getOrDefault("middle", List.of()).stream()
+	                .filter(uMiddle::contains)
+	                .collect(Collectors.toList());
+	        hit.put("middle", midHit);
+	        hitCount += midHit.size();
+
+	        List<String> baseHit = notesMap.getOrDefault("base", List.of()).stream()
+	                .filter(uBase::contains)
+	                .collect(Collectors.toList());
+	        hit.put("base", baseHit);
+	        hitCount += baseHit.size();
+
+	        if (hitCount > 0) {
+	            PerfumeWithMatch with = new PerfumeWithMatch();
+	            BeanUtils.copyProperties(dto, with);
+	            with.setUserNoteMatch(hit);
+	            with.setNoteMatchCount(hitCount);
+	            
+	            Map<String, List<String>> matchNotesMap = new LinkedHashMap<>();
+	            matchNotesMap.put("top", topHit);
+	            matchNotesMap.put("middle", midHit);
+	            matchNotesMap.put("base", baseHit);
+	            with.setMatchNotes(matchNotesMap);
+	            
+	            matched.add(with);
+	        } else {
+	            noMatched.add(dto);
+	        }
+	    }
+	    
+	    Map<String, Object> res = new LinkedHashMap<>();
+	    res.put("Match", matched);
+	    res.put("NoMatch",noMatched);
+	    
+	    return res;
+	    
+	    //return new AccordCompareResponse(matched, noMatched);
 	}
 
+	
+	
+	// 대분류 선택
 	@Override
 	public List<Map<Integer, String>> getCategory() throws SQLException {
 	    return dao.selectCategoryInfo();
 	}
 	
+	// 대분류 및 소분류 조합 선택
 	@Override
 	public List<CategoryMoodDto> getCategoryMood() throws SQLException{
 		return dao.selectCategoryMoodInfo();
 	}
+	
+	
+	
+	
+//	
+//	// 사용자가 선택한 Accord 기준으로 Perfume을 가져온다.
+//	@Override
+//	public List<PerfumeExtendedDto> filterByAccord(List<String> accords) throws SQLException {
+//		// Accord로 걸러낸 향수에 대한 기본 정보를 가져온다.
+//		List<PerfumeMatchDto> filtered =  dao.searchByAccord(accords);
+//		
+//		List<PerfumeExtendedDto> result = new ArrayList<>();
+//		
+//		for(PerfumeMatchDto perfume : filtered) {
+//			int pfId = perfume.getPerfumeId();
+//			PerfumeBasicDto basicInfo = dao.selectPerfumeBasicByPerfumeId(pfId);
+//			PerfumeExtendedDto extendedInfo = new PerfumeExtendedDto();
+//			// 기존 정보 복사
+//			BeanUtils.copyProperties(basicInfo, extendedInfo);
+//			
+//			// 추가 정보 DB에서 가져와서 더함
+//			extendedInfo.setAccordmatchCount(perfume.getAccordMatchCount());
+//			
+//			List<SillageDto> sillageList = dao.selectSillageByPerfumeId(pfId);
+//			Map<String, Integer> sillageMap = new HashMap<>();
+//			for (SillageDto s : sillageList) {
+//				sillageMap.put(s.getStrength(), s.getVoteNum());
+//			}
+//			extendedInfo.setSillage(sillageMap);
+//			
+//			List<LongevityDto> longevityList = dao.selectLongevityByPerfumeId(pfId);
+//			Map<String, Integer> longevityMap = new HashMap<>();
+//			for (LongevityDto l : longevityList) {
+//				longevityMap.put(l.getLength(), l.getVoteNum());
+//			}
+//			extendedInfo.setLongevity(longevityMap);
+//			
+//			List<NotesDto> notesList = dao.selectNotesByPerfumeId(pfId);
+//			Map<String, List<String>> notesMap = new LinkedHashMap<>();
+//			for(NotesDto n: notesList) {
+//				String key = n.getType().toLowerCase();
+//				
+//				if(!notesMap.containsKey(key)) {
+//					notesMap.put(key, new ArrayList<>());
+//				}
+//				
+//				notesMap.get(key).add(n.getName());
+//				
+//			}
+//			extendedInfo.setNotes(notesMap);
+//			
+//			result.add(extendedInfo);
+//		}
+//		
+//		return result;
+//	}
 
+	
 }
+
