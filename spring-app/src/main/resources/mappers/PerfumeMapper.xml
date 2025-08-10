@@ -169,8 +169,7 @@
 		ORDER BY accord_match_count DESC
 		LIMIT 20
 		;
-		
-		
+
 	</select>
 
 
@@ -198,7 +197,7 @@
 			
 	</select>
 	
-	
+	<!-- 사용자가 보유한 Note를 보여준다. -->
 	<select id ="selectUserNotes">
 		SELECT
 		 u.user_id,
@@ -216,8 +215,31 @@
 		
 		
 	</select>
+	 
+	 
+	<!-- moodId를 이용해 Accord별 가중치 합을 구하고, 상위 12개를 추출한다. --> 
+	<select id = "selectMoodAccords" parameterType="list">
+		SELECT
+		    a.id   AS accord_id,
+		    a.name AS accord,
+		    SUM(ma.weight) AS totalWeight
+	  FROM mood as m
+	  JOIN mood_accord as ma ON m.id = ma.mood_id
+	  JOIN accords as a ON ma.accord_id = a.id 
+	  WHERE m.id IN
+	  <foreach item="item" collection="moodIdList" open="(" separator="," close=")">
+	    #{item}
+	  </foreach>
+	  GROUP BY a.id, a.name
+	  ORDER BY totalWeight DESC
+	  LIMIT 12
+
+		
+	</select>
 	
-	<!-- <update id="updateArticleDetail" parameterType="ArticleDetail">
+	
+	<!-- 
+	<update id="updateArticleDetail" parameterType="ArticleDetail">
 		UPDATE 
 		   SET 
 		     
@@ -226,11 +248,19 @@
 	
 	
 	<insert id="insertArticleMaster" parameterType="ArticleMaster" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
-	</insert> -->
+	</insert> 
 	
+	DB 컬럼명이 무엇이든 DTO의 name, type으로 매핑
+	<resultMap id="NotesDtoMap" type="com.moodrop.model.dto.NotesDto">	
+		<result column="note_name" property="name"/>
+		<result column="name"      property="name"/>
+		<result column="note_type" property="type"/>
+		<result column="type"      property="type"/>
+	</resultMap>
+
+
+	-->
 	
-	
-	
-	
+
 
 </mapper>

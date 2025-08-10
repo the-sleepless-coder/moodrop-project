@@ -9,6 +9,7 @@ import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.DayNightDto;
 import com.moodrop.model.dto.LongevityDto;
 import com.moodrop.model.dto.MainAccordDto;
+import com.moodrop.model.dto.MoodAccordDto;
 import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeBasicDto;
 import com.moodrop.model.dto.PerfumeMatchDto;
@@ -45,6 +46,7 @@ public interface PerfumeDao {
 	// 사용자 보유 노트 가져오기
 	List<NotesDto> selectUserNotes(String userId);
 	
-	
+	// Mood -> Accord 값 가져오기
+	List<MoodAccordDto> selectMoodAccords(@Param("moodIdList") List<Integer> moodIdList);
 	
 }

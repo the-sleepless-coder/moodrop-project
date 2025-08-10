@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.moodrop.model.dto.CategoryMoodDto;
-import com.moodrop.model.dto.PerfumeExtendedDto;
+import com.moodrop.model.dto.MoodAccordDto;
 import com.moodrop.model.dto.PerfumeWrapper;
 
 public interface PerfumeService {
@@ -16,7 +16,10 @@ public interface PerfumeService {
 	List<CategoryMoodDto>getCategoryMood() throws SQLException;
 
 	Map<String, Object> filterByAccordWithUserNotes(String userId, List<String> accords) throws SQLException;
-
+	
+	List<MoodAccordDto>calculateAccordWithMood(List<Integer> moods);
+	
+	
 	//List<PerfumeExtendedDto> filterByAccord(List<String> accords) throws SQLException;
 	
 }

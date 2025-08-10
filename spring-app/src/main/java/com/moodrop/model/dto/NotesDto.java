@@ -20,4 +20,5 @@ public class NotesDto {
 	// Note Info
 	private String name;
 	private String type;
+	private Integer weight;
 }

@@ -2,23 +2,29 @@ package com.moodrop.model.serviceImpl;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import com.moodrop.model.dao.PerfumeDao;
+import com.moodrop.model.domain.Accord;
+import com.moodrop.model.domain.AccordNote;
+import com.moodrop.model.domain.Note;
 import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.DayNightDto;
 import com.moodrop.model.dto.LongevityDto;
 import com.moodrop.model.dto.MainAccordDto;
+import com.moodrop.model.dto.MoodAccordDto;
+import com.moodrop.model.dto.NoteScoreDto;
 import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeBasicDto;
 import com.moodrop.model.dto.PerfumeExtendedDto;
@@ -27,13 +33,23 @@ import com.moodrop.model.dto.PerfumeWithMatch;
 import com.moodrop.model.dto.PerfumeWrapper;
 import com.moodrop.model.dto.SeasonDto;
 import com.moodrop.model.dto.SillageDto;
+import com.moodrop.model.repository.AccordNoteRepository;
+import com.moodrop.model.repository.AccordRepository;
+import com.moodrop.model.repository.NoteRepository;
 import com.moodrop.model.service.PerfumeService;
 
+import lombok.RequiredArgsConstructor;
+
+
 @Service
+@RequiredArgsConstructor
 public class PerfumeServiceImpl implements PerfumeService{
-	@Autowired
-	PerfumeDao dao;
 	
+	private final PerfumeDao dao;
+	//private final NoteRepository noteRepository;
+	//private final AccordRepository accordRepository;
+	//private final AccordNoteRepository accordNoteRepository;
+	 
 	 /*
 	 Perfume에 대한 전체 정보 조회
 	 */
@@ -206,23 +222,51 @@ public class PerfumeServiceImpl implements PerfumeService{
 	    //return new AccordCompareResponse(matched, noMatched);
 	}
 
-	
-	
-	// 대분류 선택
+	// Mood 대분류 선택
 	@Override
 	public List<Map<Integer, String>> getCategory() throws SQLException {
 	    return dao.selectCategoryInfo();
 	}
 	
-	// 대분류 및 소분류 조합 선택
+	// Mood 대분류 및 소분류 조합 선택
 	@Override
 	public List<CategoryMoodDto> getCategoryMood() throws SQLException{
 		return dao.selectCategoryMoodInfo();
 	}
 	
 	
+	// Mood에 따른 Accord 합 가중치를 내림차순으로 정렬하고, 상위 12개의 Accord를 전달한다.
+	@Override
+	public List<MoodAccordDto> calculateAccordWithMood(List<Integer> moodIdList) {
+		List<MoodAccordDto> moodAccords = dao.selectMoodAccords(moodIdList);
+		
+		return moodAccords;
+	}
 	
 	
+	
+	
+	
+
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //	
 //	// 사용자가 선택한 Accord 기준으로 Perfume을 가져온다.
 //	@Override
@@ -276,6 +320,48 @@ public class PerfumeServiceImpl implements PerfumeService{
 //		return result;
 //	}
 
-	
-}
 
+
+////Mood에 따른 Accord 합 가중치를 내림차순으로 정렬하고, 상위 12개의 Accord를 전달한다.
+//	@Override
+//	public List<MoodAccordDto> calculateAccordWithMood(List<Integer> moodIdList) {
+//		// 1. moodIdList를 활용한 모든 moodAccordDto 가져오기.
+//		List<MoodAccordDto> moodAccords = dao.selectMoodAccords(moodIdList);
+//		
+//		// 2. Mood에 따른 Accord가 높은 순으로 정렬 후, 상위 12개 추출. 
+//		// Map accordId : moodAccordDto -> 같은 accordId라면 weight 정보를 더해준다.
+//		Map<Integer, MoodAccordDto> resultMap = new HashMap<>();
+//		
+//		for(MoodAccordDto dto : moodAccords) {
+//			// accordId가 없다면 resultMap에 생성, 있다면 기존에 있는 resultMap의 accordId에 weight를 더해준다.
+//			int accordId = dto.getAccordId();
+//			if( !resultMap.containsKey(accordId)){
+//				resultMap.put( accordId, new MoodAccordDto(
+//						dto.getMoodId(),
+//						dto.getMood(),
+//						dto.getAccordId(),
+//						dto.getAccord(),
+//						dto.getWeight()
+//						));
+//			}else {
+//				MoodAccordDto existing = resultMap.get(accordId);
+//				existing.setWeight(existing.getWeight() + dto.getWeight());
+//			}
+//		}
+//		
+//		// Map의 value를 리스트로 변환
+//		List<MoodAccordDto> mergedList = new ArrayList<>(resultMap.values());
+//
+//		// weight 내림차순 정렬
+//		mergedList.sort((a, b) -> Float.compare(b.getWeight(), a.getWeight()));
+//
+//		// 상위 12개 추출
+//		List<MoodAccordDto> result = mergedList.stream()
+//		        .limit(12)
+//		        .collect(Collectors.toList());
+//		
+//		
+//		//System.out.println(moodAccords);
+//		System.out.println(result);
+//		return result;
+//	}

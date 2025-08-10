@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.moodrop.model.dao.RecipeDao">
+	
+	<!-- composition String -> JSON으로 바꾼다. -->
+	<resultMap id="UserRecipeMap" type="com.moodrop.model.dto.UserRecipeDto">
+	  <result property="composition" column="composition"
+	          typeHandler="com.moodrop.typehandler.JsonToNoteListTypeHandler"/>
+	</resultMap>
+	
+	<select id = "selectUserRecipe" resultMap = "UserRecipeMap">
+		SELECT 
+			u.user_id,
+		    u.name as user_name,
+		    up.name as perfume_name,
+		    up.description,
+			JSON_ARRAYAGG(
+			  IF(upc.note_id IS NULL, NULL,
+			     JSON_OBJECT('name', n.name, 'type', n.type, 'weight', upc.weight)
+			  )
+			) AS composition
+		    /*
+		    up.description as perfume_description,
+		    n.name as note_name,
+		    upc.weight
+		    */
+		    
+		FROM
+			user as u
+		JOIN user_perfumes as up ON u.id = up.user_id
+		LEFT JOIN user_perfume_compositions as upc ON up.id = upc.user_perfume_id 
+		LEFT JOIN notes as n ON upc.note_id = n.id
+		WHERE
+			u.user_id = #{userId}
+		GROUP BY up.id, u.user_id, u.name, up.name, up.description      
+		    /*AND EXISTS(
+				SELECT 1
+				FROM user_perfume_compositions ups
+		        WHERE upc.user_perfume_id = u.id)
+		    */
+		;
+		
+	</select>
+
+</mapper>

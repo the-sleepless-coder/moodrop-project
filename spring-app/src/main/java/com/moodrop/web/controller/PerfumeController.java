@@ -13,10 +13,11 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.moodrop.model.dto.CategoryMoodDto;
-import com.moodrop.model.dto.PerfumeExtendedDto;
+import com.moodrop.model.dto.MoodAccordDto;
 import com.moodrop.model.dto.PerfumeWrapper;
 import com.moodrop.model.service.PerfumeService;
 
@@ -62,11 +63,7 @@ public class PerfumeController {
 	    }catch(Exception e) {
 	    	e.printStackTrace();
 	    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-	    }
-		
-		
-		
-		
+	    }	
 	}
 	
 	// 대분류 가져오기
@@ -92,11 +89,45 @@ public class PerfumeController {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}
-		
-		
 	}
 	
-	// 사용자가 선택한 Accord 기준으로 Perfume 선택
+	// Mood를 선택 후, accord 가중치 합이 가장 높은 12개를 가져온다.
+	@GetMapping("/perfume/accord")
+	public ResponseEntity<?> getAccordByMood(@RequestParam("moodId") List<Integer> moodIdList, HttpServletRequest request, HttpServletResponse response) throws SQLException{
+		// moodId라는 키를 갖고 있는 값을, 바로 List로 만든다.
+		List<MoodAccordDto> moodAccords = service.calculateAccordWithMood(moodIdList);
+		
+		try{
+			return ResponseEntity.ok(moodAccords);
+		}catch(Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+	
+	
+	
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// 사용자가 선택한 Accord 기준으로 Perfume 선택
 //	@PostMapping("/perfume/accord")
 //	public ResponseEntity<?> filterByAccord(HttpServletRequest request, HttpServletResponse response, @RequestBody Map<String, List<String>> body) {
 //	    List<String> accordList = body.get("accords");
@@ -109,5 +140,3 @@ public class PerfumeController {
 //	    	return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 //	    }
 //	}
-	
-}
