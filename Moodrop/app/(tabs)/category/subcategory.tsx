@@ -7,7 +7,7 @@ import useStore from '@/store/useStore';
 import { Mood } from '@/types/category';
 
 export default function SubcategoryScreen() {
-  const { selectedCategory, setSelectedSubcategories } = useStore();
+  const { selectedCategory, setSelectedSubcategories, setSelectedMoods: setStoreMoods } = useStore();
   const [selectedMoods, setSelectedMoods] = useState<Mood[]>([]);
 
   if (!selectedCategory) {
@@ -65,7 +65,12 @@ export default function SubcategoryScreen() {
   const handleNext = () => {
     if (selectedMoods.length === 0) return;
     
+    // Store에 선택된 무드들을 저장 (API에서 사용)
+    setStoreMoods(selectedMoods);
+    
+    // 기존 호환성을 위한 문자열 배열도 저장
     setSelectedSubcategories(selectedMoods.map(mood => mood.name));
+    
     router.push('/category/recommendation');
   };
 

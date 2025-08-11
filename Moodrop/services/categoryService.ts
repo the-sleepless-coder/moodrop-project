@@ -1,6 +1,18 @@
 import apiClient, { ApiResponse } from './api';
 import { API_ENDPOINTS } from '../config/env';
-import { Category, Mood, CategoryMoodResponse, CategoryMoodApiResponse, CategoryMoodApiItem } from '../types/category';
+import { 
+  Category, 
+  Mood, 
+  CategoryMoodResponse, 
+  CategoryMoodApiResponse, 
+  CategoryMoodApiItem,
+  Accord,
+  AccordResponse,
+  AccordRequestParams,
+  Perfume,
+  PerfumeListResponse,
+  PerfumeListRequestParams
+} from '../types/category';
 
 // 카테고리 및 무드 데이터 서비스
 class CategoryService {
@@ -173,6 +185,122 @@ class CategoryService {
       console.error(`Failed to search moods with term "${searchTerm}":`, error);
       return [];
     }
+  }
+
+  /**
+   * 선택된 무드 ID들로 accord 목록을 조회합니다.
+   * @param moodIds - 최대 3개의 무드 ID 배열
+   * @returns 가중치 높은 순으로 정렬된 12개의 accord 목록
+   */
+  async getAccordsByMoods(moodIds: number[]): Promise<ApiResponse<AccordResponse>> {
+    try {
+      // moodId 개수 검증 (최대 3개)
+      if (moodIds.length === 0 || moodIds.length > 3) {
+        return {
+          success: false,
+          error: 'moodIds는 1개 이상 3개 이하여야 합니다.',
+          message: 'Invalid moodIds count'
+        } as ApiResponse<AccordResponse>;
+      }
+
+      // 쿼리 파라미터 생성: moodId=1&moodId=3&moodId=5
+      const queryParams = moodIds.map(id => `moodId=${id}`).join('&');
+      const endpoint = `${API_ENDPOINTS.PERFUME.ACCORD}?${queryParams}`;
+      
+      console.log('Accord API Request:', endpoint);
+      
+      const response = await apiClient.get<Accord[]>(endpoint);
+      
+      console.log('Accord API Raw Response:', response);
+      
+      if (response.success && response.data) {
+        // 서버는 Accord 배열을 직접 반환하므로 AccordResponse 형태로 래핑
+        const wrappedResponse: ApiResponse<AccordResponse> = {
+          success: true,
+          data: {
+            accords: response.data
+          },
+          message: response.message
+        };
+        console.log('Accord API Success Response:', wrappedResponse);
+        return wrappedResponse;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch accords:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        message: 'Failed to fetch accords'
+      } as ApiResponse<AccordResponse>;
+    }
+  }
+
+  /**
+   * 선택된 무드들의 이름으로 accord를 조회합니다.
+   * @param selectedMoods - 선택된 무드 객체 배열
+   * @returns accord 목록
+   */
+  async getAccordsBySelectedMoods(selectedMoods: Mood[]): Promise<ApiResponse<AccordResponse>> {
+    const moodIds = selectedMoods.map(mood => mood.id);
+    return this.getAccordsByMoods(moodIds);
+  }
+
+  /**
+   * accord 배열을 사용하여 향수 리스트를 조회합니다.
+   * @param accords - accord 문자열 배열
+   * @param userId - 사용자 ID (기본값: 1)
+   * @returns Match와 NoMatch로 분류된 향수 목록
+   */
+  async getPerfumesByAccords(accords: string[], userId: number = 1): Promise<ApiResponse<PerfumeListResponse>> {
+    try {
+      // accords 배열 검증
+      if (!accords || accords.length === 0) {
+        return {
+          success: false,
+          error: 'accords 배열이 비어있습니다.',
+          message: 'Empty accords array'
+        } as ApiResponse<PerfumeListResponse>;
+      }
+
+      const endpoint = `${API_ENDPOINTS.PERFUME.LIST}/${userId}`;
+      const requestBody: PerfumeListRequestParams = { accords };
+      
+      console.log('PerfumeList API Request:', endpoint, requestBody);
+      
+      const response = await apiClient.post<PerfumeListResponse>(endpoint, requestBody);
+      
+      console.log('PerfumeList API Raw Response:', response);
+      
+      if (response.success && response.data) {
+        console.log('PerfumeList API Success:', {
+          matchCount: response.data.Match?.length || 0,
+          noMatchCount: response.data.NoMatch?.length || 0
+        });
+        return response;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch perfumes:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        message: 'Failed to fetch perfumes'
+      } as ApiResponse<PerfumeListResponse>;
+    }
+  }
+
+  /**
+   * Accord 객체 배열을 사용하여 향수 리스트를 조회합니다.
+   * @param accordObjects - Accord 객체 배열
+   * @param userId - 사용자 ID (기본값: 1)
+   * @returns Match와 NoMatch로 분류된 향수 목록
+   */
+  async getPerfumesByAccordObjects(accordObjects: Accord[], userId: number = 1): Promise<ApiResponse<PerfumeListResponse>> {
+    const accordNames = accordObjects.map(accord => accord.accord);
+    return this.getPerfumesByAccords(accordNames, userId);
   }
 }
 

@@ -27,8 +27,9 @@ interface AvailableIngredient {
 }
 
 export default function IngredientSettingsScreen() {
-  // 사용 가능한 향료 라이브러리
+  // 사용 가능한 향료 라이브러리 (에탄올 포함)
   const [availableIngredients] = useState<AvailableIngredient[]>([
+    // 향료들
     { id: 'rose', name: '장미', color: '#d97066', category: '플로럴' },
     { id: 'jasmine', name: '자스민', color: '#8b5cf6', category: '플로럴' },
     { id: 'lavender', name: '라벤더', color: '#ec4899', category: '플로럴' },
@@ -44,6 +45,9 @@ export default function IngredientSettingsScreen() {
     { id: 'lemon', name: '레몬', color: '#eab308', category: '프레시' },
     { id: 'neroli', name: '네롤리', color: '#06b6d4', category: '플로럴' },
     { id: 'oakmoss', name: '오크모스', color: '#059669', category: '우디' },
+    
+    // 베이스 솔루션
+    { id: 'ethanol', name: '에탄올', color: '#3b82f6', category: '베이스' },
   ]);
 
   const [ingredients, setIngredients] = useState<Ingredient[]>([
@@ -542,7 +546,7 @@ export default function IngredientSettingsScreen() {
           </View>
           
           <ScrollView style={styles.modalContent}>
-            {['플로럴', '우디', '프레시', '오리엔탈'].map(category => (
+            {['베이스', '플로럴', '우디', '프레시', '오리엔탈'].map(category => (
               <View key={category} style={styles.categorySection}>
                 <Text style={styles.categoryTitle}>{category}</Text>
                 <View style={styles.ingredientGrid}>
@@ -552,11 +556,24 @@ export default function IngredientSettingsScreen() {
                     .map(ingredient => (
                       <TouchableOpacity
                         key={ingredient.id}
-                        style={[styles.ingredientCard, { borderColor: ingredient.color }]}
+                        style={[
+                          styles.ingredientCard, 
+                          { borderColor: ingredient.color },
+                          // 에탄올은 베이스 재료로 시각적 구분
+                          ingredient.category === '베이스' && styles.baseIngredientCard
+                        ]}
                         onPress={() => selectedSlot && addIngredientToSlot(selectedSlot, ingredient)}
                       >
                         <View style={[styles.ingredientDot, { backgroundColor: ingredient.color }]} />
-                        <Text style={styles.ingredientName}>{ingredient.name}</Text>
+                        <Text style={[
+                          styles.ingredientName,
+                          ingredient.category === '베이스' && styles.baseIngredientName
+                        ]}>
+                          {ingredient.name}
+                        </Text>
+                        {ingredient.category === '베이스' && (
+                          <Text style={styles.baseIngredientLabel}>베이스</Text>
+                        )}
                       </TouchableOpacity>
                     ))}
                 </View>
@@ -982,5 +999,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#171717',
     fontWeight: '500',
+  },
+  // 베이스 재료 (에탄올) 전용 스타일
+  baseIngredientCard: {
+    backgroundColor: '#f0f9ff',
+    borderWidth: 2,
+    borderStyle: 'dashed',
+  },
+  baseIngredientName: {
+    color: '#1e40af',
+    fontWeight: '600',
+  },
+  baseIngredientLabel: {
+    fontSize: 10,
+    color: '#3b82f6',
+    fontWeight: '600',
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 'auto',
   },
 });

@@ -2,8 +2,9 @@ import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Star, Clock, Heart, ArrowRight, Download, Settings, FlaskConical } from 'lucide-react-native';
+import { Star, Clock, Heart, ArrowRight, Download, Settings, FlaskConical, MapPin, Users } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+import { Perfume } from '@/types/category';
 
 const { width } = Dimensions.get('window');
 
@@ -15,6 +16,45 @@ export default function DetailScreen() {
     router.back();
     return null;
   }
+
+  // 향수 이름 포매팅 (하이픈을 띄어쓰기로, 각 단어 첫글자 대문자)
+  const formatPerfumeName = (name: string) => {
+    return name
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // 브랜드 이름 포매팅
+  const formatBrandName = (name: string) => {
+    return name
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Accord 매칭률 계산 함수 (조정된 스케일 적용)
+  const calculateMatchPercentage = (accordMatchCount: number, totalAccords: number) => {
+    if (!totalAccords) return 0;
+    const rawPercentage = (accordMatchCount / totalAccords) * 100;
+    // 33%를 95% 수준으로 상향 조정하는 변환
+    const adjustedPercentage = Math.round(20 + (rawPercentage * 2.3));
+    return Math.min(100, adjustedPercentage);
+  };
+
+  // 매칭률에 따른 색상 반환 (조정된 기준)
+  const getMatchingColor = (percentage: number) => {
+    if (percentage >= 85) return '#22c55e';      // 초록
+    if (percentage >= 65) return '#f59e0b';      // 주황
+    return '#9ca3af';                            // 회색
+  };
+
+  // 매칭률에 따른 텍스트 반환 (조정된 기준)
+  const getMatchingText = (percentage: number) => {
+    if (percentage >= 85) return '높은 적합도';
+    if (percentage >= 65) return '보통 적합도';
+    return '낮은 적합도';
+  };
 
   const handleEditRecipe = () => {
     router.push('/category/recipe');
@@ -33,30 +73,131 @@ export default function DetailScreen() {
               <Text style={styles.sectionTitle}>향수 정보</Text>
               <View style={styles.infoRow}>
                 <Text style={styles.infoLabel}>브랜드:</Text>
-                <Text style={styles.infoValue}>{selectedPerfume.brand}</Text>
+                <Text style={styles.infoValue}>{formatBrandName(selectedPerfume.brandName)}</Text>
               </View>
               <View style={styles.infoRow}>
-                <Text style={styles.infoLabel}>지속시간:</Text>
-                <Text style={styles.infoValue}>{selectedPerfume.duration}</Text>
+                <Text style={styles.infoLabel}>출시년도:</Text>
+                <Text style={styles.infoValue}>{selectedPerfume.year}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>원산지:</Text>
+                <Text style={styles.infoValue}>{selectedPerfume.country}</Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>성별:</Text>
+                <Text style={styles.infoValue}>
+                  {selectedPerfume.gender === 'men' ? '남성' : 
+                   selectedPerfume.gender === 'women' ? '여성' : '남녀공용'}
+                </Text>
+              </View>
+              <View style={styles.infoRow}>
+                <Text style={styles.infoLabel}>매칭도:</Text>
+                <Text style={[
+                  styles.infoValue, 
+                  { color: getMatchingColor(calculateMatchPercentage(selectedPerfume.accordMatchCount, useStore.getState().accords?.length || 1)) }
+                ]}>
+                  {calculateMatchPercentage(selectedPerfume.accordMatchCount, useStore.getState().accords?.length || 1)}% 
+                  ({getMatchingText(calculateMatchPercentage(selectedPerfume.accordMatchCount, useStore.getState().accords?.length || 1))})
+                </Text>
               </View>
             </View>
 
             <View style={styles.infoSection}>
               <Text style={styles.sectionTitle}>향의 구성</Text>
               <View style={styles.notesContainer}>
-                <View style={styles.noteGroup}>
-                  <Text style={styles.noteGroupTitle}>Top Notes</Text>
-                  <Text style={styles.noteGroupText}>{selectedPerfume.topNotes.join(', ')}</Text>
+                {selectedPerfume.notes.top && selectedPerfume.notes.top.length > 0 && (
+                  <View style={styles.noteGroup}>
+                    <Text style={styles.noteGroupTitle}>Top Notes</Text>
+                    <Text style={styles.noteGroupText}>
+                      {selectedPerfume.notes.top.join(', ')}
+                    </Text>
+                  </View>
+                )}
+                {selectedPerfume.notes.middle && selectedPerfume.notes.middle.length > 0 && (
+                  <View style={styles.noteGroup}>
+                    <Text style={styles.noteGroupTitle}>Middle Notes</Text>
+                    <Text style={styles.noteGroupText}>
+                      {selectedPerfume.notes.middle.join(', ')}
+                    </Text>
+                  </View>
+                )}
+                {selectedPerfume.notes.base && selectedPerfume.notes.base.length > 0 && (
+                  <View style={styles.noteGroup}>
+                    <Text style={styles.noteGroupTitle}>Base Notes</Text>
+                    <Text style={styles.noteGroupText}>
+                      {selectedPerfume.notes.base.join(', ')}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </View>
+
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>지속력 & 향의 확산력</Text>
+              <View style={styles.longevityContainer}>
+                <View style={styles.statGroup}>
+                  <Text style={styles.statGroupTitle}>지속력 통계</Text>
+                  <View style={styles.statBars}>
+                    {['eternal', 'long lasting', 'moderate', 'weak', 'very weak']
+                      .filter(key => selectedPerfume.longevity[key])
+                      .map((key) => (
+                      <View key={key} style={styles.statBar}>
+                        <Text style={styles.statLabel}>
+                          {key === 'eternal' ? '영구' : 
+                           key === 'long lasting' ? '오래감' :
+                           key === 'moderate' ? '보통' :
+                           key === 'weak' ? '약함' : '매우약함'}
+                        </Text>
+                        <View style={styles.statBarContainer}>
+                          <View 
+                            style={[
+                              styles.statBarFill, 
+                              { 
+                                width: `${(selectedPerfume.longevity[key] / Math.max(...Object.values(selectedPerfume.longevity))) * 100}%`,
+                                backgroundColor: '#3b82f6'
+                              }
+                            ]} 
+                          />
+                        </View>
+                        <Text style={styles.statValue}>{selectedPerfume.longevity[key]}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
-                <View style={styles.noteGroup}>
-                  <Text style={styles.noteGroupTitle}>Middle Notes</Text>
-                  <Text style={styles.noteGroupText}>{selectedPerfume.middleNotes.join(', ')}</Text>
-                </View>
-                <View style={styles.noteGroup}>
-                  <Text style={styles.noteGroupTitle}>Base Notes</Text>
-                  <Text style={styles.noteGroupText}>{selectedPerfume.baseNotes.join(', ')}</Text>
+
+                <View style={styles.statGroup}>
+                  <Text style={styles.statGroupTitle}>향의 확산력 통계</Text>
+                  <View style={styles.statBars}>
+                    {['enormous', 'strong', 'moderate', 'intimate']
+                      .filter(key => selectedPerfume.sillage[key])
+                      .map((key) => (
+                      <View key={key} style={styles.statBar}>
+                        <Text style={styles.statLabel}>
+                          {key === 'enormous' ? '매우강함' : 
+                           key === 'strong' ? '강함' :
+                           key === 'moderate' ? '보통' : '은은함'}
+                        </Text>
+                        <View style={styles.statBarContainer}>
+                          <View 
+                            style={[
+                              styles.statBarFill, 
+                              { 
+                                width: `${(selectedPerfume.sillage[key] / Math.max(...Object.values(selectedPerfume.sillage))) * 100}%`,
+                                backgroundColor: '#22c55e'
+                              }
+                            ]} 
+                          />
+                        </View>
+                        <Text style={styles.statValue}>{selectedPerfume.sillage[key]}</Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
               </View>
+              
+              <Text style={styles.sourceNotice}>
+                * 데이터 출처: fragrantica.com 커뮤니티 투표 통계
+              </Text>
             </View>
           </View>
         );
@@ -64,25 +205,51 @@ export default function DetailScreen() {
       case 'ingredients':
         return (
           <View style={styles.tabContent}>
-            <Text style={styles.sectionTitle}>성분 비율</Text>
+            <Text style={styles.sectionTitle}>향료 구성</Text>
             <View style={styles.ingredientsContainer}>
-              {Object.entries(selectedPerfume.ingredients).map(([ingredient, percentage]) => (
-                <View key={ingredient} style={styles.ingredientRow}>
-                  <View style={styles.ingredientInfo}>
-                    <Text style={styles.ingredientName}>{ingredient}</Text>
-                    <Text style={styles.ingredientPercentage}>{percentage}%</Text>
-                  </View>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[
-                        styles.progressFill, 
-                        { width: `${percentage}%`, backgroundColor: getIngredientColor(ingredient) }
-                      ]} 
-                    />
+              {/* Top Notes */}
+              {selectedPerfume.notes.top && selectedPerfume.notes.top.length > 0 && (
+                <View style={styles.noteGroup}>
+                  <Text style={styles.noteGroupTitle}>Top Notes</Text>
+                  <View style={styles.notesList}>
+                    {selectedPerfume.notes.top.map((note: string, index: number) => (
+                      <Text key={index} style={styles.noteItem}>
+                        {note}
+                      </Text>
+                    ))}
                   </View>
                 </View>
-              ))}
+              )}
+
+              {/* Middle Notes */}
+              {selectedPerfume.notes.middle && selectedPerfume.notes.middle.length > 0 && (
+                <View style={styles.noteGroup}>
+                  <Text style={styles.noteGroupTitle}>Middle Notes</Text>
+                  <View style={styles.notesList}>
+                    {selectedPerfume.notes.middle.map((note: string, index: number) => (
+                      <Text key={index} style={styles.noteItem}>
+                        {note}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              )}
+
+              {/* Base Notes */}
+              {selectedPerfume.notes.base && selectedPerfume.notes.base.length > 0 && (
+                <View style={styles.noteGroup}>
+                  <Text style={styles.noteGroupTitle}>Base Notes</Text>
+                  <View style={styles.notesList}>
+                    {selectedPerfume.notes.base.map((note: string, index: number) => (
+                      <Text key={index} style={styles.noteItem}>
+                        {note}
+                      </Text>
+                    ))}
+                  </View>
+                </View>
+              )}
             </View>
+            
             <View style={styles.editRecipeSection}>
               <Text style={styles.editRecipeTitle}>나만의 레시피로 커스터마이징</Text>
               <Text style={styles.editRecipeDescription}>
@@ -99,38 +266,19 @@ export default function DetailScreen() {
       case 'reviews':
         return (
           <View style={styles.tabContent}>
-            <View style={styles.reviewsHeader}>
-              <Text style={styles.sectionTitle}>사용자 리뷰</Text>
-              <View style={styles.overallRating}>
-                <Star size={20} color="#f59e0b" />
-                <Text style={styles.overallRatingText}>{selectedPerfume.rating}</Text>
-                <Text style={styles.reviewCount}>(24개 리뷰)</Text>
-              </View>
-            </View>
-            
-            {[
-              { author: '향수러버', rating: 5, comment: '정말 오래 지속되고 은은한 향이 좋아요!', date: '2024.01.15' },
-              { author: '플라워걸', rating: 4, comment: '플로럴 향이 너무 예뻐요. 데이트할 때 완벽!', date: '2024.01.10' },
-              { author: '향수초보', rating: 5, comment: '첫 향수로 선택했는데 만족스러워요', date: '2024.01.08' }
-            ].map((review, index) => (
-              <View key={index} style={styles.reviewCard}>
-                <View style={styles.reviewHeader}>
-                  <Text style={styles.reviewAuthor}>{review.author}</Text>
-                  <View style={styles.reviewRating}>
-                    {[...Array(5)].map((_, i) => (
-                      <Star 
-                        key={i} 
-                        size={12} 
-                        color={i < review.rating ? '#f59e0b' : '#d1d5db'} 
-                        fill={i < review.rating ? '#f59e0b' : 'transparent'}
-                      />
-                    ))}
-                  </View>
-                  <Text style={styles.reviewDate}>{review.date}</Text>
+            <View style={styles.communityRatingSection}>
+              <View style={styles.reviewsHeader}>
+                <Text style={styles.sectionTitle}>커뮤니티 평가</Text>
+                <View style={styles.overallRating}>
+                  <Star size={20} color="#f59e0b" fill="#f59e0b" />
+                  <Text style={styles.overallRatingText}>{selectedPerfume.ratingInfo.ratingVal}</Text>
+                  <Text style={styles.reviewCount}>({selectedPerfume.ratingInfo.ratingCount.toLocaleString()}개 평가)</Text>
                 </View>
-                <Text style={styles.reviewComment}>{review.comment}</Text>
               </View>
-            ))}
+              <Text style={styles.sourceNotice}>
+                * 데이터 출처: fragrantica.com 커뮤니티 평가
+              </Text>
+            </View>
           </View>
         );
       
@@ -143,21 +291,26 @@ export default function DetailScreen() {
     <SafeAreaView style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
-          <Text style={styles.perfumeName}>{selectedPerfume.name}</Text>
-          <Text style={styles.perfumeDescription}>{selectedPerfume.description}</Text>
+          <Text style={styles.perfumeName}>{formatPerfumeName(selectedPerfume.perfumeName)}</Text>
+          <Text style={styles.perfumeBrand}>
+            {formatBrandName(selectedPerfume.brandName)} • {selectedPerfume.year} • {selectedPerfume.country}
+          </Text>
           
           <View style={styles.quickStats}>
             <View style={styles.statCard}>
-              <Star size={16} color="#f59e0b" />
-              <Text style={styles.statText}>{selectedPerfume.rating}</Text>
+              <Star size={16} color="#f59e0b" fill="#f59e0b" />
+              <Text style={styles.statText}>{selectedPerfume.ratingInfo.ratingVal}</Text>
             </View>
             <View style={styles.statCard}>
-              <Clock size={16} color="#737373" />
-              <Text style={styles.statText}>{selectedPerfume.duration}</Text>
+              <Users size={16} color="#737373" />
+              <Text style={styles.statText}>
+                {selectedPerfume.gender === 'men' ? '남성' : 
+                 selectedPerfume.gender === 'women' ? '여성' : '공용'}
+              </Text>
             </View>
             <View style={styles.statCard}>
               <Heart size={16} color="#ef4444" />
-              <Text style={styles.statText}>{selectedPerfume.popularity}%</Text>
+              <Text style={styles.statText}>매칭도 {calculateMatchPercentage(selectedPerfume.accordMatchCount, useStore.getState().accords?.length || 1)}%</Text>
             </View>
           </View>
         </View>
@@ -214,25 +367,14 @@ export default function DetailScreen() {
   );
 }
 
-function getIngredientColor(ingredient: string): string {
+// 노트 카테고리별 색상
+function getCategoryColor(category: string): string {
   const colors: { [key: string]: string } = {
-    '장미': '#d97066',
-    '자스민': '#8b5cf6',
-    '피오니': '#ec4899',
-    '머스크': '#6b7280',
-    '바닐라': '#f59e0b',
-    '샌달우드': '#8b6f47',
-    '시더우드': '#059669',
-    '패촐리': '#7c2d12',
-    '베티버': '#365314',
-    '시트러스': '#f97316',
-    '아쿠아틱': '#0ea5e9',
-    '그린': '#16a34a',
-    '오존': '#06b6d4',
-    '앰버': '#d97706',
-    '스파이시': '#dc2626',
+    'Top': '#3b82f6',     // 파란색
+    'Middle': '#8b5cf6',  // 보라색 
+    'Base': '#d97706',    // 주황색
   };
-  return colors[ingredient] || '#9ca3af';
+  return colors[category] || '#9ca3af';
 }
 
 const styles = StyleSheet.create({
@@ -251,10 +393,9 @@ const styles = StyleSheet.create({
     color: '#171717',
     marginBottom: 8,
   },
-  perfumeDescription: {
+  perfumeBrand: {
     fontSize: 16,
-    color: '#525252',
-    lineHeight: 24,
+    color: '#737373',
     marginBottom: 20,
   },
   quickStats: {
@@ -507,5 +648,125 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 18,
     fontWeight: '600',
+  },
+  // 성분 탭 관련 스타일 (새로운 디자인)
+  notesList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  noteItem: {
+    backgroundColor: '#f3f4f6',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+    fontSize: 13,
+    color: '#374151',
+    fontWeight: '500',
+  },
+  
+  // 지속력 & 실라지 관련 스타일
+  longevityContainer: {
+    gap: 24,
+  },
+  statGroup: {
+    backgroundColor: '#fafafa',
+    padding: 16,
+    borderRadius: 12,
+  },
+  statGroupTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#171717',
+    marginBottom: 16,
+  },
+  statBars: {
+    gap: 8,
+  },
+  statBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: '#525252',
+    fontWeight: '500',
+    width: 60,
+  },
+  statBarContainer: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  statBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  statValue: {
+    fontSize: 12,
+    color: '#171717',
+    fontWeight: '600',
+    minWidth: 30,
+    textAlign: 'right',
+  },
+  
+  // 리뷰 탭 관련 스타일
+  ratingDistribution: {
+    marginBottom: 24,
+  },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    gap: 12,
+  },
+  starLabel: {
+    fontSize: 14,
+    color: '#525252',
+    fontWeight: '500',
+    width: 30,
+  },
+  ratingBarContainer: {
+    flex: 1,
+    height: 12,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 6,
+    overflow: 'hidden',
+  },
+  ratingBarFill: {
+    height: '100%',
+    backgroundColor: '#f59e0b',
+    borderRadius: 6,
+  },
+  ratingPercent: {
+    fontSize: 12,
+    color: '#525252',
+    fontWeight: '500',
+    minWidth: 40,
+    textAlign: 'right',
+  },
+  commentsSection: {
+    backgroundColor: '#fafafa',
+    padding: 20,
+    borderRadius: 12,
+  },
+  noCommentsText: {
+    fontSize: 14,
+    color: '#9ca3af',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  sourceNotice: {
+    fontSize: 12,
+    color: '#9ca3af',
+    fontStyle: 'italic',
+    marginTop: 16,
+    textAlign: 'left',
+  },
+  communityRatingSection: {
+    marginBottom: 0,
   },
 });

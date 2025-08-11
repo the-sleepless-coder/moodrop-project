@@ -36,6 +36,12 @@ export const API_ENDPOINTS = {
   // 카테고리 및 무드
   CATEGORY_MOOD: '/categoryMood',
   
+  // 향수 관련
+  PERFUME: {
+    ACCORD: '/perfume/accord',
+    LIST: '/perfume/accord', // POST /perfume/accord/{userId}
+  },
+  
   // 향료 관련
   INGREDIENTS: {
     LIST: '/ingredients',

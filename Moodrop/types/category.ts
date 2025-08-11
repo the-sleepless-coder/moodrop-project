@@ -44,3 +44,71 @@ export type FragranceCategory = '플로럴' | '우디' | '프레시' | '오리�
 export interface CategoryMapping {
   [key: string]: FragranceCategory;
 }
+
+// Accord 관련 타입 정의
+export interface Accord {
+  accordId: number;
+  accord: string;
+  totalWeight: number;
+}
+
+export interface AccordResponse {
+  accords: Accord[];
+}
+
+// Accord API 요청 파라미터 타입
+export interface AccordRequestParams {
+  moodIds: number[];
+}
+
+// 향수 관련 타입 정의
+export interface PerfumeRatingInfo {
+  ratingCount: number;
+  ratingVal: number;
+}
+
+export interface PerfumeSillage {
+  strong: number;
+  intimate: number;
+  enormous: number;
+  moderate: number;
+}
+
+export interface PerfumeLongevity {
+  eternal: number;
+  'long lasting': number;
+  'very weak': number;
+  weak: number;
+  moderate: number;
+}
+
+export interface PerfumeNotes {
+  base: string[];
+  top: string[];
+  middle: string[];
+}
+
+export interface Perfume {
+  id: number;
+  perfumeName: string;
+  brandName: string;
+  country: string;
+  year: number;
+  gender: string;
+  description: string;
+  comments: string | null;
+  ratingInfo: PerfumeRatingInfo;
+  accordMatchCount: number;
+  sillage: PerfumeSillage;
+  longevity: PerfumeLongevity;
+  notes: PerfumeNotes;
+}
+
+export interface PerfumeListResponse {
+  Match: Perfume[];
+  NoMatch: Perfume[];
+}
+
+export interface PerfumeListRequestParams {
+  accords: string[];
+}

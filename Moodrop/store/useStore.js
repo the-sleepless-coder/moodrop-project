@@ -3,11 +3,17 @@ import { create } from 'zustand';
 const useStore = create((set, get) => ({
   // 향수 카테고리 관련 상태
   selectedCategory: null,
-  selectedSubcategories: [],
+  selectedSubcategories: [], // 문자열 배열 (호환성)
+  selectedMoods: [], // Mood 객체 배열 (새로 추가)
+  accords: [], // 조회된 accord 목록
   recommendations: [],
   selectedPerfume: null,
   currentPage: 1,
   totalPages: 0,
+  
+  // API 로딩 상태
+  accordsLoading: false,
+  recommendationsLoading: false,
 
   // 제조 관련 상태
   manufacturingStatus: 'idle', // idle, connecting, manufacturing, completed
@@ -30,6 +36,14 @@ const useStore = create((set, get) => ({
   setSelectedCategory: (category) => set({ selectedCategory: category }),
   
   setSelectedSubcategories: (subcategories) => set({ selectedSubcategories: subcategories }),
+  
+  setSelectedMoods: (moods) => set({ selectedMoods: moods }),
+  
+  setAccords: (accords) => set({ accords }),
+  
+  setAccordsLoading: (loading) => set({ accordsLoading: loading }),
+  
+  setRecommendationsLoading: (loading) => set({ recommendationsLoading: loading }),
   
   setRecommendations: (recommendations, page, totalPages) => set({
     recommendations,
