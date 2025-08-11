@@ -9,7 +9,7 @@ void start_servos(struct Hole holes[]){
     msleep(PLATE_SPIN_TIME * abs(INIT_POS - holes[0].num));
     valve_ctrl(holes[0]);
     msleep(500);
-    for(int i = 1; i < HOLE_CNT; i++){ // 2, 3, 4번째 루트로 가기
+    for(int i = 1; i < g_recipe_count; i++){ // 2, 3, 4번째 루트로 가기
         curAngle += get_angle(holes[i - 1].num, holes[i].num);
         plate_spin(curAngle);
         msleep(PLATE_SPIN_TIME * abs(holes[i - 1].num - holes[i].num));
