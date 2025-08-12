@@ -148,7 +148,8 @@
 		
 	<!-- 
 	각 Perfume 별로 Accord가 많이 있는 것 순으로 정렬한다.
-	perfume_id & count를 우선적으로 추출한다.
+	perfume_id & count를 이용해 필요한 정보를 추출한다.
+	전체 DB가 아닌 determinedNotes가 존재하는 Perfume만 추출한다.
 	-->
 	<select id="searchByAccord" parameterType = "list">
 		SELECT 
@@ -160,8 +161,13 @@
 		JOIN perfume_main_accords as pma ON p.id = pma.perfume_id
 		JOIN accords as a ON pma.accord_id = a.id
 		
-		WHERE
-			a.name IN
+		 WHERE EXISTS (
+		      SELECT 1
+		      FROM determined_notes dn
+		      WHERE dn.perfume_id = p.id
+		  )
+		 AND
+		 a.name IN
 		<foreach item="item" collection="list" open="(" separator="," close=")">
 		    #{item}
 		</foreach>
@@ -237,30 +243,82 @@
 		
 	</select>
 	
+	<select id="selectDeterminedNotes">
+		SELECT 
+			n.name,
+			n.korean_name,
+			n.type,
+			dn.percentage as weight
+		FROM perfumes as p
+		JOIN determined_notes as dn ON p.id = perfume_id
+		JOIN notes as n ON dn.note_id = n.id
+		WHERE
+			p.id = #{perfumeId}
+		;
+	</select>
 	
-	<!-- 
-	<update id="updateArticleDetail" parameterType="ArticleDetail">
-		UPDATE 
-		   SET 
-		     
-		 WHERE 
-	</update>
+	
+	<!-- note 이름으로 id/type -->
+    <select id="findNotesByNames"
+            resultType="com.moodrop.model.dao.PerfumeDao$NoteRow">
+        SELECT n.id, n.name, n.type
+        FROM notes n
+        WHERE n.name IN
+        <foreach collection="names" item="nm" open="(" separator="," close=")">
+            #{nm}
+        </foreach>
+    </select>
+	
+	<!-- accord 이름으로 id -->
+    <select id="findAccordIdsByNames"
+            resultType="com.moodrop.model.dao.PerfumeDao$AccordRow">
+        SELECT a.id, a.name
+        FROM accords a
+        WHERE a.name IN
+        <foreach collection="names" item="nm" open="(" separator="," close=")">
+            #{nm}
+        </foreach>
+    </select>
+    
+     <!-- accord_note 중계 테이블에서 weight 조회 -->
+    <select id="findAccordNotesByNoteIds"
+            resultType="com.moodrop.model.dao.PerfumeDao$AccordNoteRow">
+        SELECT an.note_id   AS noteId,
+        an.accord_id AS accordId,
+        an.weight    AS weight
+        FROM accord_note an
+        WHERE an.note_id IN
+        <foreach collection="noteIds" item="id" open="(" separator="," close=")">
+            #{id}
+        </foreach>
+    </select>
 	
 	
-	<insert id="insertArticleMaster" parameterType="ArticleMaster" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
-	</insert> 
-	
-	DB 컬럼명이 무엇이든 DTO의 name, type으로 매핑
-	<resultMap id="NotesDtoMap" type="com.moodrop.model.dto.NotesDto">	
-		<result column="note_name" property="name"/>
-		<result column="name"      property="name"/>
-		<result column="note_type" property="type"/>
-		<result column="type"      property="type"/>
-	</resultMap>
-
-
-	-->
-	
-
+    
+    
 
 </mapper>
+
+
+<!-- 
+<update id="updateArticleDetail" parameterType="ArticleDetail">
+	UPDATE 
+	   SET 
+	     
+	 WHERE 
+</update>
+
+
+<insert id="insertArticleMaster" parameterType="ArticleMaster" keyColumn="id" keyProperty="id" useGeneratedKeys="true">
+</insert> 
+
+DB 컬럼명이 무엇이든 DTO의 name, type으로 매핑
+<resultMap id="NotesDtoMap" type="com.moodrop.model.dto.NotesDto">	
+	<result column="note_name" property="name"/>
+	<result column="name"      property="name"/>
+	<result column="note_type" property="type"/>
+	<result column="type"      property="type"/>
+</resultMap>
+
+
+-->

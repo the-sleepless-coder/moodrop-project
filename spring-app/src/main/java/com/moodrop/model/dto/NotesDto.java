@@ -18,6 +18,7 @@ import lombok.ToString;
 @NoArgsConstructor
 public class NotesDto {
 	// Note Info
+	// private int noteId;
 	private String name;
 	private String type;
 	private Integer weight;

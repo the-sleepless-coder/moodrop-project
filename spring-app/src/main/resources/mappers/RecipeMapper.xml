@@ -10,9 +10,12 @@
 	          typeHandler="com.moodrop.typehandler.JsonToNoteListTypeHandler"/>
 	</resultMap>
 	
+	<!-- 사용자의 레시피를 조회한다. -->
 	<select id = "selectUserRecipe" resultMap = "UserRecipeMap">
 		SELECT 
-			u.user_id,
+			up.id as recipe_id,
+			u.id as user_id,
+			u.user_id as user_id_string,
 		    u.name as user_name,
 		    up.name as perfume_name,
 		    up.description,
@@ -34,7 +37,7 @@
 		LEFT JOIN notes as n ON upc.note_id = n.id
 		WHERE
 			u.user_id = #{userId}
-		GROUP BY up.id, u.user_id, u.name, up.name, up.description      
+		GROUP BY up.id, u.id, u.user_id, u.name, up.name, up.description      
 		    /*AND EXISTS(
 				SELECT 1
 				FROM user_perfume_compositions ups
@@ -43,5 +46,149 @@
 		;
 		
 	</select>
+	
+	<select id="selectNoteIdByName">
+		select id
+		FROM notes
+		WHERE name IN 
+		     <foreach collection ="names" item="name" open="(" separator="," close=")" >
+		     	#{name}
+		     </foreach>
+	</select>
+	
+	
+	<!-- 방금 insert한 id 가져오기 (MyBatis의 useGeneratedKeys 활용) --> 
+	<insert id = "insertUserRecipe" useGeneratedKeys="true" keyProperty="recipeId">
+		INSERT INTO user_perfumes (
+			user_id
+		  , name
+		  , description
+		) values (
+			#{userId}
+		  , #{perfumeName}
+		  , #{description}
+		)
+	</insert>
+	
+	<!-- name -> id로 변환해서 넣는다. -->
+	<insert id = "insertCompositionsInRecipe">		
+		INSERT INTO user_perfume_compositions (
+			user_perfume_id
+			, note_id
+			, weight
+			)
+		VALUES
+		<foreach item = "item" collection = "items" separator= ",">
+			(
+			  #{userPerfumeId}
+			, (SELECT id FROM notes WHERE name = #{item.name} LIMIT 1)
+			, #{item.weight}
+			)
+		</foreach>
+			
+		
+	</insert>
+	
+	<!-- id로 레시피를 조회한다. -->
+	<select id="selectRecipeById" resultMap="UserRecipeMap">
+		SELECT
+			u.id as user_id,
+		    u.user_id as user_id_string,
+		    up.id as recipe_id,
+		    up.name as perfume_name,
+		    up.description,
+		    up.rating_average,
+		    up.like_count,
+		    JSON_ARRAYAGG(
+		    JSON_OBJECT(
+		      
+		      'weight',   upc.weight,
+		      'name', n.name,
+		      'type', n.type
+		    )
+		  ) AS composition
+		    
+		FROM user as u
+		JOIN user_perfumes as up ON u.id = up.user_id
+		LEFT JOIN user_perfume_compositions as upc ON up.id = upc.user_perfume_id
+		LEFT JOIN notes as n ON upc.note_id = n.id
+		WHERE
+			up.id = #{recipeId}
+		GROUP BY 
+			user_id, user_id_string, user_perfume_id, perfume_name, description, rating_average, like_count
+		    ;
+		
+		
+	</select>
+	
+	<!-- 
+	소유권 체크 없이 recipeId로만 삭제 
+	user 권한 확인 후 삭제하는 것이 좋다.
+	-->
+	<delete id="deleteRecipeById" parameterType="int">
+	  DELETE 
+	  FROM user_perfumes
+	  WHERE id = #{recipeId}
+	</delete>
+	
+	<delete id="deleteCompositionById">
+		DELETE
+		FROM user_perfume_compositions
+		WHERE user_perfume_id = #{recipeId}
+		;
+	</delete>
+	
+	
+	<!-- 
+	user 권한 확인 필요.
+	사용자의 레시피를 수정한다.
+	 -->
+	 <update id = "updateUserRecipe">
+	 	UPDATE user_perfumes
+		   SET user_id     = #{userId}
+		     , name        = #{perfumeName}
+		     , description = #{description}
+		 WHERE id          = #{recipeId}
+	 	
+	 </update>
+	 
+	 <!-- 원래 아이디가 존재한다면 PK 충돌 시 Update, 아니라면 새로운 값 Insert  -->
+	<insert id="upsertCompositionsInRecipe">
+		INSERT INTO user_perfume_compositions(
+		user_perfume_id
+		, note_id
+		, weight
+		)
+		VALUES
+		<foreach collection ="items" item ="item" separator=",">
+			(
+				#{recipeId},
+				(SELECT id FROM notes WHERE name = #{item.name} LIMIT 1),
+				#{item.weight}
+			)
+		</foreach>
+		ON DUPLICATE KEY UPDATE
+			weight = VALUES(weight)
+	
+	</insert> 
+	
+	
+	<!--
+ 	<select id="selectRecipeById" parameterType="int">
+		SELECT
+			u.id as user_id,
+			u.user_id as user_id_string,
+			
+		FROM
+			user as u
+		JOIN user_perfumes as up ON u.id = up.user_id
+		JOIN user_perfume_compositions as upc ON up.id = upc.user_perfume_id
+		
+		WHERE
+			upc.id=#{recipeId}
+		;
+		
+	</select>
+	 -->
 
 </mapper>

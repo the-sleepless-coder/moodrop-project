@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.MoodAccordDto;
+import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeWrapper;
 import com.moodrop.model.service.PerfumeService;
 
@@ -55,8 +56,8 @@ public class PerfumeController {
 	 * */
 	@PostMapping("/perfume/accord/{userId}")
 	public ResponseEntity<?> filterByAccordAndUserNotes(HttpServletRequest request, HttpServletResponse response, @PathVariable String userId, @RequestBody Map<String,List<String>> body) throws SQLException{
-		 List<String> accordList = body.get("accords");
 		try {
+			List<String> accordList = body.get("accords");
 			Map<String, Object> result = service.filterByAccordWithUserNotes(userId, accordList);
 			return ResponseEntity.ok(result);
 	    	
@@ -69,8 +70,8 @@ public class PerfumeController {
 	// 대분류 가져오기
 	@GetMapping("/category")
 	public ResponseEntity<?> getCategory(HttpServletRequest request, HttpServletResponse response) throws SQLException{
-		List<Map<Integer,String>> category = service.getCategory();
 		try {
+			List<Map<Integer,String>> category = service.getCategory();
 			return ResponseEntity.ok(category);			
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -82,8 +83,8 @@ public class PerfumeController {
 	// 대분류 내 소분류 가져오기(Category 내 Mood 가져오기)
 	@GetMapping("/categoryMood")
 	public ResponseEntity<?> getCategoryMood(HttpServletRequest request, HttpServletResponse response) throws SQLException{
-		List<CategoryMoodDto> categoryMood = service.getCategoryMood();
 		try {
+			List<CategoryMoodDto> categoryMood = service.getCategoryMood();
 			return ResponseEntity.ok(categoryMood);			
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -93,11 +94,10 @@ public class PerfumeController {
 	
 	// Mood를 선택 후, accord 가중치 합이 가장 높은 12개를 가져온다.
 	@GetMapping("/perfume/accord")
-	public ResponseEntity<?> getAccordByMood(@RequestParam("moodId") List<Integer> moodIdList, HttpServletRequest request, HttpServletResponse response) throws SQLException{
-		// moodId라는 키를 갖고 있는 값을, 바로 List로 만든다.
-		List<MoodAccordDto> moodAccords = service.calculateAccordWithMood(moodIdList);
-		
+	public ResponseEntity<?> getAccordByMood(@RequestParam("moodId") List<Integer> moodIdList, HttpServletRequest request, HttpServletResponse response) throws SQLException{		
 		try{
+			// moodId라는 키를 갖고 있는 값을, 바로 List로 만든다.
+			List<MoodAccordDto> moodAccords = service.calculateAccordWithMood(moodIdList);
 			return ResponseEntity.ok(moodAccords);
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -105,6 +105,21 @@ public class PerfumeController {
 		}
 	}
 	
+	@GetMapping("/perfume/selectNote/{perfumeId}") 
+	public ResponseEntity<?> selectHighestWeightNote(@PathVariable("perfumeId") int perfumeId, HttpServletRequest request, HttpServletResponse response){		
+		try {
+			List<NotesDto> result = service.getDeterminedNotes(perfumeId);
+			if(!result.isEmpty()) {
+				return ResponseEntity.ok(result);				
+			}else {
+				return ResponseEntity.ok("Perfume does not exist");
+			}
+		}catch(Exception e){
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+			
+		}
+	}
+
 	
 	
 }
@@ -118,12 +133,30 @@ public class PerfumeController {
 
 
 
-
-
-
-
-
-
+/*
+ * @GetMapping("/perfume/selectNote/{perfumeId}") public ResponseEntity<?>
+ * select(@PathVariable int perfumeId, HttpServletRequest request,
+ * HttpServletResponse response) throws SQLException {
+ * 
+ * PerfumeWrapper detailedPerfumeInfo = service.getPerfumeWrapper(perfumeId);
+ * List<MainAccordDto> mainAccordDtos = detailedPerfumeInfo.getMainAccord();
+ * Map<String, List<String>> noteDtos = detailedPerfumeInfo.getNotes();
+ * 
+ * // detailed perfume Info에서 accords 추출 List<String> accords = new
+ * ArrayList<>(); for(MainAccordDto ma: mainAccordDtos) {
+ * accords.add(ma.getName()); } System.out.println(accords); // detailed perfume
+ * Info에서 notes 추출 List<String> notes = new ArrayList<>(); String[] list = new
+ * String[] {"top","middle","base"}; for(String s : list) {
+ * List<String>noteNested = noteDtos.get(s); for(String nn: noteNested) {
+ * notes.add(nn); } } System.out.println(notes); int unit = 5;
+ * PerfumeResponseDto selectedNotes = service.selectPerfume(accords, notes,
+ * unit);
+ * 
+ * // service.selectPerfume(); // var resp = service.selectPerfume( //
+ * Optional.ofNullable(perfume.accords()).orElse(List.of()), // perfume.notes(),
+ * // Optional.ofNullable(perfume.unit()).orElse(5) // ); // return
+ * ResponseEntity.ok(selectedNotes); }
+ */
 
 
 

@@ -49,4 +49,24 @@ public interface PerfumeDao {
 	// Mood -> Accord 값 가져오기
 	List<MoodAccordDto> selectMoodAccords(@Param("moodIdList") List<Integer> moodIdList);
 	
+	// Perfume의 id를 이용해, 상관관계가 높은 note만 추출한다. 
+	List<NotesDto> selectDeterminedNotes(Integer perfumeId);
+	
+	
+	
+	
+	// notes 이름으로 id/타입 조회
+    List<NoteRow> findNotesByNames(@Param("names") List<String> names);
+
+    // accords 이름으로 id 조회
+    List<AccordRow> findAccordIdsByNames(@Param("names") List<String> names);
+
+    // accord_note 중계테이블에서 (noteId, accordId, weight) 조회
+    List<AccordNoteRow> findAccordNotesByNoteIds(@Param("noteIds") List<Long> noteIds);
+
+    // ---- Row DTOs (내부 클래스) ----
+    class NoteRow { public Long id; public String name; public String type; }
+    class AccordRow { public Long id; public String name; }
+    class AccordNoteRow { public Long noteId; public Long accordId; public double weight; }
+	
 }
