@@ -11,7 +11,9 @@ import {
   AccordRequestParams,
   Perfume,
   PerfumeListResponse,
-  PerfumeListRequestParams
+  PerfumeListRequestParams,
+  PerfumeNote,
+  PerfumeNoteResponse
 } from '../types/category';
 
 // 카테고리 및 무드 데이터 서비스
@@ -250,10 +252,10 @@ class CategoryService {
   /**
    * accord 배열을 사용하여 향수 리스트를 조회합니다.
    * @param accords - accord 문자열 배열
-   * @param userId - 사용자 ID (기본값: 1)
+   * @param userId - 사용자 ID (기본값: "1")
    * @returns Match와 NoMatch로 분류된 향수 목록
    */
-  async getPerfumesByAccords(accords: string[], userId: number = 1): Promise<ApiResponse<PerfumeListResponse>> {
+  async getPerfumesByAccords(accords: string[], userId: string = "1"): Promise<ApiResponse<PerfumeListResponse>> {
     try {
       // accords 배열 검증
       if (!accords || accords.length === 0) {
@@ -295,12 +297,87 @@ class CategoryService {
   /**
    * Accord 객체 배열을 사용하여 향수 리스트를 조회합니다.
    * @param accordObjects - Accord 객체 배열
-   * @param userId - 사용자 ID (기본값: 1)
+   * @param userId - 사용자 ID (기본값: "1")
    * @returns Match와 NoMatch로 분류된 향수 목록
    */
-  async getPerfumesByAccordObjects(accordObjects: Accord[], userId: number = 1): Promise<ApiResponse<PerfumeListResponse>> {
+  async getPerfumesByAccordObjects(accordObjects: Accord[], userId: string = "1"): Promise<ApiResponse<PerfumeListResponse>> {
     const accordNames = accordObjects.map(accord => accord.accord);
     return this.getPerfumesByAccords(accordNames, userId);
+  }
+
+  /**
+   * 특정 향수의 제조 note 정보를 조회합니다.
+   * @param perfumeId - 향수 ID
+   * @returns 향수 제조 note 목록 (name, type, weight)
+   */
+  async getPerfumeNote(perfumeId: number): Promise<ApiResponse<PerfumeNoteResponse>> {
+    try {
+      if (!perfumeId || perfumeId <= 0) {
+        return {
+          success: false,
+          error: '유효하지 않은 향수 ID입니다.',
+          message: 'Invalid perfume ID'
+        } as ApiResponse<PerfumeNoteResponse>;
+      }
+
+      const endpoint = `${API_ENDPOINTS.PERFUME.SELECT_NOTE}/${perfumeId}`;
+      
+      console.log('PerfumeNote API Request:', endpoint);
+      
+      const response = await apiClient.get<PerfumeNote[]>(endpoint);
+      
+      console.log('PerfumeNote API Raw Response:', response);
+      
+      if (response.success && response.data) {
+        console.log('PerfumeNote API Success:', {
+          perfumeId,
+          noteCount: response.data.length,
+          notes: response.data.map(note => `${note.name}(${note.type}):${note.weight}%`)
+        });
+        return response;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch perfume note:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        message: 'Failed to fetch perfume note'
+      } as ApiResponse<PerfumeNoteResponse>;
+    }
+  }
+
+  /**
+   * 향수 ID 배열에 대해 모든 제조 note 정보를 조회합니다.
+   * @param perfumeIds - 향수 ID 배열
+   * @returns 각 향수별 제조 note 정보 맵
+   */
+  async getPerfumeNotes(perfumeIds: number[]): Promise<Map<number, PerfumeNote[]>> {
+    const noteMap = new Map<number, PerfumeNote[]>();
+    
+    try {
+      // 병렬로 모든 향수 note 조회
+      const promises = perfumeIds.map(async (perfumeId) => {
+        const response = await this.getPerfumeNote(perfumeId);
+        if (response.success && response.data) {
+          noteMap.set(perfumeId, response.data);
+        }
+        return { perfumeId, response };
+      });
+      
+      await Promise.all(promises);
+      
+      console.log('Bulk PerfumeNotes fetched:', {
+        requestedCount: perfumeIds.length,
+        successCount: noteMap.size
+      });
+      
+    } catch (error) {
+      console.error('Failed to fetch bulk perfume notes:', error);
+    }
+    
+    return noteMap;
   }
 }
 

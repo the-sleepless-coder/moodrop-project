@@ -5,17 +5,66 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
 import { RefreshCw, RotateCcw, Save, FlaskConical } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+import { PerfumeNote } from '@/types/category';
+import { categoryService } from '@/services/categoryService';
 
 export default function RecipeScreen() {
   const { selectedPerfume } = useStore();
   const [editMode, setEditMode] = useState(false);
   const [recipe, setRecipe] = useState<{ [key: string]: number }>({});
   const [totalPercentage, setTotalPercentage] = useState(100);
+  const [perfumeNotes, setPerfumeNotes] = useState<PerfumeNote[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
+  // 향수 제조 note 데이터 로드 및 초기 레시피 설정
   useEffect(() => {
-    if (selectedPerfume) {
-      setRecipe({ ...selectedPerfume.ingredients });
-    }
+    const loadPerfumeData = async () => {
+      if (selectedPerfume?.id) {
+        setIsLoading(true);
+        try {
+          // 향수 제조 note API 호출
+          const response = await categoryService.getPerfumeNote(selectedPerfume.id);
+          if (response.success && response.data) {
+            setPerfumeNotes(response.data);
+            
+            // API 데이터를 기본 레시피로 설정
+            const initialRecipe: { [key: string]: number } = {};
+            response.data.forEach(note => {
+              initialRecipe[note.name] = note.weight;
+            });
+            
+            setRecipe(initialRecipe);
+          } else {
+            // API 실패 시 향수 notes 데이터로 폴백
+            const fallbackRecipe: { [key: string]: number } = {};
+            let remainingPercentage = 100;
+            const allNotes = [
+              ...(selectedPerfume.notes.top || []),
+              ...(selectedPerfume.notes.middle || []),
+              ...(selectedPerfume.notes.base || [])
+            ];
+            
+            // 균등 분배
+            const evenWeight = Math.floor(100 / allNotes.length);
+            allNotes.forEach((note, index) => {
+              const weight = index === allNotes.length - 1 
+                ? remainingPercentage // 마지막 노트에 남은 비율 할당
+                : evenWeight;
+              fallbackRecipe[note] = weight;
+              remainingPercentage -= weight;
+            });
+            
+            setRecipe(fallbackRecipe);
+          }
+        } catch (error) {
+          console.error('Failed to load perfume data:', error);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    loadPerfumeData();
   }, [selectedPerfume]);
 
   useEffect(() => {
@@ -50,7 +99,25 @@ export default function RecipeScreen() {
   };
 
   const handleReset = () => {
-    setRecipe({ ...selectedPerfume.ingredients });
+    if (perfumeNotes.length > 0) {
+      // API 데이터가 있으면 API 기본값으로 리셋
+      const resetRecipe: { [key: string]: number } = {};
+      perfumeNotes.forEach(note => {
+        resetRecipe[note.name] = note.weight;
+      });
+      setRecipe(resetRecipe);
+    } else {
+      // API 데이터가 없으면 균등 분배로 리셋
+      const ingredients = Object.keys(recipe);
+      const evenPercentage = Math.floor(100 / ingredients.length);
+      const remainder = 100 - (evenPercentage * ingredients.length);
+      
+      const resetRecipe: { [key: string]: number } = {};
+      ingredients.forEach((ingredient, index) => {
+        resetRecipe[ingredient] = evenPercentage + (index === 0 ? remainder : 0);
+      });
+      setRecipe(resetRecipe);
+    }
   };
 
   const handleSave = () => {
@@ -189,15 +256,47 @@ export default function RecipeScreen() {
           </View>
 
           <View style={styles.ingredientsContainer}>
-            {Object.entries(recipe).map(([ingredient, percentage]) => (
-              <View key={ingredient} style={styles.ingredientCard}>
-                <View style={styles.ingredientHeader}>
-                  <View style={styles.ingredientInfo}>
-                    <View style={[styles.ingredientDot, { backgroundColor: getIngredientColor(ingredient) }]} />
-                    <Text style={styles.ingredientName}>{ingredient}</Text>
+            {Object.entries(recipe).map(([ingredient, percentage]) => {
+              const isFromAPI = perfumeNotes.some(note => note.name === ingredient);
+              const originalWeight = perfumeNotes.find(note => note.name === ingredient)?.weight || 0;
+              const isModified = isFromAPI && percentage !== originalWeight;
+              
+              return (
+                <View key={ingredient} style={[
+                  styles.ingredientCard,
+                  isFromAPI && styles.apiIngredientCard
+                ]}>
+                  <View style={styles.ingredientHeader}>
+                    <View style={styles.ingredientInfo}>
+                      <View style={[
+                        styles.ingredientDot, 
+                        { backgroundColor: getIngredientColor(ingredient) },
+                        isFromAPI && styles.apiIngredientDot
+                      ]} />
+                      <Text style={[
+                        styles.ingredientName,
+                        isFromAPI && styles.apiIngredientName
+                      ]}>
+                        {ingredient}
+                      </Text>
+                      {isFromAPI && (
+                        <Text style={styles.apiLabel}>제조용</Text>
+                      )}
+                    </View>
+                    <View style={styles.percentageContainer}>
+                      <Text style={[
+                        styles.ingredientPercentage,
+                        isModified && styles.modifiedPercentage
+                      ]}>
+                        {percentage}%
+                      </Text>
+                      {isFromAPI && isModified && (
+                        <Text style={styles.originalPercentage}>
+                          (원래: {originalWeight}%)
+                        </Text>
+                      )}
+                    </View>
                   </View>
-                  <Text style={styles.ingredientPercentage}>{percentage}%</Text>
-                </View>
                 
                 <View style={styles.progressBar}>
                   <View 
@@ -229,8 +328,9 @@ export default function RecipeScreen() {
                     </View>
                   </View>
                 )}
-              </View>
-            ))}
+                </View>
+              );
+            })}
           </View>
         </View>
 
@@ -543,5 +643,41 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  // API 기반 향료 스타일
+  apiIngredientCard: {
+    borderWidth: 1,
+    borderColor: '#3b82f6',
+    backgroundColor: '#f0f9ff',
+  },
+  apiIngredientDot: {
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  apiIngredientName: {
+    fontWeight: '600',
+    color: '#1e40af',
+  },
+  apiLabel: {
+    fontSize: 10,
+    color: '#3b82f6',
+    backgroundColor: '#dbeafe',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    marginLeft: 8,
+    fontWeight: '600',
+  },
+  percentageContainer: {
+    alignItems: 'flex-end',
+  },
+  modifiedPercentage: {
+    color: '#ef4444',
+    fontWeight: '700',
+  },
+  originalPercentage: {
+    fontSize: 12,
+    color: '#9ca3af',
+    fontStyle: 'italic',
   },
 });

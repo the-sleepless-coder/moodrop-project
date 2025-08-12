@@ -64,6 +64,7 @@ export default function DetailScreen() {
     router.push('/category/recipe');
   };
 
+
   const renderTabContent = () => {
     switch (activeTab) {
       case 'info':

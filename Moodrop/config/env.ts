@@ -40,6 +40,7 @@ export const API_ENDPOINTS = {
   PERFUME: {
     ACCORD: '/perfume/accord',
     LIST: '/perfume/accord', // POST /perfume/accord/{userId}
+    SELECT_NOTE: '/perfume/selectNote', // GET /perfume/selectNote/{perfumeId}
   },
   
   // 향료 관련

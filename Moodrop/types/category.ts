@@ -112,3 +112,12 @@ export interface PerfumeListResponse {
 export interface PerfumeListRequestParams {
   accords: string[];
 }
+
+// 향수 제조 Note 관련 타입 정의
+export interface PerfumeNote {
+  name: string;
+  type: 'top' | 'middle' | 'base';
+  weight: number;
+}
+
+export type PerfumeNoteResponse = PerfumeNote[];
