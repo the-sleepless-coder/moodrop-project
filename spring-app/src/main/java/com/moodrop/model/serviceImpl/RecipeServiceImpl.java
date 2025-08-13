@@ -7,24 +7,24 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.moodrop.MoodropApplication;
 import com.moodrop.model.dao.RecipeDao;
-import com.moodrop.model.dto.NotesDto;
+import com.moodrop.model.dao.UserDao;
 import com.moodrop.model.dto.UserRecipeDto;
 import com.moodrop.model.service.RecipeService;
 
 @Service
 public class RecipeServiceImpl implements RecipeService{
-
-    private final MoodropApplication moodropApplication;
-
 	
 	@Autowired
 	RecipeDao dao;
-
-    RecipeServiceImpl(MoodropApplication moodropApplication) {
-        this.moodropApplication = moodropApplication;
-    }
+	
+	@Autowired
+	UserDao userDao;
+	
+//	private final MoodropApplication moodropApplication;
+//    RecipeServiceImpl(MoodropApplication moodropApplication) {
+//        this.moodropApplication = moodropApplication;
+//    }
 
     /*
      * userId를 이용해서 사용자의 모든 Recipe를 가져온다.
@@ -101,8 +101,41 @@ public class RecipeServiceImpl implements RecipeService{
 		
 	}
 	
-
-	
+	// 특정 사용자의 recipe를 나의 레시피로 복사한다.
+	@Override
+	@Transactional
+	public int copyRecipeIntoUser(int recipeId, String userIdString) throws SQLException {
+		
+		int userId = userDao.selectUserByString(userIdString);
+		if(userId != 0) {
+			// RecipeId로 recipe 넣기
+			// userId를 로그인한 사람의 것으로 설정한다.
+			UserRecipeDto recipe = dao.selectRecipeById(recipeId);
+			recipe.setUserId(userId);
+			// System.out.println(userId);
+			
+			int userRecipeResult = dao.insertUserRecipe(recipe);
+			if (userRecipeResult == 0) throw new SQLException("Insert user_perfumes failed");
+			// System.out.println(userRecipeResult);
+			
+			// Generated PK 사용.
+			int newRecipeId = recipe.getRecipeId();
+			
+			// composition이 존재한다면, recipeId에 맞게 composition을 넣어준다.
+			if(recipe.getComposition() != null) {			
+				int compositionResult = dao.insertCompositionsInRecipe( newRecipeId, recipe.getComposition());
+				if(compositionResult == 0 ) throw new SQLException("Insert compositions failed");
+			}
+			
+			return 1;
+		}else {
+			return 0;
+		}
+		
+		
+		
+		
+	}
 	
 	
 }

@@ -21,5 +21,8 @@ public interface RecipeService {
 	// 사용자의 레시피를 id로 삭제한다.
 	int deleteUserRecipe(int recipeId) throws SQLException;
 	
+	// 특정 recipeId를 나의 레시피로 복사한다.
+	int copyRecipeIntoUser(int recipeId, String userId) throws SQLException;
+	
 	
 }

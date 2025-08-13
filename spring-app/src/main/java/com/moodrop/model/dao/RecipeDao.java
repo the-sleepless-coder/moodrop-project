@@ -37,4 +37,8 @@ public interface RecipeDao {
 	    
 	    int deleteCompositionById(int recipeId);
 	    
+	    // recipeId 로 userId로 레시피 복사하기
+	    // int insertRecipeToUser(int userId, int recipeId);
+	    
+	    
 }

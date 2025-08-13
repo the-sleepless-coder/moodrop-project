@@ -2,6 +2,7 @@ package com.moodrop.web.controller;
 
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -99,6 +100,26 @@ public class RecipeController {
 		int result = service.deleteUserRecipe(recipeId);
 		if(result==1) {
 			return ResponseEntity.ok("Successfully Deleted");
+		}else {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+		
+	}
+	
+	/**
+	 * 특정 레시피를 나의 레시피로 복사한다.
+	 * 해당 레시피의 composition을 가져와서 나의 레시피에 추가한다.
+	 * @throws SQLException 
+	 * **/
+	@PostMapping("/recipe/copy")
+	public ResponseEntity<?> copyUserRecipe(@RequestBody Map<String, String> body, HttpServletRequest request, HttpServletResponse response ) throws SQLException{
+		int recipeId = Integer.parseInt(body.get("recipeId"));
+		String userId = body.get("userId");
+		
+		int result = service.copyRecipeIntoUser(recipeId, userId);
+		
+		if (result == 1) {
+			return ResponseEntity.ok("Recipe Successfully Copied");
 		}else {
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
 		}

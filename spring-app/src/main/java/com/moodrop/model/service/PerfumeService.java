@@ -8,6 +8,7 @@ import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.MoodAccordDto;
 import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeWrapper;
+import com.moodrop.model.dto.UserNoteDto;
 
 public interface PerfumeService {
 	PerfumeWrapper getPerfumeWrapper(int id) throws SQLException;
@@ -23,5 +24,11 @@ public interface PerfumeService {
 	List<NotesDto> getDeterminedNotes(int perfumeId);
 	
 	//List<PerfumeExtendedDto> filterByAccord(List<String> accords) throws SQLException;
+	
+	List<NotesDto> getUserNotes(String userId);
+	
+	int insertUserNote(UserNoteDto userNote) throws SQLException;
+
+	int deleteUserNote(String userId, String note) throws SQLException;
 	
 }

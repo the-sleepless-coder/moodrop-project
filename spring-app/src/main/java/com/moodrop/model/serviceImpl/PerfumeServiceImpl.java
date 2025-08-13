@@ -19,16 +19,15 @@ import com.moodrop.model.dto.DayNightDto;
 import com.moodrop.model.dto.LongevityDto;
 import com.moodrop.model.dto.MainAccordDto;
 import com.moodrop.model.dto.MoodAccordDto;
-import com.moodrop.model.dto.NoteScoreDto;
 import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeBasicDto;
 import com.moodrop.model.dto.PerfumeExtendedDto;
 import com.moodrop.model.dto.PerfumeMatchDto;
-import com.moodrop.model.dto.PerfumeResponseDto;
 import com.moodrop.model.dto.PerfumeWithMatch;
 import com.moodrop.model.dto.PerfumeWrapper;
 import com.moodrop.model.dto.SeasonDto;
 import com.moodrop.model.dto.SillageDto;
+import com.moodrop.model.dto.UserNoteDto;
 import com.moodrop.model.service.PerfumeService;
 
 import lombok.RequiredArgsConstructor;
@@ -253,7 +252,40 @@ public class PerfumeServiceImpl implements PerfumeService{
 		
 		return result;
 	}
+
+	/**
+	 * 사용자 보유 Note를 반환한다.
+	 **/
+	@Override
+	public List<NotesDto> getUserNotes(String userId) {
+		List<NotesDto> userNotes = dao.selectUserNotes(userId);
+		
+		return userNotes;
+	}
+
+	/**
+	 * 사용자 보유 Note를 추가한다.
+	 * @throws SQLException 
+	 **/
+	@Override
+	public int insertUserNote(UserNoteDto userNote) throws SQLException {
+		
+		int result = dao.insertUserNote(userNote);
+		if (result == 0) throw new SQLException();  
+		
+		return result;
+	}
 	
+	/**
+	 * 사용자 보유 Note를 삭제한다.
+	 * @throws SQLException 
+	 * **/
+	public int deleteUserNote(String userId, String noteName) throws SQLException {
+		
+		int result = dao.deleteUserNote(userId, noteName);
+		if (result == 0 ) throw new SQLException();
+		return result;
+	}
 
 	
 }

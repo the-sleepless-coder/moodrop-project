@@ -258,6 +258,27 @@
 	</select>
 	
 	
+	<!-- user_note_gram, memo 필요 여부 확인 -->
+    <insert id="insertUserNote">
+	  INSERT INTO user_notes (user_id, note_id, user_note_gram, memo)
+	  SELECT u.id, n.id, #{userNoteGram}, #{memo}
+	  FROM `user` AS u
+	  JOIN notes AS n ON n.name = #{note}
+	  WHERE u.user_id = #{userId}
+	  LIMIT 1;
+	</insert>
+	
+	<!-- 서브 쿼리로도 가능하고, Join으로도 가능하다. -->
+	<!-- 하지만 서브 쿼리보다 Join으로 하는 것이 중간 테이블 기준으로 조회하기 때문에 더 정확하다. -->
+	<delete id="deleteUserNote" >
+	  DELETE un
+	  FROM user_notes AS un
+	  JOIN `user` AS u ON u.id = un.user_id
+	  JOIN notes  AS n ON n.id = un.note_id
+	  WHERE u.user_id = #{userId}
+	    AND n.name    = #{note};
+	</delete>	
+	
 	<!-- note 이름으로 id/type -->
     <select id="findNotesByNames"
             resultType="com.moodrop.model.dao.PerfumeDao$NoteRow">
@@ -295,7 +316,6 @@
 	
 	
     
-    
 
 </mapper>
 
@@ -320,5 +340,22 @@ DB 컬럼명이 무엇이든 DTO의 name, type으로 매핑
 	<result column="type"      property="type"/>
 </resultMap>
 
+<delete id="deleteUserNote">
+		DELETE
+		FROM user_notes as un
+		WHERE user_id = (SELECT id FROM `user` u WHERE u.user_id = #{userId} LIMIT 1) 
+		AND un.note_id = (SELECT n.id FROM notes n WHERE n.name = #{note} LIMIT 1)
+		;
+		
+</delete>
+
+	<delete id="deleteUserNote">
+		DELETE
+		FROM user_notes as un
+		WHERE user_id = (SELECT id FROM `user` u WHERE u.user_id = #{userId} LIMIT 1) 
+		AND un.note_id = (SELECT n.id FROM notes n WHERE n.name = #{note} LIMIT 1)
+		;	
+	</delete>
+		
 
 -->

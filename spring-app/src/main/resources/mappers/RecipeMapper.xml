@@ -173,7 +173,11 @@
 	</insert> 
 	
 	
+	
 	<!--
+	<insert id="insertRecipeToUser">
+	</insert>
+	
  	<select id="selectRecipeById" parameterType="int">
 		SELECT
 			u.id as user_id,

@@ -5,9 +5,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,6 +22,7 @@ import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.MoodAccordDto;
 import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeWrapper;
+import com.moodrop.model.dto.UserNoteDto;
 import com.moodrop.model.service.PerfumeService;
 
 import jakarta.servlet.http.HttpServletRequest;
@@ -105,6 +108,7 @@ public class PerfumeController {
 		}
 	}
 	
+	// Perfume에서 Accord <-> Note 상관관계가 높은 Note만 뽑아낸다. 
 	@GetMapping("/perfume/selectNote/{perfumeId}") 
 	public ResponseEntity<?> selectHighestWeightNote(@PathVariable("perfumeId") int perfumeId, HttpServletRequest request, HttpServletResponse response){		
 		try {
@@ -120,6 +124,53 @@ public class PerfumeController {
 		}
 	}
 
+	// 사용자의 보유 노트를 확인한다.
+	@GetMapping("/perfume/note/{userId}")
+	public ResponseEntity<?> getUserNotes(@PathVariable("userId") String userId, HttpServletRequest request, HttpServletResponse response){
+		
+		try {
+			List<NotesDto> userNotes = service.getUserNotes(userId);
+			
+			return ResponseEntity.ok(userNotes);
+		}catch(Exception e){
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+		
+	}
+	
+	// 사용자의 보유 Note를 추가한다.
+	@PostMapping("/perfume/note")
+	public ResponseEntity<?> postUserNotes(@RequestBody UserNoteDto UserNoteDto ,HttpServletRequest request, HttpServletResponse response){
+		
+		try {
+			int result = service.insertUserNote(UserNoteDto);
+			return ResponseEntity.ok(result);
+		}catch(Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+	}
+	
+	// 사용자의 보유 Note를 삭제한다.
+	@DeleteMapping("/perfume/note")
+	public ResponseEntity<?> deleteUserNote(@RequestParam String userId, @RequestParam String noteName, HttpServletRequest request, HttpServletResponse response){
+		
+		try {
+			int result = service.deleteUserNote(userId, noteName);
+			if(result == 1) {
+				return ResponseEntity.ok("Successfully Deleted");
+			}else {
+				return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Note Not Found");
+			}
+				 
+		}catch(Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+		
+	}
+	
 	
 	
 }
