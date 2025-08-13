@@ -13,7 +13,8 @@ import {
   PerfumeListResponse,
   PerfumeListRequestParams,
   PerfumeNote,
-  PerfumeNoteResponse
+  PerfumeNoteResponse,
+  UserRecipeListResponse
 } from '../types/category';
 
 // 카테고리 및 무드 데이터 서비스
@@ -378,6 +379,49 @@ class CategoryService {
     }
     
     return noteMap;
+  }
+
+  /**
+   * 특정 사용자의 레시피 목록을 조회합니다.
+   * @param userId - 사용자 ID (문자열)
+   * @returns 사용자의 레시피 목록
+   */
+  async getUserRecipes(userId: string): Promise<ApiResponse<UserRecipeListResponse>> {
+    try {
+      if (!userId || userId.trim() === '') {
+        return {
+          success: false,
+          error: '유효하지 않은 사용자 ID입니다.',
+          message: 'Invalid user ID'
+        } as ApiResponse<UserRecipeListResponse>;
+      }
+
+      const endpoint = `/recipe/user/${userId}`;
+      
+      console.log('UserRecipes API Request:', endpoint);
+      
+      const response = await apiClient.get<UserRecipeListResponse>(endpoint);
+      
+      console.log('UserRecipes API Raw Response:', response);
+      
+      if (response.success && response.data) {
+        console.log('UserRecipes API Success:', {
+          userId,
+          recipeCount: Array.isArray(response.data) ? response.data.length : 'Unknown',
+          data: response.data
+        });
+        return response;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to fetch user recipes:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        message: 'Failed to fetch user recipes'
+      } as ApiResponse<UserRecipeListResponse>;
+    }
   }
 }
 

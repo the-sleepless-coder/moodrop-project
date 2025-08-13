@@ -121,3 +121,22 @@ export interface PerfumeNote {
 }
 
 export type PerfumeNoteResponse = PerfumeNote[];
+
+// 사용자 레시피 관련 타입
+export interface RecipeComposition {
+  name: string;           // 향료 이름 (예: "honey", "pink pepper")
+  type: 'top' | 'middle' | 'base';  // 향료 타입
+  weight: number;         // 향료 비율 (백분율)
+}
+
+export interface UserRecipe {
+  recipeId: number;       // 레시피 고유 ID
+  userId: number;         // 숫자형 사용자 ID
+  userIdString: string;   // 문자열 사용자 ID
+  perfumeName: string;    // 향수 이름
+  description: string;    // 향수 설명
+  composition: RecipeComposition[];  // 향료 구성 배열
+}
+
+// 사용자 레시피 목록 응답 타입
+export type UserRecipeListResponse = UserRecipe[];

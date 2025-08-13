@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { 
   User,
   ChevronRight,
@@ -11,9 +12,11 @@ import {
   HelpCircle,
   Settings,
   CheckCircle,
-  Save
+  Save,
+  Cpu
 } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+
 
 export default function ProfileScreen() {
   const { userProfile, updateUserProfile } = useStore();
@@ -24,13 +27,21 @@ export default function ProfileScreen() {
     lastAccess: '1시간 전',
   });
 
+
   const menuItems = [
     {
+      id: 'device',
+      title: '기기 설정',
+      subtitle: 'Moodrop Station 연결 및 관리',
+      icon: Cpu,
+      color: '#10b981',
+    },
+    {
       id: 'orders',
-      title: '주문 내역',
+      title: '제조 내역',
       subtitle: '제조한 향수 내역 확인',
       icon: Receipt,
-      color: '#3b82f6',
+      color: '#1e40af',
     },
     {
       id: 'recipes',
@@ -44,7 +55,7 @@ export default function ProfileScreen() {
       title: '찜한 향수',
       subtitle: '관심 있는 향수 모음',
       icon: Heart,
-      color: '#ef4444',
+      color: '#f97316',
     },
     {
       id: 'notifications',
@@ -58,14 +69,14 @@ export default function ProfileScreen() {
       title: '고객 지원',
       subtitle: '문의사항 및 도움말',
       icon: HelpCircle,
-      color: '#22c55e',
+      color: '#06b6d4',
     },
     {
       id: 'settings',
       title: '설정',
       subtitle: '앱 설정 및 개인정보',
       icon: Settings,
-      color: '#737373',
+      color: '#6b7280',
     },
   ];
 
@@ -96,13 +107,17 @@ export default function ProfileScreen() {
     },
   ];
 
+
   const handleMenuPress = (menuId: string) => {
     switch (menuId) {
+      case 'device':
+        router.push('/profile/device-settings');
+        break;
       case 'orders':
-        Alert.alert('주문 내역', '주문 내역을 확인합니다.');
+        Alert.alert('제조 내역', '제조 내역을 확인합니다.');
         break;
       case 'recipes':
-        Alert.alert('나만의 레시피', '저장된 레시피를 확인합니다.');
+        router.push('/profile/my-recipes');
         break;
       case 'favorites':
         Alert.alert('찜한 향수', '관심 향수 목록을 확인합니다.');
@@ -140,19 +155,22 @@ export default function ProfileScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={['top']}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         <View style={styles.header}>
           <View style={styles.profileSection}>
             <View style={styles.avatar}>
               <User size={32} color="#ffffff" />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.userName}>사용자 이름</Text>
+              <Text style={styles.userName}>json</Text>
               <Text style={styles.userEmail}>user@email.com</Text>
               <TouchableOpacity style={styles.editProfileButton}>
                 <Text style={styles.editProfileText}>프로필 편집</Text>
-                <ChevronRight size={14} color="#3b82f6" />
+                <ChevronRight size={14} color="#1e40af" />
               </TouchableOpacity>
             </View>
           </View>
@@ -202,6 +220,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
+
         <View style={styles.activitySection}>
           <Text style={styles.sectionTitle}>최근 활동</Text>
           <View style={styles.activityContainer}>
@@ -228,7 +247,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.appInfoItem}>
               <Text style={styles.appInfoLabel}>개발사</Text>
-              <Text style={styles.appInfoValue}>Moodrop Inc.</Text>
+              <Text style={styles.appInfoValue}>서울A102</Text>
             </View>
             <TouchableOpacity style={styles.appInfoItem}>
               <Text style={styles.appInfoLabel}>이용약관</Text>
@@ -269,7 +288,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: '#171717',
+    backgroundColor: '#1e40af',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -295,7 +314,7 @@ const styles = StyleSheet.create({
   },
   editProfileText: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#1e40af',
     fontWeight: '500',
     marginRight: 4,
   },

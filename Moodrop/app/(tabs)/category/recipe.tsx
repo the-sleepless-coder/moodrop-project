@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
-import { RefreshCw, RotateCcw, Save, FlaskConical } from 'lucide-react-native';
+import { RefreshCw, RotateCcw, Save, FlaskConical, Heart } from 'lucide-react-native';
 import useStore from '@/store/useStore';
 import { PerfumeNote } from '@/types/category';
 import { categoryService } from '@/services/categoryService';
@@ -166,7 +166,7 @@ export default function RecipeScreen() {
           text: '제조 시작', 
           onPress: () => {
             // 제조 화면으로 이동
-            router.push('/manufacturing');
+            router.push('/');
           } 
         }
       ]
@@ -195,8 +195,11 @@ export default function RecipeScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={[]}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>{selectedPerfume.name}</Text>
           <Text style={styles.subtitle}>레시피 커스터마이징</Text>
@@ -244,7 +247,7 @@ export default function RecipeScreen() {
             {editMode && (
               <View style={styles.actionButtons}>
                 <TouchableOpacity style={styles.actionButton} onPress={handleAutoBalance}>
-                  <RefreshCw size={16} color="#3b82f6" />
+                  <RefreshCw size={16} color="#1e40af" />
                   <Text style={styles.actionButtonText}>균등 분배</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.actionButton} onPress={handleReset}>
@@ -334,57 +337,64 @@ export default function RecipeScreen() {
           </View>
         </View>
 
-        {editMode && (
-          <View style={styles.recipeActions}>
+
+        {!editMode && (
+          <View style={styles.manufacturingInfo}>
+            <View style={styles.infoCard}>
+              <FlaskConical size={24} color="#22c55e" />
+              <View style={styles.infoText}>
+                <Text style={styles.infoTitle}>Moodrop Station에서 제조</Text>
+                <Text style={styles.infoDescription}>
+                  이 레시피를 바탕으로 실제 향수를 제조할 수 있습니다
+                </Text>
+              </View>
+            </View>
+          </View>
+        )}
+      </ScrollView>
+      
+      <View style={styles.bottomActions}>
+        {editMode ? (
+          <View style={styles.editModeActions}>
+            <TouchableOpacity 
+              style={styles.editModeButton}
+              onPress={() => setEditMode(false)}
+            >
+              <Text style={styles.editModeButtonText}>편집 완료</Text>
+            </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.saveButton, totalPercentage !== 100 && styles.saveButtonDisabled]}
               onPress={handleSave}
               disabled={totalPercentage !== 100}
             >
-              <Save size={16} color="#ffffff" />
-              <Text style={styles.saveButtonText}>레시피 저장</Text>
+              <Heart size={16} color="#ffffff" />
+              <Text style={styles.saveButtonText}>내 레시피에 추가</Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        <View style={styles.manufacturingSection}>
-          <Text style={styles.sectionTitle}>향수 제조</Text>
-          <View style={styles.manufacturingCard}>
-            <View style={styles.manufacturingInfo}>
-              <FlaskConical size={24} color="#22c55e" />
-              <View style={styles.manufacturingText}>
-                <Text style={styles.manufacturingTitle}>Moodrop Station에서 제조</Text>
-                <Text style={styles.manufacturingDescription}>
-                  이 레시피를 바탕으로 실제 향수를 제조할 수 있습니다
-                </Text>
-              </View>
-            </View>
+        ) : (
+          <View style={styles.normalModeActions}>
+            <TouchableOpacity 
+              style={styles.editButton}
+              onPress={() => setEditMode(true)}
+            >
+              <Text style={styles.editButtonText}>편집하기</Text>
+            </TouchableOpacity>
             <TouchableOpacity 
               style={[styles.manufacturingButton, totalPercentage !== 100 && styles.manufacturingButtonDisabled]}
               onPress={handleStartManufacturing}
               disabled={totalPercentage !== 100}
             >
+              <FlaskConical size={16} color="#ffffff" />
               <Text style={[
                 styles.manufacturingButtonText,
                 totalPercentage !== 100 && styles.manufacturingButtonTextDisabled
               ]}>
-                제조 시작하기
+                제조 시작
               </Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </ScrollView>
-      
-      {!editMode && (
-        <View style={styles.bottomActions}>
-          <TouchableOpacity 
-            style={styles.editButton}
-            onPress={() => setEditMode(true)}
-          >
-            <Text style={styles.editButtonText}>레시피 편집하기</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        )}
+      </View>
     </SafeAreaView>
   );
 }
@@ -495,7 +505,7 @@ const styles = StyleSheet.create({
   },
   actionButtonText: {
     fontSize: 12,
-    color: '#3b82f6',
+    color: '#1e40af',
     fontWeight: '500',
   },
   ingredientsContainer: {
@@ -566,17 +576,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#171717',
-    paddingVertical: 16,
+    backgroundColor: '#1e40af',
+    paddingVertical: 12,
     borderRadius: 8,
     gap: 8,
+    flex: 1.4,
+    marginLeft: 8,
   },
   saveButtonDisabled: {
     backgroundColor: '#d1d5db',
   },
   saveButtonText: {
     color: '#ffffff',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: '600',
   },
   manufacturingSection: {
@@ -610,10 +622,15 @@ const styles = StyleSheet.create({
     color: '#525252',
   },
   manufacturingButton: {
+    flexDirection: 'row',
     backgroundColor: '#22c55e',
     paddingVertical: 12,
     borderRadius: 8,
     alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    flex: 1.4,
+    marginLeft: 8,
   },
   manufacturingButtonDisabled: {
     backgroundColor: '#d1d5db',
@@ -634,20 +651,68 @@ const styles = StyleSheet.create({
     borderTopColor: '#f3f4f6',
   },
   editButton: {
-    backgroundColor: '#3b82f6',
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    borderRadius: 8,
     alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
   },
   editButtonText: {
-    color: '#ffffff',
+    color: '#525252',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // 새로운 액션 스타일들
+  normalModeActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editModeActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  editModeButton: {
+    backgroundColor: '#f3f4f6',
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+    flex: 1,
+    marginRight: 8,
+  },
+  editModeButtonText: {
+    color: '#525252',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  // 새로운 정보 카드 스타일들
+  infoCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f0fdf4',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#bbf7d0',
+  },
+  infoText: {
+    marginLeft: 12,
+    flex: 1,
+  },
+  infoTitle: {
     fontSize: 16,
     fontWeight: '600',
+    color: '#15803d',
+    marginBottom: 4,
+  },
+  infoDescription: {
+    fontSize: 14,
+    color: '#16a34a',
   },
   // API 기반 향료 스타일
   apiIngredientCard: {
     borderWidth: 1,
-    borderColor: '#3b82f6',
+    borderColor: '#1e40af',
     backgroundColor: '#f0f9ff',
   },
   apiIngredientDot: {
@@ -660,7 +725,7 @@ const styles = StyleSheet.create({
   },
   apiLabel: {
     fontSize: 10,
-    color: '#3b82f6',
+    color: '#1e40af',
     backgroundColor: '#dbeafe',
     paddingHorizontal: 6,
     paddingVertical: 2,

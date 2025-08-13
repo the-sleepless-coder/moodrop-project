@@ -1,7 +1,7 @@
 import { Stack } from 'expo-router';
 import React from 'react';
 
-export default function CategoryLayout() {
+export default function ProfileLayout() {
   return (
     <Stack
       screenOptions={{
@@ -20,36 +20,32 @@ export default function CategoryLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: '향수 카테고리',
-          headerShown: true,
+          title: '마이페이지',
+          headerShown: false, // 탭에서 관리하므로 헤더 숨김
         }}
       />
       <Stack.Screen
-        name="subcategory"
+        name="device-settings"
         options={{
-          title: '세부 카테고리',
+          title: '기기 설정',
           headerShown: true,
+          presentation: 'card',
         }}
       />
       <Stack.Screen
-        name="recommendation"
+        name="ingredient-settings"
         options={{
-          title: '추천 향수',
+          title: '원료 설정',
           headerShown: true,
+          presentation: 'card',
         }}
       />
       <Stack.Screen
-        name="detail"
+        name="my-recipes"
         options={{
-          title: '향수 정보',
+          title: '나만의 레시피',
           headerShown: true,
-        }}
-      />
-      <Stack.Screen
-        name="recipe"
-        options={{
-          title: '향수 레시피',
-          headerShown: true,
+          presentation: 'card',
         }}
       />
     </Stack>

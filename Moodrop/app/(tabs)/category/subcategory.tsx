@@ -78,8 +78,12 @@ export default function SubcategoryScreen() {
   const categoryColor = getCategoryColor(selectedCategory.name);
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={[]}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         <View style={styles.header}>
           <View style={[styles.categoryBadge, { backgroundColor: categoryColor }]}>
             <CategoryIcon size={16} color="#ffffff" />
@@ -267,7 +271,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#f3f4f6',
   },
   nextButton: {
-    backgroundColor: '#171717',
+    backgroundColor: '#1e40af',
     paddingVertical: 16,
     borderRadius: 8,
     alignItems: 'center',

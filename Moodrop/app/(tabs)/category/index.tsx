@@ -57,8 +57,12 @@ export default function CategoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={[]}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         <View style={styles.header}>
           <Text style={styles.title}>향수 카테고리 선택</Text>
           <Text style={styles.subtitle}>선호하는 무드의 계열을 선택해주세요</Text>

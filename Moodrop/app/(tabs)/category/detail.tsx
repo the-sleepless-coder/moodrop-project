@@ -155,7 +155,7 @@ export default function DetailScreen() {
                               styles.statBarFill, 
                               { 
                                 width: `${(selectedPerfume.longevity[key] / Math.max(...Object.values(selectedPerfume.longevity))) * 100}%`,
-                                backgroundColor: '#3b82f6'
+                                backgroundColor: '#1e40af'
                               }
                             ]} 
                           />
@@ -289,8 +289,11 @@ export default function DetailScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false}>
+    <SafeAreaView style={styles.container} edges={[]}>
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         <View style={styles.header}>
           <Text style={styles.perfumeName}>{formatPerfumeName(selectedPerfume.perfumeName)}</Text>
           <Text style={styles.perfumeBrand}>
@@ -371,7 +374,7 @@ export default function DetailScreen() {
 // 노트 카테고리별 색상
 function getCategoryColor(category: string): string {
   const colors: { [key: string]: string } = {
-    'Top': '#3b82f6',     // 파란색
+    'Top': '#1e40af',     // 딥 네이비
     'Middle': '#8b5cf6',  // 보라색 
     'Base': '#d97706',    // 주황색
   };
@@ -539,7 +542,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#171717',
+    backgroundColor: '#1e40af',
     paddingVertical: 12,
     borderRadius: 8,
     gap: 8,

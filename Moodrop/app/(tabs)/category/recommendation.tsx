@@ -205,7 +205,7 @@ export default function RecommendationScreen() {
   const isLoading = accordsLoading || recommendationsLoading;
 
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} edges={[]}>
       <View style={styles.header}>
         <View style={styles.selectionSummary}>
           <View style={[styles.categoryBadge, { backgroundColor: categoryColor }]}>
@@ -217,17 +217,10 @@ export default function RecommendationScreen() {
           </Text>
           
           {accords.length > 0 && (
-            <View style={styles.accordsContainer}>
-              <Text style={styles.accordsTitle}>매칭 Accord ({accords.length}개):</Text>
-              <View style={styles.accordsList}>
-                {accords.map((accord, index) => (
-                  <View key={accord.accordId} style={styles.accordItem}>
-                    <Text style={styles.accordName}>{accord.accord}</Text>
-                    <Text style={styles.accordWeight}>{accord.totalWeight.toFixed(2)}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+            <Text style={styles.accordsText}>
+              매칭 Accord: {accords.slice(0, 3).map(a => a.accord).join(', ')}
+              {accords.length > 3 && ` 외 ${accords.length - 3}개`}
+            </Text>
           )}
         </View>
 
@@ -259,7 +252,11 @@ export default function RecommendationScreen() {
         </View>
       </View>
 
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      >
         {accordsLoading && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={categoryColor} />
@@ -437,49 +434,10 @@ const styles = StyleSheet.create({
     color: '#525252',
     marginBottom: 4,
   },
-  accordsContainer: {
-    marginTop: 8,
-    padding: 12,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#e9ecef',
-  },
-  accordsTitle: {
-    fontSize: 13,
-    color: '#495057',
-    fontWeight: '600',
-    marginBottom: 8,
-  },
-  accordsList: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  accordItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#dee2e6',
-    gap: 4,
-  },
-  accordName: {
-    fontSize: 11,
-    color: '#343a40',
-    fontWeight: '500',
-  },
-  accordWeight: {
-    fontSize: 10,
-    color: '#6c757d',
-    fontWeight: '600',
-    backgroundColor: '#e9ecef',
-    paddingHorizontal: 4,
-    paddingVertical: 1,
-    borderRadius: 4,
+  accordsText: {
+    fontSize: 12,
+    color: '#737373',
+    fontStyle: 'italic',
   },
   sortContainer: {
     flexDirection: 'row',
@@ -501,7 +459,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#f3f4f6',
   },
   sortButtonActive: {
-    backgroundColor: '#171717',
+    backgroundColor: '#1e40af',
   },
   sortButtonText: {
     fontSize: 12,
@@ -552,7 +510,7 @@ const styles = StyleSheet.create({
   },
   expandText: {
     fontSize: 14,
-    color: '#3b82f6',
+    color: '#1e40af',
     fontWeight: '500',
   },
   perfumeCard: {
