@@ -112,9 +112,9 @@ public class RecipeController {
 	 * @throws SQLException 
 	 * **/
 	@PostMapping("/recipe/copy")
-	public ResponseEntity<?> copyUserRecipe(@RequestBody Map<String, String> body, HttpServletRequest request, HttpServletResponse response ) throws SQLException{
-		int recipeId = Integer.parseInt(body.get("recipeId"));
-		String userId = body.get("userId");
+	public ResponseEntity<?> copyUserRecipe(@RequestBody Map<String, Object> body, HttpServletRequest request, HttpServletResponse response ) throws SQLException{
+		Integer recipeId = (Integer)(body.get("recipeId"));
+		String userId = (String) body.get("userId");
 		
 		int result = service.copyRecipeIntoUser(recipeId, userId);
 		
