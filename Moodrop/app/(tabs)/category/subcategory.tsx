@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import React, { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import React, { useState, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Check, Brain, Heart, Palette, Eye, Users, MapPin, Layers, Sparkles } from 'lucide-react-native';
@@ -7,8 +7,24 @@ import useStore from '@/store/useStore';
 import { Mood } from '@/types/category';
 
 export default function SubcategoryScreen() {
-  const { selectedCategory, setSelectedSubcategories, setSelectedMoods: setStoreMoods } = useStore();
+  const selectedCategory = useStore(state => state.selectedCategory);
+  const setSelectedSubcategories = useStore(state => state.setSelectedSubcategories);
+  const setStoreMoods = useStore(state => state.setSelectedMoods);
   const [selectedMoods, setSelectedMoods] = useState<Mood[]>([]);
+
+  // 페이지 포커스 변화 감지하여 상태 초기화
+  useFocusEffect(
+    useCallback(() => {
+      // 페이지에 포커스될 때 로컬 상태 초기화
+      setSelectedMoods([]);
+      
+      // 언마운트될 때 정리 함수
+      return () => {
+        // 페이지를 떠날 때는 로컬 상태만 정리 (selectedCategory는 유지)
+        setSelectedMoods([]);
+      };
+    }, [])
+  );
 
   if (!selectedCategory) {
     router.back();
@@ -72,6 +88,12 @@ export default function SubcategoryScreen() {
     setSelectedSubcategories(selectedMoods.map(mood => mood.name));
     
     router.push('/category/recommendation');
+  };
+
+  const handleBack = () => {
+    // 뒤로 가기 시 현재 페이지의 임시 상태만 정리 (store의 selectedCategory는 유지)
+    setSelectedMoods([]);
+    router.back();
   };
 
   const CategoryIcon = getCategoryIcon(selectedCategory.name);
