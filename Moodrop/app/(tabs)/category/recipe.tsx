@@ -1,20 +1,29 @@
 import { router } from 'expo-router';
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import Slider from '@react-native-community/slider';
-import { RefreshCw, RotateCcw, Save, FlaskConical, Heart } from 'lucide-react-native';
+import { RefreshCw, RotateCcw, FlaskConical, AlertTriangle } from 'lucide-react-native';
 import useStore from '@/store/useStore';
 import { PerfumeNote } from '@/types/category';
 import { categoryService } from '@/services/categoryService';
+import CustomModal, { ModalAction } from '@/components/CustomModal';
+import notificationService from '@/services/notificationService';
 
 export default function RecipeScreen() {
-  const { selectedPerfume } = useStore();
+  const { selectedPerfume, addManufacturingJob, setManufacturingStatus, updateManufacturingJob, manufacturingJobs, manufacturingStatus } = useStore();
   const [editMode, setEditMode] = useState(false);
   const [recipe, setRecipe] = useState<{ [key: string]: number }>({});
   const [totalPercentage, setTotalPercentage] = useState(100);
   const [perfumeNotes, setPerfumeNotes] = useState<PerfumeNote[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    actions: ModalAction[];
+    icon?: React.ReactNode;
+  }>({ title: '', message: '', actions: [] });
 
   // 향수 제조 note 데이터 로드 및 초기 레시피 설정
   useEffect(() => {
@@ -120,57 +129,135 @@ export default function RecipeScreen() {
     }
   };
 
-  const handleSave = () => {
-    if (totalPercentage !== 100) {
-      Alert.alert(
-        '저장 실패',
-        '성분 비율의 합이 100%가 되어야 합니다.',
-        [{ text: '확인' }]
-      );
-      return;
-    }
-
-    Alert.alert(
-      '레시피 저장',
-      '이 레시피를 저장하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
-        { 
-          text: '저장', 
-          onPress: () => {
-            // 여기서 레시피 저장 로직 구현
-            Alert.alert('저장 완료', '나만의 레시피가 저장되었습니다.');
-            setEditMode(false);
-          } 
-        }
-      ]
-    );
-  };
 
   const handleStartManufacturing = () => {
+    // 현재 제조 중인 작업이 있는지 확인
+    const hasActiveJob = manufacturingJobs.some(job => 
+      job.status === 'preparing' || job.status === 'manufacturing'
+    );
+    
+    if (hasActiveJob) {
+      setModalConfig({
+        title: '제조 대기',
+        message: '현재 다른 향수가 제조 중입니다.\n제조가 완료된 후 새로운 제조를 시작할 수 있습니다.',
+        icon: <FlaskConical size={32} color="#f59e0b" />,
+        actions: [
+          { text: '확인', style: 'primary', onPress: () => {} }
+        ]
+      });
+      setModalVisible(true);
+      return;
+    }
+    
     if (totalPercentage !== 100) {
-      Alert.alert(
-        '제조 불가',
-        '성분 비율의 합이 100%가 되어야 제조할 수 있습니다.',
-        [{ text: '확인' }]
-      );
+      setModalConfig({
+        title: '제조 불가',
+        message: '성분 비율의 합이 100%가 되어야 제조할 수 있습니다.',
+        icon: <AlertTriangle size={32} color="#ef4444" />,
+        actions: [
+          { text: '확인', style: 'primary', onPress: () => {} }
+        ]
+      });
+      setModalVisible(true);
       return;
     }
 
-    Alert.alert(
-      '향수 제조',
-      '이 레시피로 향수 제조를 시작하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
+    setModalConfig({
+      title: '향수 제조',
+      message: '이 레시피로 향수 제조를 시작하시겠습니까?',
+      icon: <FlaskConical size={32} color="#22c55e" />,
+      actions: [
+        { text: '취소', style: 'cancel', onPress: () => {} },
         { 
           text: '제조 시작', 
+          style: 'primary',
           onPress: () => {
-            // 제조 화면으로 이동
+            // 제조 작업 추가
+            const newJob = {
+              id: Date.now().toString(),
+              perfumeName: selectedPerfume.name,
+              recipe: recipe,
+              status: 'preparing' as const,
+              progress: 0,
+              startTime: new Date().toISOString(),
+              estimatedTime: '20초',
+              stage: '재료 준비 중...'
+            };
+            
+            addManufacturingJob(newJob);
+            setManufacturingStatus('manufacturing');
+            
+            // 제조 시작 알림 표시
+            notificationService.showManufacturingNotification(
+              selectedPerfume.name,
+              0,
+              '재료 준비 중...'
+            );
+            
+            // 홈 화면으로 이동하면서 향수찾기 탭 초기화
             router.push('/');
-          } 
+            router.replace('/category/');
+            
+            // 제조 진행 시뮬레이션 시작 (20초 총 시간)
+            setTimeout(() => {
+              updateManufacturingJob(newJob.id, {
+                status: 'manufacturing',
+                progress: 25,
+                stage: '향료 조합 중...'
+              });
+              // 알림 업데이트
+              notificationService.showManufacturingNotification(
+                selectedPerfume.name,
+                25,
+                '향료 조합 중...'
+              );
+            }, 3000);
+            
+            // 중간 단계 1
+            setTimeout(() => {
+              updateManufacturingJob(newJob.id, {
+                progress: 50,
+                stage: '혼합 중...'
+              });
+              // 알림 업데이트
+              notificationService.showManufacturingNotification(
+                selectedPerfume.name,
+                50,
+                '혼합 중...'
+              );
+            }, 8000);
+            
+            // 중간 단계 2
+            setTimeout(() => {
+              updateManufacturingJob(newJob.id, {
+                progress: 75,
+                stage: '숙성 중...'
+              });
+              // 알림 업데이트
+              notificationService.showManufacturingNotification(
+                selectedPerfume.name,
+                75,
+                '숙성 중...'
+              );
+            }, 15000);
+            
+            // 완료 단계
+            setTimeout(() => {
+              updateManufacturingJob(newJob.id, {
+                status: 'completed',
+                progress: 100,
+                stage: '제조 완료!',
+                completedTime: new Date().toISOString()
+              });
+              setManufacturingStatus('completed');
+              // 완료 알림 표시
+              notificationService.showManufacturingCompleteNotification(selectedPerfume.name);
+            }, 20000);
+          }
         }
       ]
-    );
+    });
+    setModalVisible(true);
   };
 
   const getIngredientColor = (ingredient: string): string => {
@@ -282,9 +369,6 @@ export default function RecipeScreen() {
                       ]}>
                         {ingredient}
                       </Text>
-                      {isFromAPI && (
-                        <Text style={styles.apiLabel}>제조용</Text>
-                      )}
                     </View>
                     <View style={styles.percentageContainer}>
                       <Text style={[
@@ -355,22 +439,12 @@ export default function RecipeScreen() {
       
       <View style={styles.bottomActions}>
         {editMode ? (
-          <View style={styles.editModeActions}>
-            <TouchableOpacity 
-              style={styles.editModeButton}
-              onPress={() => setEditMode(false)}
-            >
-              <Text style={styles.editModeButtonText}>편집 완료</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[styles.saveButton, totalPercentage !== 100 && styles.saveButtonDisabled]}
-              onPress={handleSave}
-              disabled={totalPercentage !== 100}
-            >
-              <Heart size={16} color="#ffffff" />
-              <Text style={styles.saveButtonText}>내 레시피에 추가</Text>
-            </TouchableOpacity>
-          </View>
+          <TouchableOpacity 
+            style={styles.editCompleteButton}
+            onPress={() => setEditMode(false)}
+          >
+            <Text style={styles.editCompleteButtonText}>편집 완료</Text>
+          </TouchableOpacity>
         ) : (
           <View style={styles.normalModeActions}>
             <TouchableOpacity 
@@ -380,21 +454,36 @@ export default function RecipeScreen() {
               <Text style={styles.editButtonText}>편집하기</Text>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={[styles.manufacturingButton, totalPercentage !== 100 && styles.manufacturingButtonDisabled]}
+              style={[
+                styles.manufacturingButton, 
+                (totalPercentage !== 100 || manufacturingJobs.some(job => job.status === 'preparing' || job.status === 'manufacturing')) && styles.manufacturingButtonDisabled
+              ]}
               onPress={handleStartManufacturing}
-              disabled={totalPercentage !== 100}
+              disabled={totalPercentage !== 100 || manufacturingJobs.some(job => job.status === 'preparing' || job.status === 'manufacturing')}
             >
               <FlaskConical size={16} color="#ffffff" />
               <Text style={[
                 styles.manufacturingButtonText,
-                totalPercentage !== 100 && styles.manufacturingButtonTextDisabled
+                (totalPercentage !== 100 || manufacturingJobs.some(job => job.status === 'preparing' || job.status === 'manufacturing')) && styles.manufacturingButtonTextDisabled
               ]}>
-                제조 시작
+                {manufacturingJobs.some(job => job.status === 'preparing' || job.status === 'manufacturing') 
+                  ? '제조 대기' 
+                  : '제조 시작'
+                }
               </Text>
             </TouchableOpacity>
           </View>
         )}
       </View>
+      
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        actions={modalConfig.actions}
+        icon={modalConfig.icon}
+      />
     </SafeAreaView>
   );
 }
@@ -568,29 +657,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#737373',
   },
-  recipeActions: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-  },
-  saveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#1e40af',
-    paddingVertical: 12,
-    borderRadius: 8,
-    gap: 8,
-    flex: 1.4,
-    marginLeft: 8,
-  },
-  saveButtonDisabled: {
-    backgroundColor: '#d1d5db',
-  },
-  saveButtonText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   manufacturingSection: {
     paddingHorizontal: 24,
     paddingBottom: 24,
@@ -663,27 +729,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  // 새로운 액션 스타일들
+  editCompleteButton: {
+    backgroundColor: '#1e40af',
+    paddingVertical: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+    width: '100%',
+  },
+  editCompleteButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
   normalModeActions: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  editModeActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  editModeButton: {
-    backgroundColor: '#f3f4f6',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-    flex: 1,
-    marginRight: 8,
-  },
-  editModeButtonText: {
-    color: '#525252',
-    fontSize: 14,
-    fontWeight: '600',
   },
   // 새로운 정보 카드 스타일들
   infoCard: {
@@ -722,16 +782,6 @@ const styles = StyleSheet.create({
   apiIngredientName: {
     fontWeight: '600',
     color: '#1e40af',
-  },
-  apiLabel: {
-    fontSize: 10,
-    color: '#1e40af',
-    backgroundColor: '#dbeafe',
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
-    marginLeft: 8,
-    fontWeight: '600',
   },
   percentageContainer: {
     alignItems: 'flex-end',

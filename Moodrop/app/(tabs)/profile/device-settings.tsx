@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
-import { Cpu, Search, Settings } from 'lucide-react-native';
+import { Cpu, Search, Settings, Bluetooth, CheckCircle, WifiOff } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+import CustomModal, { ModalAction } from '@/components/CustomModal';
 
 interface Device {
   id: string;
@@ -20,6 +21,13 @@ export default function DeviceSettingsScreen() {
   const { deviceConnected, deviceInfo, setDeviceConnected, setDeviceInfo } = useStore();
   const [scanning, setScanning] = useState(false);
   const [availableDevices, setAvailableDevices] = useState<Device[]>([]);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    actions: ModalAction[];
+    icon?: React.ReactNode;
+  }>({ title: '', message: '', actions: [] });
 
   useEffect(() => {
     // 초기 기기 정보 설정
@@ -73,13 +81,15 @@ export default function DeviceSettingsScreen() {
   };
 
   const handleConnectDevice = async (device: Device) => {
-    Alert.alert(
-      '기기 연결',
-      `${device.name}에 연결하시겠습니까?`,
-      [
-        { text: '취소', style: 'cancel' },
+    setModalConfig({
+      title: '기기 연결',
+      message: `${device.name}에 연결하시겠습니까?`,
+      icon: <Bluetooth size={32} color="#1e40af" />,
+      actions: [
+        { text: '취소', style: 'cancel', onPress: () => {} },
         { 
           text: '연결', 
+          style: 'primary',
           onPress: async () => {
             // 연결 시뮬레이션
             const updatedDevice = { ...device, status: 'connecting' as const };
@@ -95,20 +105,28 @@ export default function DeviceSettingsScreen() {
               setDeviceInfo(connectedDevice);
               setDeviceConnected(true);
               setAvailableDevices([]);
-              Alert.alert('연결 완료', '기기에 성공적으로 연결되었습니다.');
+              setModalConfig({
+                title: '연결 완료',
+                message: '기기에 성공적으로 연결되었습니다.',
+                icon: <CheckCircle size={32} color="#22c55e" />,
+                actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+              });
+              setModalVisible(true);
             }, 2000);
           } 
         }
       ]
-    );
+    });
+    setModalVisible(true);
   };
 
   const handleDisconnectDevice = () => {
-    Alert.alert(
-      '기기 연결 해제',
-      '현재 연결된 기기와의 연결을 해제하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
+    setModalConfig({
+      title: '기기 연결 해제',
+      message: '현재 연결된 기기와의 연결을 해제하시겠습니까?',
+      icon: <WifiOff size={32} color="#ef4444" />,
+      actions: [
+        { text: '취소', style: 'cancel', onPress: () => {} },
         { 
           text: '연결 해제', 
           style: 'destructive',
@@ -120,7 +138,8 @@ export default function DeviceSettingsScreen() {
           }
         }
       ]
-    );
+    });
+    setModalVisible(true);
   };
 
   const handleIngredientSettings = () => {
@@ -272,6 +291,15 @@ export default function DeviceSettingsScreen() {
           </View>
         </View>
       </ScrollView>
+      
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        actions={modalConfig.actions}
+        icon={modalConfig.icon}
+      />
     </SafeAreaView>
   );
 }

@@ -1,11 +1,12 @@
 import { router } from 'expo-router';
 import React, { useEffect, useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Star, Clock, ChevronRight, Brain, Heart, Palette, Eye, Users, MapPin, Layers, Sparkles } from 'lucide-react-native';
+import { Star, Clock, ChevronRight, Brain, Heart, Palette, Eye, Users, MapPin, Layers, Sparkles, AlertCircle, Wifi } from 'lucide-react-native';
 import useStore from '@/store/useStore';
 import categoryService from '@/services/categoryService';
 import { Perfume } from '@/types/category';
+import CustomModal, { ModalAction } from '@/components/CustomModal';
 
 export default function RecommendationScreen() {
   const { 
@@ -27,6 +28,13 @@ export default function RecommendationScreen() {
   const [matchPerfumes, setMatchPerfumes] = useState<Perfume[]>([]);
   const [noMatchPerfumes, setNoMatchPerfumes] = useState<Perfume[]>([]);
   const [showNoMatch, setShowNoMatch] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    actions: ModalAction[];
+    icon?: React.ReactNode;
+  }>({ title: '', message: '', actions: [] });
 
   useEffect(() => {
     if (!selectedCategory || !selectedMoods || selectedMoods.length === 0) {
@@ -52,7 +60,13 @@ export default function RecommendationScreen() {
       const accordResponse = await categoryService.getAccordsBySelectedMoods(selectedMoods);
       
       if (!accordResponse.success || !accordResponse.data?.accords) {
-        Alert.alert('오류', 'Accord 정보를 가져올 수 없습니다.');
+        setModalConfig({
+          title: '오류',
+          message: 'Accord 정보를 가져올 수 없습니다.',
+          icon: <AlertCircle size={32} color="#ef4444" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
         setAccordsLoading(false);
         return;
       }
@@ -71,7 +85,13 @@ export default function RecommendationScreen() {
       const perfumeResponse = await categoryService.getPerfumesByAccords(accordNames, 1);
       
       if (!perfumeResponse.success || !perfumeResponse.data) {
-        Alert.alert('오류', '향수 정보를 가져올 수 없습니다.');
+        setModalConfig({
+          title: '오류',
+          message: '향수 정보를 가져올 수 없습니다.',
+          icon: <AlertCircle size={32} color="#ef4444" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
         setRecommendationsLoading(false);
         return;
       }
@@ -96,7 +116,13 @@ export default function RecommendationScreen() {
       
     } catch (error) {
       console.error('향수 추천 로딩 오류:', error);
-      Alert.alert('연결 오류', '서버와 연결할 수 없습니다.');
+      setModalConfig({
+        title: '연결 오류',
+        message: '서버와 연결할 수 없습니다.',
+        icon: <Wifi size={32} color="#ef4444" />,
+        actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+      });
+      setModalVisible(true);
       setAccordsLoading(false);
       setRecommendationsLoading(false);
     }
@@ -395,6 +421,15 @@ export default function RecommendationScreen() {
           </View>
         )}
       </ScrollView>
+      
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        actions={modalConfig.actions}
+        icon={modalConfig.icon}
+      />
     </SafeAreaView>
   );
 }

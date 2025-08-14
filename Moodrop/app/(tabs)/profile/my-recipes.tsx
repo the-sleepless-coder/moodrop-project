@@ -1,14 +1,22 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlaskConical, Clock, Droplets, Eye, Plus, MoreVertical } from 'lucide-react-native';
+import { FlaskConical, Clock, Droplets, Eye, Plus, MoreVertical, AlertCircle, Info } from 'lucide-react-native';
 import { categoryService } from '@/services/categoryService';
 import { UserRecipe, UserRecipeListResponse } from '@/types/category';
+import CustomModal, { ModalAction } from '@/components/CustomModal';
 
 export default function MyRecipesScreen() {
   const [recipes, setRecipes] = useState<UserRecipe[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    actions: ModalAction[];
+    icon?: React.ReactNode;
+  }>({ title: '', message: '', actions: [] });
 
   // 향료 색상 매핑
   const getIngredientColor = (ingredient: string) => {
@@ -61,11 +69,23 @@ export default function MyRecipesScreen() {
         console.log('My Recipes loaded:', response.data.length);
       } else {
         console.error('Failed to load recipes:', response.error);
-        Alert.alert('오류', '레시피를 불러오는데 실패했습니다.');
+        setModalConfig({
+          title: '오류',
+          message: '레시피를 불러오는데 실패했습니다.',
+          icon: <AlertCircle size={32} color="#ef4444" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
       }
     } catch (error) {
       console.error('Error fetching recipes:', error);
-      Alert.alert('오류', '네트워크 오류가 발생했습니다.');
+      setModalConfig({
+        title: '오류',
+        message: '네트워크 오류가 발생했습니다.',
+        icon: <AlertCircle size={32} color="#ef4444" />,
+        actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+      });
+      setModalVisible(true);
     } finally {
       setIsLoading(false);
       setRefreshing(false);
@@ -85,24 +105,26 @@ export default function MyRecipesScreen() {
 
   // 새 레시피 추가 (향수 찾기로 이동)
   const handleAddNewRecipe = () => {
-    Alert.alert(
-      '새 레시피 추가',
-      '향수 찾기 탭에서 새로운 향수를 발견하고 레시피를 저장하세요.',
-      [
-        { text: '확인' }
-      ]
-    );
+    setModalConfig({
+      title: '새 레시피 추가',
+      message: '향수 찾기 탭에서 새로운 향수를 발견하고 레시피를 저장하세요.',
+      icon: <Plus size={32} color="#1e40af" />,
+      actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+    });
+    setModalVisible(true);
   };
 
   // 레시피 상세 보기
   const handleRecipeDetail = (recipe: UserRecipe) => {
-    Alert.alert(
-      recipe.perfumeName,
-      `${recipe.description}\n\n향료 구성:\n${recipe.composition.map(comp => 
+    setModalConfig({
+      title: recipe.perfumeName,
+      message: `${recipe.description}\n\n향료 구성:\n${recipe.composition.map(comp => 
         `• ${comp.name} (${comp.type}): ${comp.weight}%`
       ).join('\n')}`,
-      [{ text: '확인' }]
-    );
+      icon: <Info size={32} color="#1e40af" />,
+      actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+    });
+    setModalVisible(true);
   };
 
   // 로딩 상태
@@ -223,6 +245,15 @@ export default function MyRecipesScreen() {
           </View>
         )}
       </ScrollView>
+      
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        actions={modalConfig.actions}
+        icon={modalConfig.icon}
+      />
     </SafeAreaView>
   );
 }

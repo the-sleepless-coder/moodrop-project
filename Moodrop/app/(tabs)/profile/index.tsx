@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { 
@@ -13,13 +13,25 @@ import {
   Settings,
   CheckCircle,
   Save,
-  Cpu
+  Cpu,
+  LogOut,
+  Info,
+  Clock,
+  MessageCircle
 } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+import CustomModal, { ModalAction } from '@/components/CustomModal';
 
 
 export default function ProfileScreen() {
   const { userProfile, updateUserProfile } = useStore();
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    actions: ModalAction[];
+    icon?: React.ReactNode;
+  }>({ title: '', message: '', actions: [] });
   const [stats] = useState({
     totalPerfumes: 8,
     favoriteCategory: '플로럴',
@@ -114,22 +126,52 @@ export default function ProfileScreen() {
         router.push('/profile/device-settings');
         break;
       case 'orders':
-        Alert.alert('제조 내역', '제조 내역을 확인합니다.');
+        setModalConfig({
+          title: '제조 내역',
+          message: '제조 내역을 확인합니다.',
+          icon: <Clock size={32} color="#1e40af" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
         break;
       case 'recipes':
         router.push('/profile/my-recipes');
         break;
       case 'favorites':
-        Alert.alert('찜한 향수', '관심 향수 목록을 확인합니다.');
+        setModalConfig({
+          title: '찜한 향수',
+          message: '관심 향수 목록을 확인합니다.',
+          icon: <Heart size={32} color="#ef4444" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
         break;
       case 'notifications':
-        Alert.alert('알림 설정', '알림 설정을 변경합니다.');
+        setModalConfig({
+          title: '알림 설정',
+          message: '알림 설정을 변경합니다.',
+          icon: <Bell size={32} color="#f59e0b" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
         break;
       case 'support':
-        Alert.alert('고객 지원', '고객 지원 센터로 이동합니다.');
+        setModalConfig({
+          title: '고객 지원',
+          message: '고객 지원 센터로 이동합니다.',
+          icon: <MessageCircle size={32} color="#22c55e" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
         break;
       case 'settings':
-        Alert.alert('설정', '앱 설정 화면으로 이동합니다.');
+        setModalConfig({
+          title: '설정',
+          message: '앱 설정 화면으로 이동합니다.',
+          icon: <Settings size={32} color="#6b7280" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+        setModalVisible(true);
         break;
       default:
         break;
@@ -137,21 +179,29 @@ export default function ProfileScreen() {
   };
 
   const handleLogout = () => {
-    Alert.alert(
-      '로그아웃',
-      '정말 로그아웃 하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
+    setModalConfig({
+      title: '로그아웃',
+      message: '정말 로그아웃 하시겠습니까?',
+      icon: <LogOut size={32} color="#ef4444" />,
+      actions: [
+        { text: '취소', style: 'cancel', onPress: () => {} },
         { 
           text: '로그아웃', 
           style: 'destructive',
           onPress: () => {
             // 로그아웃 로직
-            Alert.alert('로그아웃 완료', '성공적으로 로그아웃되었습니다.');
+            setModalConfig({
+              title: '로그아웃 완료',
+              message: '성공적으로 로그아웃되었습니다.',
+              icon: <CheckCircle size={32} color="#22c55e" />,
+              actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+            });
+            setModalVisible(true);
           }
         }
       ]
-    );
+    });
+    setModalVisible(true);
   };
 
   return (
@@ -266,6 +316,15 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
       </ScrollView>
+      
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        actions={modalConfig.actions}
+        icon={modalConfig.icon}
+      />
     </SafeAreaView>
   );
 }

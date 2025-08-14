@@ -1,13 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert, Dimensions, Modal } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Modal, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlaskConical, Plus, Minus, RefreshCw, Save, X } from 'lucide-react-native';
-import Svg, { Polygon, Circle, Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { FlaskConical, Plus, Minus, RefreshCw, Save, X, Trash2, AlertTriangle, CheckCircle } from 'lucide-react-native';
+import Svg, { Polygon, Circle, Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
+import { LinearGradient } from 'expo-linear-gradient';
+import CustomModal, { ModalAction } from '@/components/CustomModal';
 
 const { width } = Dimensions.get('window');
 const CONTAINER_SIZE = Math.min(width, 400); // 더 큰 컨테이너 크기
-const CENTER_SIZE = CONTAINER_SIZE * 0.3; // 중앙부 비율 조정
-const SLOT_SIZE = CONTAINER_SIZE * 0.18; // 더 큰 슬롯 크기
+const CENTER_SIZE = CONTAINER_SIZE * 0.22; // 중앙부 비율 조정 (컴팩트)
+const SLOT_SIZE = CONTAINER_SIZE * 0.19; // 더 큰 슬롯 크기
 
 interface Ingredient {
   id: string;
@@ -65,6 +67,112 @@ export default function IngredientSettingsScreen() {
   
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showIngredientSelector, setShowIngredientSelector] = useState(false);
+  const [showIngredientSettings, setShowIngredientSettings] = useState(false);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [modalConfig, setModalConfig] = useState<{
+    title: string;
+    message: string;
+    actions: ModalAction[];
+    icon?: React.ReactNode;
+  }>({ title: '', message: '', actions: [] });
+  
+  // 애니메이션 상태
+  const centerAnimation = useRef(new Animated.Value(0)).current;
+  const pulseAnimation = useRef(new Animated.Value(1)).current;
+  const swirleAnimation = useRef(new Animated.Value(0)).current;
+  const [centerColors, setCenterColors] = useState<string[]>(['#171717']);
+
+  // 중앙부 색상 업데이트 및 애니메이션
+  const updateCenterColors = () => {
+    const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+    if (activeIngredients.length === 0) {
+      setCenterColors(['#171717']);
+    } else {
+      // 향료 색상들을 배열에 추가
+      const ingredientColors = activeIngredients.map(ing => ing.color);
+      setCenterColors(['#171717', ...ingredientColors]);
+    }
+  };
+
+  // 색상 유효성 검사 및 투명도 추가
+  const addOpacityToColor = (color: string, opacity: string) => {
+    if (!color || typeof color !== 'string') {
+      return '#171717';
+    }
+    // #으로 시작하는 hex 색상인지 확인
+    if (color.startsWith('#') && (color.length === 7 || color.length === 4)) {
+      return `${color}${opacity}`;
+    }
+    return '#171717';
+  };
+
+  // 중앙부 배경색 계산
+  const getCenterBackgroundColor = () => {
+    const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+    if (activeIngredients.length === 0) {
+      return '#171717';
+    }
+    // 첫 번째 향료 색상을 더 진하게 적용
+    return addOpacityToColor(activeIngredients[0].color, '80'); // 50% 불투명도
+  };
+
+  const triggerColorMixAnimation = () => {
+    // 펄스 애니메이션
+    Animated.sequence([
+      Animated.timing(pulseAnimation, {
+        toValue: 1.15,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(pulseAnimation, {
+        toValue: 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // 소용돌이 애니메이션
+    swirleAnimation.setValue(0);
+    Animated.timing(swirleAnimation, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  // 지속적인 소용돌이 애니메이션 시작
+  const startContinuousSwirl = () => {
+    const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+    if (activeIngredients.length > 0) {
+      swirleAnimation.setValue(0);
+      Animated.loop(
+        Animated.timing(swirleAnimation, {
+          toValue: 1,
+          duration: 4000,
+          useNativeDriver: true,
+        }),
+        { iterations: -1 }
+      ).start();
+    }
+  };
+
+  // ingredients 변경 감지 (초기 로드 제외)
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
+  
+  useEffect(() => {
+    updateCenterColors();
+    if (!isInitialLoad) {
+      triggerColorMixAnimation();
+      startContinuousSwirl();
+    } else {
+      setIsInitialLoad(false);
+      // 초기 로드 후에도 향료가 있으면 소용돌이 시작
+      const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+      if (activeIngredients.length > 0) {
+        startContinuousSwirl();
+      }
+    }
+  }, [ingredients, isInitialLoad]);
 
   const updateIngredientAmount = (id: string, newAmount: number) => {
     setIngredients(prev => 
@@ -76,31 +184,48 @@ export default function IngredientSettingsScreen() {
     );
   };
 
-  const handleRefillAll = () => {
-    Alert.alert(
-      '전체 보충',
-      '모든 원료를 최대량으로 보충하시겠습니까?',
-      [
-        { text: '취소', style: 'cancel' },
+  const handleClearAll = () => {
+    setModalConfig({
+      title: '전체 비우기',
+      message: '모든 원료를 제거하시겠습니까?',
+      icon: <Trash2 size={32} color="#ef4444" />,
+      actions: [
+        { text: '취소', style: 'cancel', onPress: () => {} },
         { 
-          text: '보충', 
+          text: '비우기', 
+          style: 'destructive',
           onPress: () => {
             setIngredients(prev => 
-              prev.map(ingredient => 
-                ingredient.isEmpty 
-                  ? ingredient 
-                  : { ...ingredient, amount: ingredient.maxAmount }
-              )
+              prev.map(ingredient => ({
+                ...ingredient,
+                name: '',
+                color: '#e5e7eb',
+                isEmpty: true,
+                amount: 0
+              }))
             );
-            Alert.alert('완료', '모든 원료가 보충되었습니다.');
+            setModalConfig({
+              title: '완료',
+              message: '모든 원료가 제거되었습니다.',
+              icon: <CheckCircle size={32} color="#22c55e" />,
+              actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+            });
+            setModalVisible(true);
           }
         }
       ]
-    );
+    });
+    setModalVisible(true);
   };
 
   const handleSaveSettings = () => {
-    Alert.alert('설정 저장', '원료 설정이 저장되었습니다.');
+    setModalConfig({
+      title: '설정 저장',
+      message: '원료 설정이 저장되었습니다.',
+      icon: <Save size={32} color="#22c55e" />,
+      actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+    });
+    setModalVisible(true);
   };
 
   const getAmountStatus = (amount: number, maxAmount: number) => {
@@ -146,21 +271,15 @@ export default function IngredientSettingsScreen() {
   };
 
   const getSlotPosition = (slot: number) => {
-    // 12등분 원에서 3번, 9번 제외
-    // 6시 방향을 정면(0도)으로, 8번 슬롯 위치가 1번이 되도록 설정
-    // 8번 슬롯은 6시에서 반시계로 2칸 = 6시에서 60도 반시계 방향
-    const slotToAngleMap: { [key: number]: number } = {
-      1: 150,  // 11시 방향 (시계방향 90도 회전)
-      2: 120,  // 10시 방향 (시계방향 90도 회전)
-      4: 60,   // 8시 방향 (시계방향 90도 회전)
-      5: 30,   // 7시 방향 (시계방향 90도 회전)
-      6: 0,    // 6시 방향 (시계방향 90도 회전)
-      7: -30,  // 5시 방향 (시계방향 90도 회전)
-      8: -60,  // 4시 방향 (시계방향 90도 회전)
-      10: -120, // 2시 방향 (시계방향 90도 회전)
-      11: -150, // 1시 방향 (시계방향 90도 회전)
-      12: 180, // 12시 방향 (시계방향 90도 회전)
-    };
+    // 10개 슬롯을 10등분으로 균등 배치 (36도씩)
+    // 1번 슬롯이 144도 위치에 오도록 시작점 설정 (180 - 36도)
+    const slotOrder = [1, 2, 4, 5, 6, 7, 8, 10, 11, 12]; // 현재 존재하는 10개 슬롯
+    const slotToAngleMap: { [key: number]: number } = {};
+    
+    slotOrder.forEach((slotNum, index) => {
+      // 1번이 144도 위치에 오도록 하고, 반시계방향으로 36도씩 배치
+      slotToAngleMap[slotNum] = 144 - (index * 36);
+    });
     
     const angle = (slotToAngleMap[slot] || 0) * (Math.PI / 180);
     const radius = (CONTAINER_SIZE - SLOT_SIZE) / 2 - 30; // 반지름을 조금 줄여서 프레임 안쪽으로 배치
@@ -210,10 +329,10 @@ export default function IngredientSettingsScreen() {
     return (
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <Defs>
-          <LinearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
+          <SvgLinearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <Stop offset="0%" stopColor={color} stopOpacity="1" />
             <Stop offset="100%" stopColor={color} stopOpacity="0.7" />
-          </LinearGradient>
+          </SvgLinearGradient>
         </Defs>
         
         {/* 배경 원 */}
@@ -279,6 +398,7 @@ export default function IngredientSettingsScreen() {
         contentContainerStyle={styles.scrollContent}
       >
         <Text style={styles.subtitle}>Moodrop Station의 원료를 관리하세요</Text>
+        <Text style={styles.guideText}>빈 공간을 터치하여 향료를 추가하거나, 기존 향료를 터치하여 수량을 조절하세요</Text>
         
         {/* 6각형 기기 시각화 */}
         <View style={styles.deviceContainer}>
@@ -297,88 +417,81 @@ export default function IngredientSettingsScreen() {
               />
             </Svg>
             
-            {/* 중앙부 */}
-            <View style={[styles.centerCircle, { 
+            {/* 중앙부 - 애니메이션 효과가 있는 Moodrop Station */}
+            <View style={[styles.centerContainer, { 
               width: CENTER_SIZE, 
               height: CENTER_SIZE,
               left: (CONTAINER_SIZE - CENTER_SIZE) / 2,
               top: (CONTAINER_SIZE - CENTER_SIZE) / 2,
             }]}>
-              {selectedIngredient ? (
-                /* 선택된 슬롯 표시 */
-                <View style={styles.selectedSlotCenter}>
-                  <PieChartSlot
-                    size={CENTER_SIZE * 0.95}
-                    color={selectedIngredient.isEmpty ? '#e5e7eb' : selectedIngredient.color}
-                    amount={selectedIngredient.amount}
-                    maxAmount={selectedIngredient.maxAmount}
-                    isEmpty={selectedIngredient.isEmpty || false}
-                    isSelected={false}
-                    slotId={`center-${selectedIngredient.id}`}
-                  />
-                  
-                  {/* 중앙 슬롯 정보 및 컨트롤 */}
-                  <View style={styles.centerSlotInfo}>
-                    {selectedIngredient.isEmpty ? (
-                      <View style={styles.centerEmptyActions}>
-                        <Text style={styles.centerEmptyText}>빈 공간</Text>
-                        <TouchableOpacity 
-                          style={styles.centerAddButton}
-                          onPress={() => setShowIngredientSelector(true)}
-                        >
-                          <Plus size={16} color="#ffffff" />
-                          <Text style={styles.centerAddButtonText}>향료 추가</Text>
-                        </TouchableOpacity>
-                      </View>
-                    ) : (
-                      <>
-                        <Text style={styles.centerSlotName}>{selectedIngredient.name}</Text>
-                        <Text style={styles.centerSlotAmount}>
-                          {selectedIngredient.amount}ml / {selectedIngredient.maxAmount}ml
-                        </Text>
-                        
-                        {/* 수량 조절 버튼 */}
-                        <View style={styles.centerControls}>
-                          <TouchableOpacity 
-                            style={styles.centerControlButton}
-                            onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount - 1)}
-                          >
-                            <Minus size={14} color="#737373" />
-                          </TouchableOpacity>
-                          
-                          <TouchableOpacity 
-                            style={styles.centerControlButton}
-                            onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount + 1)}
-                          >
-                            <Plus size={14} color="#737373" />
-                          </TouchableOpacity>
-                        </View>
-                        
-                        {/* 제거 버튼 */}
-                        <TouchableOpacity 
-                          style={styles.centerRemoveButton}
-                          onPress={() => removeIngredientFromSlot(selectedIngredient.id)}
-                        >
-                          <X size={12} color="#ef4444" />
-                          <Text style={styles.centerRemoveText}>제거</Text>
-                        </TouchableOpacity>
-                      </>
-                    )}
-                  </View>
-                </View>
-              ) : (
-                /* 기본 Moodrop Station 표시 */
-                <>
+              <Animated.View style={[
+                styles.centerCircle,
+                {
+                  transform: [{ scale: pulseAnimation }],
+                }
+              ]}>
+                {centerColors && centerColors.length > 1 ? (
+                  // 향료가 있을 때: 그라데이션과 소용돌이 효과
+                  <>
+                    <LinearGradient
+                      colors={[
+                        centerColors[0] || '#171717',
+                        centerColors[1] || '#171717',
+                        centerColors[centerColors.length - 1] || centerColors[1] || '#171717'
+                      ]}
+                      style={styles.centerGradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                    />
+                    
+                    {/* 소용돌이 레이어들 */}
+                    {Array.isArray(centerColors) && centerColors.slice(1).map((color, index) => (
+                      <Animated.View
+                        key={`swirl-layer-${index}`}
+                        style={[
+                          styles.swirlLayer,
+                          {
+                            transform: [
+                              {
+                                rotate: swirleAnimation.interpolate({
+                                  inputRange: [0, 1],
+                                  outputRange: [`${index * 60}deg`, `${(index * 60) + 360}deg`],
+                                }),
+                              },
+                              { scale: 1 + (index * 0.1) }
+                            ],
+                          }
+                        ]}
+                      >
+                        <LinearGradient
+                          colors={[
+                            addOpacityToColor(color, '80'),
+                            addOpacityToColor(color, '40'),
+                            'transparent',
+                            addOpacityToColor(color, '60')
+                          ]}
+                          style={styles.swirlGradient}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 1 }}
+                        />
+                      </Animated.View>
+                    ))}
+                  </>
+                ) : (
+                  // 향료가 없을 때: 기본 검은색
+                  <View style={[styles.centerGradient, { backgroundColor: '#171717' }]} />
+                )}
+                
+                <View style={styles.centerTextContainer}>
                   <Text style={styles.centerText}>Moodrop</Text>
                   <Text style={styles.centerSubText}>Station</Text>
-                </>
-              )}
+                </View>
+              </Animated.View>
             </View>
             
             {/* 10개 파이차트 슬롯 */}
             {ingredients.map((ingredient) => {
               const position = getSlotPosition(ingredient.slot);
-              const statusInfo = getAmountStatus(ingredient.amount, ingredient.maxAmount);
               
               return (
                 <View
@@ -395,7 +508,17 @@ export default function IngredientSettingsScreen() {
                 >
                   <TouchableOpacity
                     style={styles.pieChartWrapper}
-                    onPress={() => setSelectedSlot(selectedSlot === ingredient.id ? null : ingredient.id)}
+                    onPress={() => {
+                      if (ingredient.isEmpty) {
+                        // 빈 공간을 클릭하면 바로 향료 추가 모달 열기
+                        setSelectedSlot(ingredient.id);
+                        setShowIngredientSelector(true);
+                      } else {
+                        // 향료가 있으면 원료 설정 모달 열기
+                        setSelectedSlot(ingredient.id);
+                        setShowIngredientSettings(true);
+                      }
+                    }}
                   >
                     <PieChartSlot
                       size={SLOT_SIZE}
@@ -403,15 +526,14 @@ export default function IngredientSettingsScreen() {
                       amount={ingredient.amount}
                       maxAmount={ingredient.maxAmount}
                       isEmpty={ingredient.isEmpty || false}
-                      isSelected={selectedSlot === ingredient.id}
+                      isSelected={false}
                       slotId={ingredient.id}
                     />
                     
                     {/* 슬롯 정보 중앙 표시 */}
                     <View style={styles.slotCenterInfo}>
-                      <Text style={styles.slotNumber}>{ingredient.slot}</Text>
                       {ingredient.isEmpty ? (
-                        <Text style={styles.emptySlotText}>빈 공간</Text>
+                        null
                       ) : (
                         <Text style={styles.slotName}>{ingredient.name}</Text>
                       )}
@@ -423,97 +545,12 @@ export default function IngredientSettingsScreen() {
           </View>
         </View>
 
-        {/* 선택된 슬롯 상세 조절 */}
-        {selectedIngredient && (
-          <View style={styles.selectedIngredientSection}>
-            <View style={styles.selectedHeader}>
-              <View style={styles.selectedInfo}>
-                <View style={[styles.selectedDot, { backgroundColor: selectedIngredient.color }]} />
-                <View>
-                  <Text style={styles.selectedName}>
-                    {selectedIngredient.isEmpty ? '빈 공간' : selectedIngredient.name}
-                  </Text>
-                </View>
-              </View>
-              <TouchableOpacity 
-                style={styles.closeButton}
-                onPress={() => setSelectedSlot(null)}
-              >
-                <X size={20} color="#737373" />
-              </TouchableOpacity>
-            </View>
-
-            {selectedIngredient.isEmpty ? (
-              /* 빈 슬롯일 때 향료 추가 버튼 */
-              <View style={styles.emptySlotActions}>
-                <TouchableOpacity 
-                  style={styles.addIngredientButton}
-                  onPress={() => setShowIngredientSelector(true)}
-                >
-                  <Plus size={20} color="#ffffff" />
-                  <Text style={styles.addIngredientButtonText}>향료 추가</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              /* 향료가 있을 때 조절 및 제거 */
-              <>
-                <View style={styles.amountSection}>
-                  <Text style={styles.amountLabel}>
-                    {selectedIngredient.amount}ml / {selectedIngredient.maxAmount}ml
-                  </Text>
-                  <View style={styles.progressBar}>
-                    <View 
-                      style={[
-                        styles.progressBarFill, 
-                        { 
-                          width: `${(selectedIngredient.amount / selectedIngredient.maxAmount) * 100}%`, 
-                          backgroundColor: getAmountStatus(selectedIngredient.amount, selectedIngredient.maxAmount).color 
-                        }
-                      ]} 
-                    />
-                  </View>
-                </View>
-
-                <View style={styles.controls}>
-                  <TouchableOpacity 
-                    style={styles.controlButton}
-                    onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount - 1)}
-                  >
-                    <Minus size={20} color="#737373" />
-                  </TouchableOpacity>
-                  
-                  <View style={styles.controlDisplay}>
-                    <Text style={styles.controlAmount}>{selectedIngredient.amount}</Text>
-                    <Text style={styles.controlUnit}>ml</Text>
-                  </View>
-                  
-                  <TouchableOpacity 
-                    style={styles.controlButton}
-                    onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount + 1)}
-                  >
-                    <Plus size={20} color="#737373" />
-                  </TouchableOpacity>
-                </View>
-
-                <View style={styles.removeSection}>
-                  <TouchableOpacity 
-                    style={styles.removeButton}
-                    onPress={() => removeIngredientFromSlot(selectedIngredient.id)}
-                  >
-                    <X size={16} color="#ef4444" />
-                    <Text style={styles.removeButtonText}>제거</Text>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        )}
 
         {/* 전체 관리 버튼들 */}
         <View style={styles.actionsSection}>
-          <TouchableOpacity style={styles.refillButton} onPress={handleRefillAll}>
-            <RefreshCw size={20} color="#ffffff" />
-            <Text style={styles.refillButtonText}>전체 보충</Text>
+          <TouchableOpacity style={styles.clearButton} onPress={handleClearAll}>
+            <Trash2 size={20} color="#ffffff" />
+            <Text style={styles.clearButtonText}>전체 비우기</Text>
           </TouchableOpacity>
           
           <TouchableOpacity style={styles.saveButton} onPress={handleSaveSettings}>
@@ -584,6 +621,100 @@ export default function IngredientSettingsScreen() {
           </ScrollView>
         </SafeAreaView>
       </Modal>
+
+      {/* 원료 설정 모달 */}
+      <Modal
+        visible={showIngredientSettings}
+        animationType="fade"
+        transparent={true}
+        onRequestClose={() => setShowIngredientSettings(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <TouchableOpacity 
+            style={styles.modalBackground}
+            activeOpacity={1}
+            onPress={() => setShowIngredientSettings(false)}
+          />
+          
+          {selectedIngredient && !selectedIngredient.isEmpty && (
+            <View style={styles.ingredientSettingsModal}>
+              <View style={styles.modalHeader}>
+                <Text style={styles.modalTitle}>원료 설정</Text>
+                <TouchableOpacity onPress={() => setShowIngredientSettings(false)}>
+                  <X size={24} color="#737373" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.selectedHeader}>
+                <View style={styles.selectedInfo}>
+                  <View style={[styles.selectedDot, { backgroundColor: selectedIngredient.color }]} />
+                  <Text style={styles.selectedName}>{selectedIngredient.name}</Text>
+                </View>
+              </View>
+
+              <View style={styles.amountSection}>
+                <Text style={styles.amountLabel}>
+                  {selectedIngredient.amount}ml / {selectedIngredient.maxAmount}ml
+                </Text>
+                <View style={styles.progressBar}>
+                  <View 
+                    style={[
+                      styles.progressBarFill, 
+                      { 
+                        width: `${(selectedIngredient.amount / selectedIngredient.maxAmount) * 100}%`, 
+                        backgroundColor: getAmountStatus(selectedIngredient.amount, selectedIngredient.maxAmount).color 
+                      }
+                    ]} 
+                  />
+                </View>
+              </View>
+
+              <View style={styles.controls}>
+                <TouchableOpacity 
+                  style={styles.controlButton}
+                  onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount - 1)}
+                >
+                  <Minus size={20} color="#737373" />
+                </TouchableOpacity>
+                
+                <View style={styles.controlDisplay}>
+                  <Text style={styles.controlAmount}>{selectedIngredient.amount}</Text>
+                  <Text style={styles.controlUnit}>ml</Text>
+                </View>
+                
+                <TouchableOpacity 
+                  style={styles.controlButton}
+                  onPress={() => updateIngredientAmount(selectedIngredient.id, selectedIngredient.amount + 1)}
+                >
+                  <Plus size={20} color="#737373" />
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.removeSection}>
+                <TouchableOpacity 
+                  style={styles.removeButton}
+                  onPress={() => {
+                    removeIngredientFromSlot(selectedIngredient.id);
+                    setShowIngredientSettings(false);
+                  }}
+                >
+                  <X size={16} color="#ef4444" />
+                  <Text style={styles.removeButtonText}>제거</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+      </Modal>
+      
+      <CustomModal
+        visible={modalVisible}
+        onClose={() => setModalVisible(false)}
+        title={modalConfig.title}
+        message={modalConfig.message}
+        actions={modalConfig.actions}
+        icon={modalConfig.icon}
+      />
     </SafeAreaView>
   );
 }
@@ -604,7 +735,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#525252',
     textAlign: 'center',
+    marginBottom: 8,
+  },
+  guideText: {
+    fontSize: 14,
+    color: '#737373',
+    textAlign: 'center',
     marginBottom: 32,
+    lineHeight: 20,
   },
   deviceContainer: {
     alignItems: 'center',
@@ -618,108 +756,59 @@ const styles = StyleSheet.create({
   hexagonSvg: {
     position: 'absolute',
   },
-  centerCircle: {
+  centerContainer: {
     position: 'absolute',
-    backgroundColor: '#171717',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  centerCircle: {
+    width: '100%',
+    height: '100%',
     borderRadius: 9999,
     justifyContent: 'center',
     alignItems: 'center',
+    position: 'relative',
+  },
+  centerTextContainer: {
+    position: 'absolute',
+    justifyContent: 'center',
+    alignItems: 'center',
+    width: '100%',
+    height: '100%',
+    zIndex: 10,
+  },
+  centerGradient: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 9999,
+  },
+  swirlLayer: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    borderRadius: 9999,
+  },
+  swirlGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 9999,
   },
   centerText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   centerSubText: {
     color: '#ffffff',
     fontSize: 12,
-    opacity: 0.8,
-  },
-  selectedSlotCenter: {
-    position: 'absolute',
-    width: '120%',
-    height: '120%',
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ffffff',
-    borderRadius: 999,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 4,
-    zIndex: 10,
-  },
-  centerSlotInfo: {
-    position: 'absolute',
-    alignItems: 'center',
-    justifyContent: 'center',
-    width: '70%',
-    height: '70%',
-  },
-  centerSlotName: {
-    fontSize: 14,
-    color: '#171717',
-    fontWeight: '600',
-    textAlign: 'center',
-    marginBottom: 2,
-  },
-  centerSlotAmount: {
-    fontSize: 12,
-    color: '#737373',
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  centerEmptyActions: {
-    alignItems: 'center',
-  },
-  centerEmptyText: {
-    fontSize: 12,
-    color: '#9ca3af',
-    fontWeight: '500',
-    marginBottom: 8,
-  },
-  centerAddButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#3b82f6',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
-    gap: 4,
-  },
-  centerAddButtonText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  centerControls: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 6,
-  },
-  centerControlButton: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#f3f4f6',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#d1d5db',
-  },
-  centerRemoveButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    gap: 3,
-  },
-  centerRemoveText: {
-    color: '#ef4444',
-    fontSize: 10,
-    fontWeight: '500',
+    opacity: 0.9,
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
   },
   ingredientSlotContainer: {
     position: 'absolute',
@@ -741,12 +830,6 @@ const styles = StyleSheet.create({
     height: '60%',
     pointerEvents: 'none', // 터치 이벤트 통과
   },
-  slotNumber: {
-    fontSize: 12,
-    color: '#737373',
-    fontWeight: '600',
-    marginBottom: 2,
-  },
   slotName: {
     fontSize: 12,
     color: '#171717',
@@ -765,19 +848,37 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     textAlign: 'center',
   },
-  selectedIngredientSection: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 12,
-    padding: 20,
-    marginBottom: 24,
-    borderWidth: 2,
-    borderColor: '#e9ecef',
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBackground: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  ingredientSettingsModal: {
+    backgroundColor: '#ffffff',
+    borderRadius: 16,
+    margin: 32,
+    minWidth: 320,
+    maxWidth: 400,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.25,
+    shadowRadius: 8,
+    elevation: 8,
   },
   selectedHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
   },
   selectedInfo: {
     flexDirection: 'row',
@@ -798,7 +899,8 @@ const styles = StyleSheet.create({
     padding: 4,
   },
   amountSection: {
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   amountLabel: {
     fontSize: 16,
@@ -821,6 +923,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 24,
+    paddingHorizontal: 20,
+    marginBottom: 16,
   },
   controlButton: {
     width: 48,
@@ -848,18 +952,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 12,
     marginBottom: 24,
+    alignItems: 'stretch',
   },
-  refillButton: {
+  clearButton: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#22c55e',
+    backgroundColor: '#ef4444',
     paddingVertical: 16,
+    paddingHorizontal: 16,
     borderRadius: 12,
     gap: 8,
+    minHeight: 56,
   },
-  refillButtonText: {
+  clearButtonText: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '600',
@@ -871,8 +978,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#3b82f6',
     paddingVertical: 16,
+    paddingHorizontal: 16,
     borderRadius: 12,
     gap: 8,
+    minHeight: 56,
   },
   saveButtonText: {
     color: '#ffffff',
@@ -916,10 +1025,11 @@ const styles = StyleSheet.create({
   },
   removeSection: {
     alignItems: 'center',
-    marginTop: 16,
+    paddingHorizontal: 20,
     paddingTop: 16,
+    paddingBottom: 20,
     borderTopWidth: 1,
-    borderTopColor: '#e5e7eb',
+    borderTopColor: '#f3f4f6',
   },
   removeButton: {
     flexDirection: 'row',
@@ -941,10 +1051,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 16,
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e7eb',
+    borderBottomColor: '#f3f4f6',
   },
   modalTitle: {
     fontSize: 18,
