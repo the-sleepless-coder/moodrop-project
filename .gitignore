@@ -286,5 +286,6 @@ buck-out/
 ### CLAUDE CODE ###
 CLAUDE.md
 TASK.md
+API_docs.md
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,reactnative,linux

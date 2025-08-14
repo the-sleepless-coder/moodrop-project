@@ -423,6 +423,98 @@ class CategoryService {
       } as ApiResponse<UserRecipeListResponse>;
     }
   }
+
+  /**
+   * 새로운 커스텀 레시피를 생성합니다.
+   * @param userId - 사용자 ID (숫자)
+   * @param perfumeName - 향수 이름
+   * @param description - 향수 설명
+   * @param composition - 향료 구성 배열 (name, type, weight)
+   * @returns 생성된 레시피 정보
+   */
+  async createUserRecipe(
+    userId: number, 
+    perfumeName: string,
+    description: string,
+    composition: Array<{ name: string; type: string; weight: number }>
+  ): Promise<ApiResponse<any>> {
+    try {
+      if (!userId || userId <= 0) {
+        return {
+          success: false,
+          error: '유효하지 않은 사용자 ID입니다.',
+          message: 'Invalid user ID'
+        } as ApiResponse<any>;
+      }
+
+      if (!perfumeName || perfumeName.trim() === '') {
+        return {
+          success: false,
+          error: '향수 이름이 필요합니다.',
+          message: 'Perfume name is required'
+        } as ApiResponse<any>;
+      }
+
+      if (!description || description.trim() === '') {
+        return {
+          success: false,
+          error: '향수 설명이 필요합니다.',
+          message: 'Description is required'
+        } as ApiResponse<any>;
+      }
+
+      if (!composition || composition.length === 0) {
+        return {
+          success: false,
+          error: '향료 정보가 필요합니다.',
+          message: 'Composition is required'
+        } as ApiResponse<any>;
+      }
+
+      // 비율 합계 검증
+      const totalPercentage = composition.reduce((sum, item) => sum + item.weight, 0);
+      if (Math.abs(totalPercentage - 100) > 0.1) {
+        return {
+          success: false,
+          error: '향료 비율의 합이 100%가 되어야 합니다.',
+          message: 'Total percentage must be 100%'
+        } as ApiResponse<any>;
+      }
+
+      const endpoint = '/recipe';
+      const requestBody = {
+        userId,
+        perfumeName,
+        description,
+        composition
+      };
+      
+      console.log('CreateUserRecipe API Request:', endpoint, requestBody);
+      
+      const response = await apiClient.post<any>(endpoint, requestBody);
+      
+      console.log('CreateUserRecipe API Raw Response:', response);
+      
+      if (response.success && response.data) {
+        console.log('CreateUserRecipe API Success:', {
+          userId,
+          perfumeName,
+          description,
+          compositionCount: composition.length
+        });
+        return response;
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Failed to create user recipe:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error occurred',
+        message: 'Failed to create user recipe'
+      } as ApiResponse<any>;
+    }
+  }
 }
 
 // 카테고리 서비스 인스턴스 생성 및 내보내기
