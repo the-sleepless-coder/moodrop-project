@@ -25,6 +25,7 @@ import com.moodrop.model.dto.PerfumeExtendedDto;
 import com.moodrop.model.dto.PerfumeMatchDto;
 import com.moodrop.model.dto.PerfumeWithMatch;
 import com.moodrop.model.dto.PerfumeWrapper;
+import com.moodrop.model.dto.PerfumeWrapperExtended;
 import com.moodrop.model.dto.SeasonDto;
 import com.moodrop.model.dto.SillageDto;
 import com.moodrop.model.dto.UserNoteDto;
@@ -41,7 +42,27 @@ public class PerfumeServiceImpl implements PerfumeService{
 	//private final NoteRepository noteRepository;
 	//private final AccordRepository accordRepository;
 	//private final AccordNoteRepository accordNoteRepository;
-	 
+	
+	// selectPerfumeByNotes, selectPerfumeByNotesAtLeastK
+	private static final int MIN_COUNT = 3;
+	
+	// selectPerfumeByNotesAtLeastK
+	private static final int RESTRICT_COUNT = 100;
+	
+	// JSON String -> List<String> Parsing 용도로 쓰임.
+	private static final com.fasterxml.jackson.databind.ObjectMapper OM = new com.fasterxml.jackson.databind.ObjectMapper();
+
+	private static java.util.List<String> parseNotes(String json) {
+	    if (json == null || json.isBlank()) return java.util.List.of();
+	    try {
+	        return OM.readValue(json, new com.fasterxml.jackson.core.type.TypeReference<java.util.List<String>>() {});
+	    } catch (Exception e) {
+	        // 필요하면 로그
+	        // log.warn("Failed to parse matchedNotesJson: {}", json, e);
+	        return java.util.List.of();
+	    }
+	}
+	
 	 /**
 	 Perfume에 대한 전체 정보 조회
 	 **/
@@ -164,7 +185,22 @@ public class PerfumeServiceImpl implements PerfumeService{
 	            notesMap.computeIfAbsent(n.getType(), k -> new ArrayList<>()).add(n.getName());
 	        }
 	        dto.setNotes(notesMap);
-
+	        
+	        // dayNight 정보
+	        Map<String, Integer> dayNightMap = new LinkedHashMap<>();
+	        for(DayNightDto dn: dao.selectDayNightByPerfumeId(pfId)) {
+	        	dayNightMap.put(dn.getDayNight(), dn.getWeight());
+	        }
+	        dto.setDayNight(dayNightMap);
+	        
+	        // season 정보
+	        Map<String, Integer> seasonMap = new LinkedHashMap<>();
+	        for(SeasonDto s: dao.selectSeasonByPerfumeId(pfId)) {
+	        	seasonMap.put( s.getSeason(), s.getWeight());
+	        }
+	        dto.setSeason(seasonMap);
+	        
+	        
 	        // 2) 사용자 노트와 교집합
 	        Map<String, List<String>> hit = new LinkedHashMap<>();
 	        int hitCount = 0;
@@ -280,6 +316,7 @@ public class PerfumeServiceImpl implements PerfumeService{
 	 * 사용자 보유 Note를 삭제한다.
 	 * @throws SQLException 
 	 * **/
+	@Override
 	public int deleteUserNote(String userId, String noteName) throws SQLException {
 		
 		int result = dao.deleteUserNote(userId, noteName);
@@ -287,5 +324,75 @@ public class PerfumeServiceImpl implements PerfumeService{
 		return result;
 	}
 
+	/**
+	 * 노트 일부만 담고 있는 향수를 검색한다.(최대 500개 반환 후 Service에서 개수 통제)
+	 * noteList을 입력값으로 넣으면, perfumeId 반환.
+	 * perfumeId 이용해 전체 perfumeWrapper List 반환.
+	 * @throws SQLException 
+	 * **/
+	@Override
+	public List<PerfumeWrapper> selectPerfumeByNote(List<String> noteList) throws SQLException{
+		// noteList 및 listSize입력 시, perfumeId 반환.
+		// myBatis에서 listSize 반환 오류로 인해, service에서 추출.
+		int listSize = noteList.size();
+		List<Integer> searchedPerfumes = dao.selectPerfumeByNotes(noteList, listSize);
+		
+		// perfumeId 이용해 전체 PerfumeWrapper List 반환.
+		int restrictCount = 100;
+		int count = 0;
+		List<PerfumeWrapper> searchResult = new ArrayList<>(); 
+		for(Integer perfume: searchedPerfumes) {
+			int perfumeId = perfume;
+			searchResult.add(getPerfumeWrapper(perfumeId));
+			count++;
+			if( count== RESTRICT_COUNT) break;
+		}
+		
+		return searchResult;
+	}
+	
+	
+	public List<PerfumeWrapperExtended> getPerfumeWrapperExtended(int id, List<String> noteList, int minCount) throws SQLException{
+		
+		PerfumeWrapper baseInfo = getPerfumeWrapper(id);
+		
+		List<PerfumeWrapperExtended> extendedInfo = dao.selectPerfumeByNotesAtLeastMin(noteList, minCount);
+		return null;
+	}
+	
+	
+	/**
+	 * 모든 노트를 담고 있는 향수를 검색한다.(최대 500개 반환 후 Service에서 개수 통제) 
+	 **/
+	@Override
+	public List<PerfumeWrapperExtended> selectPerfumeByAtLeastKNotes(List<String> noteList) throws SQLException{
+		// Perfume의 Note가 noteList 내 MinCount이상 들어 있는, perfumeId를 반환한다.
+		List<PerfumeWrapperExtended> hits = dao.selectPerfumeByNotesAtLeastMin(noteList, MIN_COUNT);
+		
+		int count = 0;
+		List<PerfumeWrapperExtended> searchResult = new ArrayList<>();
+		for(PerfumeWrapperExtended hit: hits) {
+			int perfumeId = hit.getMatchId();
+			
+			System.out.println(hit.getMatchedNotesJson());
+			
+			// perfume 기본 정보를 가져온다.
+			PerfumeWrapper baseInfo = getPerfumeWrapper(perfumeId);
+			
+			// JSON String -> List<String> 정보를 Parsing해서 쓴다.
+			List<String> matchedNotes = parseNotes(hit.getMatchedNotesJson());
+			
+			// noteMatchCount, MatchedNotes 정보를 추가한다.
+			PerfumeWrapperExtended ext = PerfumeWrapperExtended.of(baseInfo, perfumeId, hit.getMatchCount(), matchedNotes);
+			
+			// 검색 정보 List에 추가한다.
+			searchResult.add(ext);
+			
+			count++;
+			if( count == RESTRICT_COUNT ) break;
+		}
+		return searchResult;
+	}
+	
 	
 }

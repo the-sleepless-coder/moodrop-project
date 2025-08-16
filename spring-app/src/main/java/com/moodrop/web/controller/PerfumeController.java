@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
-import org.apache.catalina.connector.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +21,7 @@ import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.MoodAccordDto;
 import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeWrapper;
+import com.moodrop.model.dto.PerfumeWrapperExtended;
 import com.moodrop.model.dto.UserNoteDto;
 import com.moodrop.model.service.PerfumeService;
 
@@ -167,6 +167,47 @@ public class PerfumeController {
 		}catch(Exception e) {
 			e.printStackTrace();
 			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+		
+	}
+	
+	/**
+	 * 노트 일부만 담고 있는 향수를 검색한다.
+	 * **/
+	@PostMapping("/perfume/searchPartNote")
+	public ResponseEntity<?> searchPerfumeByNote(@RequestBody Map<String, List<String>> noteList, HttpServletRequest request, HttpServletResponse response ) throws SQLException{
+		
+		try {
+			List<String> extractedNoteList = noteList.get("noteList");
+			List<PerfumeWrapper>searchResult = service.selectPerfumeByNote(extractedNoteList);
+
+			return ResponseEntity.ok(searchResult);			
+			
+			// return ResponseEntity.ok("Done");
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+		
+	}
+	
+	/**
+	 * 모든 노트를 담고 있는 향수를 검색한다.
+	 * **/
+	@PostMapping("/perfume/searchAllNote")
+	public ResponseEntity<?> searchPerfumeByAllnote(@RequestBody Map<String, List<String>> noteList, HttpServletRequest request, HttpServletResponse response){
+		
+		try {
+			List<String> extractedNoteList= noteList.get("noteList");
+			List<PerfumeWrapperExtended> searchResult = service.selectPerfumeByAtLeastKNotes(extractedNoteList);
+			
+			return ResponseEntity.ok(searchResult);
+			
+		}catch(Exception e) {
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+			
 		}
 		
 	}

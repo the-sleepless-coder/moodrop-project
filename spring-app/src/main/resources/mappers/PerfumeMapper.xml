@@ -4,6 +4,12 @@
 
 <mapper namespace="com.moodrop.model.dao.PerfumeDao">
 	
+	<resultMap id="selectPerfumeByNotesAtLeastMinMap" type="com.moodrop.model.dto.PerfumeWrapperExtended">
+	  <result property="matchedNotes" column="matched_notes"
+	          typeHandler="com.moodrop.typehandler.JsonToNoteListTypeHandler"/>
+	</resultMap>
+	
+	
 	<!-- Perfume Id로 perfume의 필요한 모든 정보 조회 -->
 	<!-- Perfume Basic 정보 -->
 	<select id="selectPerfumeBasicByPerfumeId" parameterType="int" resultType="PerfumeBasicDto">
@@ -278,6 +284,44 @@
 	  WHERE u.user_id = #{userId}
 	    AND n.name    = #{note};
 	</delete>	
+	
+	
+	<!-- Note로 만들 수 있는 PerfumeId 찾기 -->
+	<select id="selectPerfumeByNotes">
+		SELECT p.id
+	    FROM perfumes AS p
+	    JOIN determined_notes AS dn ON dn.perfume_id = p.id
+	    JOIN notes AS n ON dn.note_id = n.id
+	    WHERE n.name IN
+	    <foreach collection="noteList" item="note" open="(" separator="," close=")">
+	        #{note}
+	    </foreach>
+	    GROUP BY p.id
+	    HAVING COUNT(DISTINCT n.name) = #{listSize}
+	    LIMIT 500
+		;
+	</select>
+	
+	
+	<select id="selectPerfumeByNotesAtLeastMin">
+	  SELECT p.id as match_id
+	  , COUNT(DISTINCT n.name) as match_count
+	  , JSON_ARRAYAGG(n.name) as matched_notes_json
+	  FROM perfumes as p
+	  JOIN determined_notes as dn ON p.id = dn.perfume_id 
+	  JOIN notes as n ON dn.note_id = n.id
+	  WHERE 
+	  n.name IN 
+	  <foreach collection = "noteList" item = "note" open= "(" separator = "," close = ")">
+	  	#{note}
+	  </foreach>
+	  GROUP BY match_id
+	  HAVING COUNT(DISTINCT n.name) >= #{minCount}
+	  ORDER BY COUNT(DISTINCT n.name) DESC, p.id ASC
+	  LIMIT 500
+	  ;
+	</select>
+	
 	
 	<!-- note 이름으로 id/type -->
     <select id="findNotesByNames"
