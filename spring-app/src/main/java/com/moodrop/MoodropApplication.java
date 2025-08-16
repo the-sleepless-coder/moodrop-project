@@ -6,7 +6,6 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @MapperScan(basePackages = "com.moodrop.model.dao")
-@EnableJpaRepositories(basePackages = "com.moodrop.model.repository")
 public class MoodropApplication {
 
 	public static void main(String[] args) {
