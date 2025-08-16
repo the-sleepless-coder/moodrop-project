@@ -21,4 +21,6 @@ public class PerfumeExtendedDto extends PerfumeBasicDto{
 	private Map<String, Integer> sillage;
 	private Map<String, Integer> longevity;
 	private Map<String, List<String>> notes;
+	private Map<String, Integer> dayNight;
+	private Map<String, Integer> season;
 }

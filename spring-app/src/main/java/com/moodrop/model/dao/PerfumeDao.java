@@ -13,6 +13,7 @@ import com.moodrop.model.dto.MoodAccordDto;
 import com.moodrop.model.dto.NotesDto;
 import com.moodrop.model.dto.PerfumeBasicDto;
 import com.moodrop.model.dto.PerfumeMatchDto;
+import com.moodrop.model.dto.PerfumeWrapperExtended;
 import com.moodrop.model.dto.SeasonDto;
 import com.moodrop.model.dto.SillageDto;
 import com.moodrop.model.dto.UserNoteDto;
@@ -62,6 +63,17 @@ public interface PerfumeDao {
 	
 	// 사용자 보유 노트 수정
 	int updateUserNotes(UserNoteDto userNote, String userId);	
+	
+	// Note로 만들 수 있는 PerfumeId 찾기( 만들 수 있는 향수 개수도 반환, 최대 500개 반환 후 Service에서 개수 통제)
+	// listSize만큼을 perfume에서 모두 가져야, perfume 반환.
+	List<Integer> selectPerfumeByNotes(@Param("noteList") List<String> noteList, @Param("listSize") int listSize );
+	
+	// Note로 만들 수 있는 perfumeId 찾기
+	// noteList 중 perfume이 노트를 모두 다 담고 있을 경우 (혹은 향후 조정을 위해 minCount이상), perfume 반환.
+	List<PerfumeWrapperExtended> selectPerfumeByNotesAtLeastMin(@Param("noteList") List<String> noteList, @Param("minCount") int minCount);
+	
+	
+	
 	
 	
 	
