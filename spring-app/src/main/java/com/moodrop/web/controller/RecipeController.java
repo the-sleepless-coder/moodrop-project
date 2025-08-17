@@ -151,10 +151,11 @@ public class RecipeController {
 	 * 특정 레시피의 별점 평균을 가져온다.
 	 * **/
 	@GetMapping("/recipe/{recipeId}/rating")
-	public ResponseEntity<?> getRecipeRating(@PathVariable Integer recipeId, @RequestBody Map<String, Object> body, HttpServletRequest request, HttpServletResponse response) throws SQLException{
+	public ResponseEntity<?> getRecipeRating(@PathVariable Integer recipeId, HttpServletRequest request, HttpServletResponse response) throws SQLException{
 		
+		double result = service.getRecipeRating(recipeId);
 		
-		return null;
+		return ResponseEntity.ok(result);
 	}
 	
 	

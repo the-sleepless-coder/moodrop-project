@@ -150,6 +150,10 @@ public class RecipeServiceImpl implements RecipeService{
 		
 		int result = dao.insertRecipeRating(userId, recipeId, rating);
 		if(result !=0) {
+			// 별점 평균 연산 후 갱신
+			double avg = dao.selectAverageRating(recipeId);
+			dao.updateRecipeAverage(recipeId, avg);
+			
 			return result;
 		}else {
 			throw new SQLException();
@@ -158,14 +162,19 @@ public class RecipeServiceImpl implements RecipeService{
 	
 	
 	/**
-	 * 레시피에 대한 평점 평균을 가져온다.
+	 * 레시피에 대해 이미 계산된 평점 평균을 가져온다.
+	 * @throws SQLException 
 	 ***/
-	public float getRecipeRating(int recipeId) {
+	@Override
+	public double getRecipeRating(int recipeId) throws SQLException {
+		double result = dao.selectRecipeAverageFromDb(recipeId);
 		
+		if(result != 0) {
+			return result;
+		}else {
+			throw new SQLException();
+		}
 		
-		
-		
-		return 0;
 	}
 	
 	

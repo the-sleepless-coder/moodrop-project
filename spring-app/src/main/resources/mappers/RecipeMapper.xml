@@ -183,11 +183,25 @@
 	</insert>
 	
 	
-	<select id="selectRecipeRating">
-		
+	<select id="selectAverageRating" resultType = "double">
+		SELECT ROUND(COALESCE(AVG(rating),0),2) as avg_rating
+		FROM recipe_rating
+		WHERE recipe_id = #{recipeId}
+		;
 		
 	</select>
 	
+	<update id="updateRecipeAverage" >
+		UPDATE user_perfumes
+		SET rating_average = #{avg}
+		WHERE id = #{recipeId}
+	</update>
+	
+	<select id="selectRecipeAverageFromDb">
+		SELECT ROUND(COALESCE(rating_average, 0), 2) AS rating_average
+		FROM user_perfumes
+		WHERE id = #{recipeId};
+	</select>
 	
 	<!--
 	<insert id="insertRecipeToUser">

@@ -26,6 +26,12 @@ public interface RecipeService {
 	
 	// 특정 recipe에 rating을 부여한다.
 	int insertRecipeRating(String userIdString, int recipeId, int rating) throws SQLException;
+
+	/**
+	 * 레시피에 대해 이미 계산된 평점 평균을 가져온다.
+	 * @throws SQLException 
+	 ***/
+	double getRecipeRating(int recipeId) throws SQLException;
 	
 	
 }
