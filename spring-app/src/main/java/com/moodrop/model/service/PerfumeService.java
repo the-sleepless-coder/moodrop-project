@@ -43,6 +43,8 @@ public interface PerfumeService {
 	 * @throws SQLException 
 	 * **/
 	List<PerfumeWrapperExtended> selectPerfumeByAtLeastKNotes(List<String> noteList) throws SQLException;
+
+	List<NotesDto> getAllDeterminedNotes();
 	
 	
 	

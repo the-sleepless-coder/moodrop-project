@@ -212,6 +212,22 @@ public class PerfumeController {
 		
 	}
 	
+	// 전체 Determined Notes 리스트를 반환한다.
+	@GetMapping("/perfume/getAllDeterminedNotes")
+	public ResponseEntity<?> getUserNotes(HttpServletRequest request, HttpServletResponse response){
+		
+		try {
+			List<NotesDto> allDeterminedNotes = service.getAllDeterminedNotes();
+			
+			return ResponseEntity.ok(allDeterminedNotes);
+		}catch(Exception e) {
+			
+			e.printStackTrace();
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build(); 
+		}
+		
+		
+	}
 	
 	
 }

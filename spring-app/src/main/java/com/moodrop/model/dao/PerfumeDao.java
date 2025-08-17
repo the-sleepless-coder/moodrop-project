@@ -52,6 +52,9 @@ public interface PerfumeDao {
 	List<NotesDto> selectDeterminedNotes(Integer perfumeId);
 	
 	
+	// 사용자 userIdInt를 업데이트를 위해서 잠근다.
+	int lockUserRow(@Param("userIdInt") int userIdInt);
+	
 	// 사용자 보유 노트 등록 
 	int insertUserNote(UserNoteDto userNote); 
 	
@@ -73,7 +76,8 @@ public interface PerfumeDao {
 	List<PerfumeWrapperExtended> selectPerfumeByNotesAtLeastMin(@Param("noteList") List<String> noteList, @Param("minCount") int minCount);
 	
 	
-	
+	// determined Notes 리스트를 반환한다.
+	List<NotesDto> selectDeterminedNotesList();
 	
 	
 	

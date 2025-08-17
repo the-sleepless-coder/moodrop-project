@@ -12,8 +12,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.moodrop.model.dao.PerfumeDao;
+import com.moodrop.model.dao.UserDao;
 import com.moodrop.model.dto.CategoryMoodDto;
 import com.moodrop.model.dto.DayNightDto;
 import com.moodrop.model.dto.LongevityDto;
@@ -42,6 +44,8 @@ public class PerfumeServiceImpl implements PerfumeService{
 	//private final NoteRepository noteRepository;
 	//private final AccordRepository accordRepository;
 	//private final AccordNoteRepository accordNoteRepository;
+	
+	private final UserDao userDao;
 	
 	// selectPerfumeByNotes, selectPerfumeByNotesAtLeastK
 	private static final int MIN_COUNT = 3;
@@ -294,6 +298,9 @@ public class PerfumeServiceImpl implements PerfumeService{
 	public List<NotesDto> getDeterminedNotes(int perfumeId) {
 		List<NotesDto> result = dao.selectDeterminedNotes(perfumeId);
 		
+		for(NotesDto note: result) {
+			note.setKoreanName(note.getKoreanName().trim());
+		}
 		return result;
 	}
 
@@ -303,7 +310,10 @@ public class PerfumeServiceImpl implements PerfumeService{
 	@Override
 	public List<NotesDto> getUserNotes(String userId) {
 		List<NotesDto> userNotes = dao.selectUserNotes(userId);
-		
+		// 한국어 공백 문자 처리 후 userNote 전달.
+		for(NotesDto userNote: userNotes) {
+			userNote.setKoreanName(userNote.getKoreanName().trim());  
+		}
 		return userNotes;
 	}
 
@@ -311,8 +321,22 @@ public class PerfumeServiceImpl implements PerfumeService{
 	 * 사용자 보유 Note를 추가한다.
 	 * @throws SQLException 
 	 **/
+	@Transactional
 	@Override
 	public int insertUserNote(UserNoteDto userNote) throws SQLException {
+		// 1. Race condition 방지를 위한 lockUserRow를 불러온다.
+		int userIdInt = userDao.selectUserByString(userNote.getUserId());
+		dao.lockUserRow(userIdInt);
+		
+		// 2.user가 보유한 note의 개수를 확인한다.
+		String userIdString = userNote.getUserId();
+		List<NotesDto> userNoteList = dao.selectUserNotes(userIdString);
+		
+		// 보유 노트가 8개 이상이면 insert를 멈추게 한다.
+		int cnt = userNoteList.size();
+		if(cnt >= 8) {
+			throw new IllegalStateException("보유 가능한 노트는 최대 8개 입니다.");
+		}
 		
 		int result = dao.insertUserNote(userNote);
 		if (result == 0) throw new SQLException();  
@@ -351,21 +375,14 @@ public class PerfumeServiceImpl implements PerfumeService{
 		List<PerfumeWrapper> searchResult = new ArrayList<>(); 
 		for(Integer perfume: searchedPerfumes) {
 			int perfumeId = perfume;
-			searchResult.add(getPerfumeWrapper(perfumeId));
+			
+			PerfumeWrapper perfumeWrapper = getPerfumeWrapper(perfumeId);
+			searchResult.add(perfumeWrapper);
 			count++;
 			if( count== RESTRICT_COUNT) break;
 		}
 		
 		return searchResult;
-	}
-	
-	
-	public List<PerfumeWrapperExtended> getPerfumeWrapperExtended(int id, List<String> noteList, int minCount) throws SQLException{
-		
-		PerfumeWrapper baseInfo = getPerfumeWrapper(id);
-		
-		List<PerfumeWrapperExtended> extendedInfo = dao.selectPerfumeByNotesAtLeastMin(noteList, minCount);
-		return null;
 	}
 	
 	
@@ -402,5 +419,27 @@ public class PerfumeServiceImpl implements PerfumeService{
 		return searchResult;
 	}
 	
+	// 전체 확정 Note에 대한 데이터를 가져온다.
+	@Override
+	public List<NotesDto> getAllDeterminedNotes(){
+		List<NotesDto> determinedNotesList = dao.selectDeterminedNotesList();
+		
+		for(NotesDto note: determinedNotesList) {
+			note.setKoreanName(note.getKoreanName().trim());
+		}
+		
+		return determinedNotesList;
+	}
+	
+	
+	
+	
+	public List<PerfumeWrapperExtended> getPerfumeWrapperExtended(int id, List<String> noteList, int minCount) throws SQLException{
+		
+		PerfumeWrapper baseInfo = getPerfumeWrapper(id);
+		
+		List<PerfumeWrapperExtended> extendedInfo = dao.selectPerfumeByNotesAtLeastMin(noteList, minCount);
+		return null;
+	}
 	
 }
