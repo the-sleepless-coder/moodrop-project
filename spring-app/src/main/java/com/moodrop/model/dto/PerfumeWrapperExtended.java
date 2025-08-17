@@ -40,6 +40,7 @@ public class PerfumeWrapperExtended extends PerfumeWrapper{
 		ext.setLongevityInfo(base.getLongevityInfo());
 		ext.setMainAccord(base.getMainAccord());
 		ext.setNotes(base.getNotes());
+		ext.setKoreanNotes(base.getKoreanNotes());
 		ext.setSeasonInfo(base.getSeasonInfo());
 		ext.setSillageInfo(base.getSillageInfo());
 		// 확장 필드
