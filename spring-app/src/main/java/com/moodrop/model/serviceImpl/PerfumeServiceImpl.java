@@ -108,20 +108,28 @@ public class PerfumeServiceImpl implements PerfumeService{
 		List<MainAccordDto> mainAccord = dao.selectMainAccordByPerfumeId(id);
 		
 		List<NotesDto> notesList = dao.selectNotesByPerfumeId(id);
-		Map<String, List<String>> notesMap = new LinkedHashMap<>();
+		Map<String, List<String>> notesEnglishMap = new LinkedHashMap<>();
+		Map<String, List<String>> notesKoreanMap = new LinkedHashMap<>();
         for(NotesDto n: notesList) {
-        	String key = n.getType().toLowerCase();
+        	String type = n.getType().toLowerCase();
         	
-        	if(!notesMap.containsKey(key)) {
-        		notesMap.put(key, new ArrayList<>());
+        	// type 별로 Map 생성. 
+        	// Map안에 type이 있으면, 해당 List에 note를 넣어준다.
+        	if(!notesEnglishMap.containsKey(type)) {
+        		notesEnglishMap.put(type, new ArrayList<>());
+        	}
+        	notesEnglishMap.get(type).add(n.getName().trim());
+        	
+        	if(!notesKoreanMap.containsKey(type)) {
+        		notesKoreanMap.put(type, new ArrayList<>());
         	}
         	
-        	notesMap.get(key).add(n.getName());
+        	notesKoreanMap.get(type).add(n.getKoreanName().trim());
         	
         }
         
         
-		PerfumeWrapper perfumeWrapper = new PerfumeWrapper(basic, dayNightInfo, longevityInfo, mainAccord, notesMap, seasonInfo, sillageInfo);
+		PerfumeWrapper perfumeWrapper = new PerfumeWrapper(basic, dayNightInfo, longevityInfo, mainAccord, notesEnglishMap, notesKoreanMap,seasonInfo, sillageInfo);
 		
 		return perfumeWrapper;
 	}
