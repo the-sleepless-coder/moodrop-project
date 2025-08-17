@@ -17,6 +17,8 @@ import com.moodrop.model.service.AsyncDbUpdater;
 import com.moodrop.model.service.PerfumeCommandFactory;
 import com.moodrop.util.WebSocketNotifier;
 import jakarta.annotation.PreDestroy;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -72,6 +74,9 @@ public class MqttService {
     private final Map<String, Long> lastJobIdByDevice = new ConcurrentHashMap<>();
 
     private final Map<Long, Double> cacheStock = new ConcurrentHashMap<>();
+
+    @PersistenceContext
+    private EntityManager em;
 
     private void publishToDevice(PerfumeCommand.PerfumeCommandRequest cmd) {
         try {
@@ -326,7 +331,6 @@ public class MqttService {
     public CompletableFuture<ResponseDto.ConnectResponseDto> connectAsync(String deviceId) {
         endpointRepo.ensureExists(deviceId);
 
-        // 장치별 단일 in-flight 보장
         if (connectFutureByDevice.putIfAbsent(deviceId, new CompletableFuture<>()) != null) {
             throw new IllegalStateException("connect in-flight for device " + deviceId);
         }
@@ -620,4 +624,39 @@ public class MqttService {
     public void shutdownScheduler() {
         scheduler.shutdownNow();
     }
+
+    @Transactional
+    public ResponseDto.CheckResponseDto checkFromDb(String deviceId) {
+        endpointRepo.ensureExists(deviceId);
+
+        String sql = """
+        SELECT s.slot_id, sn.note_id, sn.note_name, st.amount
+          FROM device_slot s
+          LEFT JOIN device_slot_note sn
+            ON sn.device_id = s.device_id AND sn.slot_id = s.slot_id
+          LEFT JOIN device_stock st
+            ON st.device_id = s.device_id AND st.slot_id = s.slot_id
+         WHERE s.device_id = :deviceId
+         ORDER BY s.slot_id
+    """;
+
+        @SuppressWarnings("unchecked")
+        var rows = (java.util.List<Object[]>) em.createNativeQuery(sql)
+                .setParameter("deviceId", deviceId)
+                .getResultList();
+
+        var ingredients = new java.util.ArrayList<Ingredient>(rows.size());
+        for (Object[] r : rows) {
+            long   slotId   = ((Number) r[0]).longValue();
+            Long   noteId   = (r[1] == null) ? null : ((Number) r[1]).longValue();
+            String noteName = (String) r[2];
+            double amount   = (r[3] == null) ? 0d : ((Number) r[3]).doubleValue();
+            ingredients.add(new Ingredient(slotId, noteId == null ? 0L : noteId, noteName, amount));
+        }
+
+        long slotCount = 8L;
+        var data = new ResponseDto.CheckResponseDto.CheckData(deviceId, slotCount, ingredients);
+        return new ResponseDto.CheckResponseDto(true, data);
+    }
+
 }

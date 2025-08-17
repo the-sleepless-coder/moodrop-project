@@ -73,6 +73,15 @@ public class MqttController {
         return ResponseEntity.ok(mqttService.getStats(deviceId));
     }
 
+    @GetMapping("/devices/{deviceId}/ingredients/check_sub")
+    public java.util.concurrent.CompletableFuture<
+            org.springframework.http.ResponseEntity<ResponseDto.CheckResponseDto>> checkSub(
+            @PathVariable String deviceId) {
+        var res = mqttService.checkFromDb(deviceId);
+        return java.util.concurrent.CompletableFuture.completedFuture(
+                org.springframework.http.ResponseEntity.ok(res));
+    }
+
 //    @PostMapping(path = "/devices/register", consumes = "application/json", produces = "application/json")
 //    public void RegisterDevice(RequestDto.RegisterDeviceRequestDto dto) {
 //        mqttService.registerDevice(dto);
