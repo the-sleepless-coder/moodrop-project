@@ -318,7 +318,10 @@ public class PerfumeServiceImpl implements PerfumeService{
 		List<NotesDto> userNotes = dao.selectUserNotes(userId);
 		// 한국어 공백 문자 처리 후 userNote 전달.
 		for(NotesDto userNote: userNotes) {
-			userNote.setKoreanName(userNote.getKoreanName().trim());  
+			String koreanName = userNote.getKoreanName();
+			if(koreanName != null) {
+				userNote.setKoreanName(koreanName.trim());  				
+			}
 		}
 		return userNotes;
 	}
