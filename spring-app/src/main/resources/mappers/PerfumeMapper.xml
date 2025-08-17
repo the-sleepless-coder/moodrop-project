@@ -215,7 +215,8 @@
 		SELECT
 		 u.user_id,
 		 n.name,
-		 n.type
+		 n.type,
+		 n.korean_name
 		 
 		FROM
 			user as u
@@ -262,6 +263,18 @@
 		WHERE
 			p.id = #{perfumeId}
 		;
+	</select>
+	
+	
+	<!-- 
+	id 업데이트를 위한 행 잠금
+	중간 테이블 업데이트를 위한 유일한 id를 가진 부모 테이블을 잠근다. 
+	 -->
+	<select id="lockUserRow">
+	  SELECT id 
+	  FROM user 
+	  WHERE id = #{userIdInt}
+	  FOR UPDATE
 	</select>
 	
 	
@@ -358,6 +371,17 @@
             #{id}
         </foreach>
     </select>
+	
+	<select id = "selectDeterminedNotesList">
+		SELECT n.id as note_id
+		, n.name
+		, n.type
+		, n.korean_name
+		FROM notes as n
+		JOIN determined_notes as dn ON dn.note_id = n.id
+		GROUP BY n.id, n.name
+		;
+	</select>
 	
 	
     
