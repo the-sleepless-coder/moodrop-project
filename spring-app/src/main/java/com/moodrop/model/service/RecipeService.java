@@ -24,5 +24,8 @@ public interface RecipeService {
 	// 특정 recipeId를 나의 레시피로 복사한다.
 	int copyRecipeIntoUser(int recipeId, String userId) throws SQLException;
 	
+	// 특정 recipe에 rating을 부여한다.
+	int insertRecipeRating(String userIdString, int recipeId, int rating) throws SQLException;
+	
 	
 }

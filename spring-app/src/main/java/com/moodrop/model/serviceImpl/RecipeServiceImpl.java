@@ -132,10 +132,43 @@ public class RecipeServiceImpl implements RecipeService{
 			return 0;
 		}
 		
-		
-		
-		
 	}
+	
+	/**
+	 * 레시피에 대한 평점을 준다.
+	 * **/
+	@Override
+	public int insertRecipeRating(String userIdString, int recipeId, int rating) throws SQLException{
+		
+		// 평점에 대한 범위 설정
+		if (rating < 1 || rating > 5) {
+	        throw new IllegalArgumentException("rating은 1~5 사이여야 합니다.");
+	    }
+		
+		// userId, recipeId, rating을 이용해서 평점 정보를 남긴다.
+		int userId = userDao.selectUserByString(userIdString);
+		
+		int result = dao.insertRecipeRating(userId, recipeId, rating);
+		if(result !=0) {
+			return result;
+		}else {
+			throw new SQLException();
+		}	
+	}
+	
+	
+	/**
+	 * 레시피에 대한 평점 평균을 가져온다.
+	 ***/
+	public float getRecipeRating(int recipeId) {
+		
+		
+		
+		
+		return 0;
+	}
+	
+	
 	
 	
 }

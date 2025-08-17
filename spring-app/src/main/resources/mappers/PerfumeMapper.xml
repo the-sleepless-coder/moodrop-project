@@ -108,7 +108,8 @@
 	<select id="selectNotesByPerfumeId" parameterType="int" resultType="NotesDto">
 		SELECT
 			n.type,
-		    n.name
+		    n.name,
+		    n.korean_name
 		    
 		FROM perfumes as p
 		

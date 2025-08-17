@@ -20,4 +20,5 @@ public class NotesDto {
 	private String name;
 	private String type;
 	private Integer weight;
+	private String koreanName;
 }
