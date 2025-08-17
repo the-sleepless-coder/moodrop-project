@@ -127,4 +127,36 @@ public class RecipeController {
 	}
 	
 	
+	/**
+	 * 특정 레시피에 대한 별점을 준다.
+	 * @throws SQLException 
+	 * */
+	@PostMapping("/recipe/{recipeId}/rating")
+	public ResponseEntity<?> rateRecipe(@PathVariable Integer recipeId, @RequestBody Map<String, Object> body, HttpServletRequest request, HttpServletResponse response) throws SQLException{
+		
+		int rating = (Integer)body.get("rating");
+		String userId = (String) body.get("userId");
+		
+		int result = service.insertRecipeRating(userId, recipeId, rating);
+		
+		if(result ==1) {
+			return ResponseEntity.ok("Successfully Rated Recipe");
+		}else {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();			
+		}
+		
+	}
+	
+	/**
+	 * 특정 레시피의 별점 평균을 가져온다.
+	 * **/
+	@GetMapping("/recipe/{recipeId}/rating")
+	public ResponseEntity<?> getRecipeRating(@PathVariable Integer recipeId, @RequestBody Map<String, Object> body, HttpServletRequest request, HttpServletResponse response) throws SQLException{
+		
+		
+		return null;
+	}
+	
+	
+	
 }

@@ -40,5 +40,11 @@ public interface RecipeDao {
 	    // recipeId 로 userId로 레시피 복사하기
 	    // int insertRecipeToUser(int userId, int recipeId);
 	    
+	    // recipe 별점 주기
+	    int insertRecipeRating(int userId, int recipeId, int rating);
+	    
+	    
+	    // recipe 별점 가져오기
+	    float selectRecipeRating(int recipeId);
 	    
 }

@@ -172,6 +172,21 @@
 	
 	</insert> 
 	
+	<insert id="insertRecipeRating">
+		INSERT INTO recipe_rating(user_id, recipe_id, rating)
+		VALUES 
+		(
+		  #{userId}
+		, #{recipeId}
+		, #{rating}
+		)
+	</insert>
+	
+	
+	<select id="selectRecipeRating">
+		
+		
+	</select>
 	
 	
 	<!--
