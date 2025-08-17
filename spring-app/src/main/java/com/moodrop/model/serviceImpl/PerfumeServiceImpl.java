@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -150,15 +151,20 @@ public class PerfumeServiceImpl implements PerfumeService{
 
 	    // DB에서 사용자 노트 기준 -> Determined Notes의 향수를 찾는다.
 	    List<NotesDto> userNotesList = dao.selectUserNotes(userId);
-
+	    
 	    // Map<String, List<String>> 형태로 변환
 	    Map<String, List<String>> userNotes = new LinkedHashMap<>();
+	    Set<String> uAll = new LinkedHashSet<>();
 	    for (NotesDto n : userNotesList) {
 	        if (n == null || n.getType() == null || n.getName() == null) continue;
 	        userNotes.computeIfAbsent(n.getType(), k -> new ArrayList<>()).add(n.getName());
+	        
+	        String noteName = n.getName();
+	        uAll.add(noteName);
 	    }
 
 	    // Set으로 변환(중복 제거만)
+	    // Set<String> userNotesSet = new HashSet<>(userNotes.get("top"));
 	    Set<String> uTop    = new HashSet<>(userNotes.getOrDefault("top",    List.of()));
 	    Set<String> uMiddle = new HashSet<>(userNotes.getOrDefault("middle", List.of()));
 	    Set<String> uBase   = new HashSet<>(userNotes.getOrDefault("base",   List.of()));
@@ -174,21 +180,21 @@ public class PerfumeServiceImpl implements PerfumeService{
 
 	        // 기본 정보 + 부가 정보
 	        PerfumeBasicDto basic = dao.selectPerfumeBasicByPerfumeId(pfId);
-	        PerfumeExtendedDto dto = new PerfumeExtendedDto();
-	        BeanUtils.copyProperties(basic, dto);
-	        dto.setAccordMatchCount(p.getAccordMatchCount());
+	        PerfumeExtendedDto ExtendedDto = new PerfumeExtendedDto();
+	        BeanUtils.copyProperties(basic, ExtendedDto);
+	        ExtendedDto.setAccordMatchCount(p.getAccordMatchCount());
 	        
 	        Map<String, Integer> sillageMap = new HashMap<>();
 	        for (SillageDto s : dao.selectSillageByPerfumeId(pfId)) {
 	            sillageMap.put(s.getStrength(), s.getVoteNum());
 	        }
-	        dto.setSillage(sillageMap);
+	        ExtendedDto.setSillage(sillageMap);
 
 	        Map<String, Integer> longevityMap = new HashMap<>();
 	        for (LongevityDto l : dao.selectLongevityByPerfumeId(pfId)) {
 	            longevityMap.put(l.getLength(), l.getVoteNum());
 	        }
-	        dto.setLongevity(longevityMap);
+	        ExtendedDto.setLongevity(longevityMap);
 
 	        // notes
 	        Map<String, List<String>> notesMap = new LinkedHashMap<>();
@@ -196,21 +202,21 @@ public class PerfumeServiceImpl implements PerfumeService{
 	            if (n == null || n.getType() == null || n.getName() == null) continue;
 	            notesMap.computeIfAbsent(n.getType(), k -> new ArrayList<>()).add(n.getName());
 	        }
-	        dto.setNotes(notesMap);
+	        ExtendedDto.setNotes(notesMap);
 	        
 	        // dayNight 정보
 	        Map<String, Integer> dayNightMap = new LinkedHashMap<>();
 	        for(DayNightDto dn: dao.selectDayNightByPerfumeId(pfId)) {
 	        	dayNightMap.put(dn.getDayNight(), dn.getWeight());
 	        }
-	        dto.setDayNight(dayNightMap);
+	        ExtendedDto.setDayNight(dayNightMap);
 	        
 	        // season 정보
 	        Map<String, Integer> seasonMap = new LinkedHashMap<>();
 	        for(SeasonDto s: dao.selectSeasonByPerfumeId(pfId)) {
 	        	seasonMap.put( s.getSeason(), s.getWeight());
 	        }
-	        dto.setSeason(seasonMap);
+	        ExtendedDto.setSeason(seasonMap);
 	        
 	        
 	        // 2) 사용자 노트와 교집합
@@ -237,7 +243,7 @@ public class PerfumeServiceImpl implements PerfumeService{
 
 	        if (hitCount > 0) {
 	            PerfumeWithMatch with = new PerfumeWithMatch();
-	            BeanUtils.copyProperties(dto, with);
+	            BeanUtils.copyProperties(ExtendedDto, with);
 	            with.setUserNoteMatch(hit);
 	            with.setNoteMatchCount(hitCount);
 	            
@@ -249,7 +255,7 @@ public class PerfumeServiceImpl implements PerfumeService{
 	            
 	            matched.add(with);
 	        } else {
-	            noMatched.add(dto);
+	            noMatched.add(ExtendedDto);
 	        }
 	    }
 	    
