@@ -14,6 +14,7 @@ add_executable(main_app
     src/servo.c
     src/servo_sync.c
     src/valve.c
+    src/log.c
 )
 
 # test/main.c 기반 실행 파일
@@ -25,6 +26,7 @@ add_executable(test_app
     src/servo.c
     src/servo_sync.c
     src/valve.c
+    src/log.c
 )
 
 # 두 실행 파일 모두 필요한 라이브러리 링크

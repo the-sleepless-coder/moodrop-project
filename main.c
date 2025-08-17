@@ -6,6 +6,7 @@
 #include "storage.h"
 #include "shared_globals.h"
 #include "servo_sync.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -21,21 +22,20 @@ int main(void) {
     // 핀 번호는 젯슨 오린 나노 기준으로 GPIO22 (J41 핀 15번)을 예시로 사용합니다.
     const char *chip_name = "gpiochip1";
     unsigned int led_pin = 19;
-
+    
+    // Log 초기화
+    log_init();
+    
     // LED 초기화
-    if (led_init(chip_name, led_pin) < 0) {
-        fprintf(stderr, "LED initialize failed. Exiting.\n");
-        return EXIT_FAILURE;
-    }
+    led_init(chip_name, led_pin);
+    
+    // mqtt 초기화
+    mqtt_init();
 
     // 원료량 정보 로드 (MQTT 초기화 전 또는 후에 위치)
-    if (load_base_storage() != 0) {
-        fprintf(stderr, "Base storage initialize failed. Exiting.\n");
-        led_release();
-        return EXIT_FAILURE;
-    }
+    load_base_storage();
 
-    mqtt_init();
+    
     printf("프로그램 시작. 메시지 수신 대기 중...\n");
 
     while (1) {
@@ -84,5 +84,6 @@ int main(void) {
     mqtt_disconnect();
     led_off();
     led_release();
+    log_close();
     return 0;
 }

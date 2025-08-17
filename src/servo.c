@@ -3,6 +3,7 @@
 
 #include "servo.h"
 #include "valve.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>

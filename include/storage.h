@@ -14,7 +14,7 @@
  * 파일이 없으면 기본값으로 새로 생성합니다.
  * @return 성공 시 0, 실패 시 -1을 반환합니다.
  */
-int load_base_storage();
+void load_base_storage();
 
 /**
  * @brief 제조에 필요한 원료가 충분한지 확인합니다.

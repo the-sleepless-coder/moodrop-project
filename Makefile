@@ -7,7 +7,7 @@ LDFLAGS = -lmosquitto -lcjson -lm -lgpiod
 TARGET = test
 
 # 소스 파일들
-SRCS = main.c mqtt.c servo_sync.c servo.c valve.c led.c storage.c
+SRCS = main.c mqtt.c servo_sync.c servo.c valve.c led.c storage.c log.c
 OBJS = $(SRCS:.c=.o)
 
 # 기본 타겟
@@ -23,11 +23,11 @@ $(TARGET): $(OBJS)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # 의존성 규칙
-main.o: main.c mqtt.h servo.h valve.h led.h
-mqtt.o: mqtt.c mqtt.h
-servo.o: servo.c servo.h valve.h mqtt.h
-valve.o: valve.c valve.h mqtt.h
-led.o: led.c led.h
+main.o: main.c mqtt.h servo.h valve.h led.h log.h
+mqtt.o: mqtt.c mqtt.h log.h
+servo.o: servo.c servo.h valve.h mqtt.h log.h
+valve.o: valve.c valve.h mqtt.h log.h
+led.o: led.c led.h log.h
 
 # 정리
 clean:

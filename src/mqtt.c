@@ -4,6 +4,7 @@
 #include "mqtt.h"
 #include "storage.h"
 #include "shared_globals.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -177,6 +178,8 @@ void mqtt_init(void) {
     mosq = mosquitto_new(MQTT_CLIENT_ID, true, NULL);
     if (!mosq) {
         fprintf(stderr, "오류: Mosquitto 클라이언트 생성 실패\n");
+        fprintf(stderr, "MQTT initialize failed. Exiting.\n");
+        log_message("MQTT initialize failed");
         exit(EXIT_FAILURE);
     }
 
@@ -188,6 +191,8 @@ void mqtt_init(void) {
     rc = mosquitto_connect(mosq, MQTT_BROKER_ADDRESS, MQTT_PORT, 60);
     if (rc != MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "오류: 브로커에 연결할 수 없습니다: %s\n", mosquitto_strerror(rc));
+        fprintf(stderr, "MQTT initialize failed. Exiting.\n");
+        log_message("MQTT initialize failed");
         mosquitto_destroy(mosq);
         mosquitto_lib_cleanup();
         exit(EXIT_FAILURE);
@@ -197,10 +202,14 @@ void mqtt_init(void) {
     rc = mosquitto_loop_start(mosq);
     if (rc != MOSQ_ERR_SUCCESS) {
         fprintf(stderr, "오류: Mosquitto 루프 시작 실패: %s\n", mosquitto_strerror(rc));
+        fprintf(stderr, "MQTT initialize failed. Exiting.\n");
+        log_message("MQTT initialize failed");
         mosquitto_destroy(mosq);
         mosquitto_lib_cleanup();
         exit(EXIT_FAILURE);
     }
+    
+    log_message("MQTT initialize succeeded");
 }
 
 // MQTT 연결 종료

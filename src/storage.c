@@ -3,6 +3,7 @@
 
 #include "storage.h"
 #include "shared_globals.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> // for strcmp
@@ -26,7 +27,7 @@ static void _write_storage_to_file() {
     fclose(file);
 }
 
-int load_base_storage() {
+void load_base_storage() {
     FILE *file = fopen(BASE_STORAGE_FILE, "r");
     if (file == NULL) {
         printf("Base storage file not found. Creating a new one with default values.\n");
@@ -36,20 +37,24 @@ int load_base_storage() {
             g_base_stock[i].capacity = 500; // 기본값 500ml
         }
         _write_storage_to_file();
-        return 0;
+        log_message("Base storage initialize succeeded");
+        return;
     }
 
     for (int i = 0; i < MAX_BASE_INGREDIENTS; ++i) {
         if (fscanf(file, "%d %d", &g_base_stock[i].num, &g_base_stock[i].capacity) != 2) {
             fprintf(stderr, "Error reading base storage file. Check file format.\n");
             fclose(file);
-            return -1;
+            fprintf(stderr, "Base storage initialize failed. Exiting.\n");
+        log_message("Base storage initialize failed");
+            exit(EXIT_FAILURE);
         }
     }
 
     printf("Base storage loaded successfully.\n");
+    log_message("Base storage loaded successfully");
     fclose(file);
-    return 0;
+    return;
 }
 
 int check_base_stock(struct Hole recipe[], int recipe_count) {

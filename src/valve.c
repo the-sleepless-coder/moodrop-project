@@ -4,6 +4,7 @@
 #include "valve.h"
 #include "servo.h"
 #include "mqtt.h"
+#include "log.h"
 #include <sys/time.h>
 
 float drops[HOLE_CNT + 1];

@@ -2,6 +2,7 @@
 // LED control implementation using libgpiod
 
 #include "led.h"
+#include "log.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -12,36 +13,42 @@ static struct gpiod_line *line = NULL;
 static unsigned int g_line_offset = 0;
 
 // Initialize the LED and GPIO line
-int led_init(const char *chip_name, unsigned int line_offset) {
+void led_init(const char *chip_name, unsigned int line_offset) {
     g_line_offset = line_offset;
 
     // Open the GPIO chip
     chip = gpiod_chip_open_by_name(chip_name);
     if (!chip) {
-        perror("Failed to open GPIO chip");
-        return -1;
+        perror("Failed to open GPIO chip\n");
+        fprintf(stderr, "LED initialize failed. Exiting.\n");
+        log_message("LED initialize failed");
+        exit(EXIT_FAILURE);
     }
 
     // Get the GPIO line
     line = gpiod_chip_get_line(chip, g_line_offset);
     if (!line) {
-        perror("Failed to get GPIO line");
+        perror("Failed to get GPIO line\n");
         gpiod_chip_close(chip);
         chip = NULL;
-        return -1;
+        fprintf(stderr, "LED initialize failed. Exiting.\n");
+        log_message("LED initialize failed");
+        exit(EXIT_FAILURE);
     }
 
     // Request the line as an output
     if (gpiod_line_request_output(line, "led-control", 0) < 0) {
-        perror("Failed to request line as output");
+        perror("Failed to request line as output\n");
         gpiod_chip_close(chip);
         line = NULL;
         chip = NULL;
-        return -1;
+        fprintf(stderr, "LED initialize failed. Exiting.\n");
+        log_message("LED initialize failed");
+        exit(EXIT_FAILURE);
     }
 
     printf("LED initialized on %s, line %u\n", chip_name, line_offset);
-    return 0;
+    log_message("LED initialize succeeded");
 }
 
 // Turn the LED on
