@@ -11,9 +11,9 @@ mqtt:
 
 # spring:
 #   datasource:
-#     url: jdbc:mysql://localhost:3306/test
-#     username: root
-#     password: 1234
+#     url: jdbc:mysql://localhost:3306/moodrop
+#     username: json
+#     password: jsonsvalue!
 #     driver-class-name: com.mysql.cj.jdbc.Driver
 
 #  jpa:
