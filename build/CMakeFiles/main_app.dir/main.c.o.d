@@ -66,7 +66,8 @@ CMakeFiles/main_app.dir/main.c.o: /home/a102/test/S13P11A102_ver.3/main.c \
  /home/a102/test/S13P11A102_ver.3/include/storage.h \
  /home/a102/test/S13P11A102_ver.3/include/shared_globals.h \
  /home/a102/test/S13P11A102_ver.3/include/servo_sync.h \
- /home/a102/test/S13P11A102_ver.3/include/servo.h /usr/include/unistd.h \
+ /home/a102/test/S13P11A102_ver.3/include/servo.h \
+ /home/a102/test/S13P11A102_ver.3/include/log.h /usr/include/unistd.h \
  /usr/include/aarch64-linux-gnu/bits/posix_opt.h \
  /usr/include/aarch64-linux-gnu/bits/environments.h \
  /usr/include/aarch64-linux-gnu/bits/confname.h \

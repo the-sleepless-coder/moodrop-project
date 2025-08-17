@@ -193,6 +193,33 @@ src/led.c.s:
 	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_app.dir/build.make CMakeFiles/test_app.dir/src/led.c.s
 .PHONY : src/led.c.s
 
+src/log.o: src/log.c.o
+.PHONY : src/log.o
+
+# target to build an object file
+src/log.c.o:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_app.dir/build.make CMakeFiles/main_app.dir/src/log.c.o
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_app.dir/build.make CMakeFiles/test_app.dir/src/log.c.o
+.PHONY : src/log.c.o
+
+src/log.i: src/log.c.i
+.PHONY : src/log.i
+
+# target to preprocess a source file
+src/log.c.i:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_app.dir/build.make CMakeFiles/main_app.dir/src/log.c.i
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_app.dir/build.make CMakeFiles/test_app.dir/src/log.c.i
+.PHONY : src/log.c.i
+
+src/log.s: src/log.c.s
+.PHONY : src/log.s
+
+# target to generate assembly for a file
+src/log.c.s:
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/main_app.dir/build.make CMakeFiles/main_app.dir/src/log.c.s
+	$(MAKE) $(MAKESILENT) -f CMakeFiles/test_app.dir/build.make CMakeFiles/test_app.dir/src/log.c.s
+.PHONY : src/log.c.s
+
 src/mqtt.o: src/mqtt.c.o
 .PHONY : src/mqtt.o
 
@@ -368,6 +395,9 @@ help:
 	@echo "... src/led.o"
 	@echo "... src/led.i"
 	@echo "... src/led.s"
+	@echo "... src/log.o"
+	@echo "... src/log.i"
+	@echo "... src/log.s"
 	@echo "... src/mqtt.o"
 	@echo "... src/mqtt.i"
 	@echo "... src/mqtt.s"

@@ -62,4 +62,5 @@ CMakeFiles/main_app.dir/src/valve.c.o: \
  /usr/include/aarch64-linux-gnu/bits/types/__locale_t.h \
  /home/a102/test/S13P11A102_ver.3/include/valve.h \
  /home/a102/test/S13P11A102_ver.3/include/mqtt.h \
+ /home/a102/test/S13P11A102_ver.3/include/log.h \
  /usr/include/aarch64-linux-gnu/sys/time.h

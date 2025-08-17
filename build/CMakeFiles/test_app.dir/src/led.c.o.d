@@ -47,7 +47,8 @@ CMakeFiles/test_app.dir/src/led.c.o: \
  /usr/include/aarch64-linux-gnu/bits/types/struct_itimerspec.h \
  /usr/include/aarch64-linux-gnu/bits/types/locale_t.h \
  /usr/include/aarch64-linux-gnu/bits/types/__locale_t.h \
- /usr/include/stdio.h /usr/lib/gcc/aarch64-linux-gnu/11/include/stdarg.h \
+ /home/a102/test/S13P11A102_ver.3/include/log.h /usr/include/stdio.h \
+ /usr/lib/gcc/aarch64-linux-gnu/11/include/stdarg.h \
  /usr/include/aarch64-linux-gnu/bits/types/__fpos_t.h \
  /usr/include/aarch64-linux-gnu/bits/types/__mbstate_t.h \
  /usr/include/aarch64-linux-gnu/bits/types/__fpos64_t.h \

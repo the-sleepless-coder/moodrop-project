@@ -1,0 +1,4 @@
+[2025-08-18 07:51:53] Logging started. Log file: log_2025-08-18_07-51-53.txt
+[2025-08-18 07:51:53] LED initialize succeeded
+[2025-08-18 07:51:53] MQTT initialize succeeded
+[2025-08-18 07:51:53] Base storage loaded successfully

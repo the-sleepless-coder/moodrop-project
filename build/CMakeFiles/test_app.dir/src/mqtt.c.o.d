@@ -5,7 +5,7 @@ CMakeFiles/test_app.dir/src/mqtt.c.o: \
  /usr/lib/gcc/aarch64-linux-gnu/11/include/stdbool.h \
  /home/a102/test/S13P11A102_ver.3/include/storage.h \
  /home/a102/test/S13P11A102_ver.3/include/shared_globals.h \
- /usr/include/stdio.h \
+ /home/a102/test/S13P11A102_ver.3/include/log.h /usr/include/stdio.h \
  /usr/include/aarch64-linux-gnu/bits/libc-header-start.h \
  /usr/include/features.h /usr/include/features-time64.h \
  /usr/include/aarch64-linux-gnu/bits/wordsize.h \

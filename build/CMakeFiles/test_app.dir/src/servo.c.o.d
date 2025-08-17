@@ -60,7 +60,8 @@ CMakeFiles/test_app.dir/src/servo.c.o: \
  /usr/include/aarch64-linux-gnu/bits/types/FILE.h \
  /usr/include/aarch64-linux-gnu/bits/types/struct_FILE.h \
  /usr/include/aarch64-linux-gnu/bits/stdio_lim.h \
- /home/a102/test/S13P11A102_ver.3/include/valve.h /usr/include/fcntl.h \
+ /home/a102/test/S13P11A102_ver.3/include/valve.h \
+ /home/a102/test/S13P11A102_ver.3/include/log.h /usr/include/fcntl.h \
  /usr/include/aarch64-linux-gnu/bits/fcntl.h \
  /usr/include/aarch64-linux-gnu/bits/fcntl-linux.h \
  /usr/include/aarch64-linux-gnu/bits/stat.h \

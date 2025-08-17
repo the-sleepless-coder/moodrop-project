@@ -3,6 +3,8 @@ file(REMOVE_RECURSE
   "CMakeFiles/main_app.dir/main.c.o.d"
   "CMakeFiles/main_app.dir/src/led.c.o"
   "CMakeFiles/main_app.dir/src/led.c.o.d"
+  "CMakeFiles/main_app.dir/src/log.c.o"
+  "CMakeFiles/main_app.dir/src/log.c.o.d"
   "CMakeFiles/main_app.dir/src/mqtt.c.o"
   "CMakeFiles/main_app.dir/src/mqtt.c.o.d"
   "CMakeFiles/main_app.dir/src/servo.c.o"
