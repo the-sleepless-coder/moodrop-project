@@ -88,6 +88,18 @@ export interface PerfumeNotes {
   middle: string[];
 }
 
+export interface PerfumeDayNight {
+  day: number;
+  night: number;
+}
+
+export interface PerfumeSeason {
+  spring: number;
+  summer: number;
+  fall: number;
+  winter: number;
+}
+
 export interface Perfume {
   id: number;
   perfumeName: string;
@@ -102,6 +114,8 @@ export interface Perfume {
   sillage: PerfumeSillage;
   longevity: PerfumeLongevity;
   notes: PerfumeNotes;
+  dayNight: PerfumeDayNight;
+  season: PerfumeSeason;
 }
 
 export interface PerfumeListResponse {
@@ -116,6 +130,7 @@ export interface PerfumeListRequestParams {
 // 향수 제조 Note 관련 타입 정의
 export interface PerfumeNote {
   name: string;
+  koreanName?: string;  // 한국어 이름 (선택적)
   type: 'top' | 'middle' | 'base';
   weight: number;
 }

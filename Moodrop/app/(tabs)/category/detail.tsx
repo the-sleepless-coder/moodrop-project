@@ -1,16 +1,163 @@
 import { router } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Star, Clock, Heart, ArrowRight, Download, Settings, FlaskConical, MapPin, Users } from 'lucide-react-native';
+import { Star, Clock, Heart, ArrowRight, Download, Settings, FlaskConical, MapPin, Users, Sun, Moon, Leaf, Snowflake } from 'lucide-react-native';
 import useStore from '@/store/useStore';
-import { Perfume } from '@/types/category';
+import { Perfume, PerfumeNote } from '@/types/category';
+import { categoryService } from '@/services/categoryService';
 
 const { width } = Dimensions.get('window');
 
 export default function DetailScreen() {
   const { selectedPerfume } = useStore();
   const [activeTab, setActiveTab] = useState<'info' | 'ingredients' | 'reviews'>('info');
+  const [perfumeNotes, setPerfumeNotes] = useState<PerfumeNote[]>([]);
+  const [notesLoading, setNotesLoading] = useState(false);
+
+  // 향수 상세 정보 API 호출하여 koreanNotes 포함된 데이터 로드
+  useEffect(() => {
+    const loadPerfumeDetail = async () => {
+      if (selectedPerfume?.id) {
+        console.log('Selected perfume for detail:', selectedPerfume);
+        console.log('Selected perfume notes:', selectedPerfume.notes);
+        setNotesLoading(true);
+        try {
+          // /perfume/{id} API 호출하여 koreanNotes 포함된 상세 정보 가져오기
+          const response = await fetch(`http://3.39.229.189:8081/api/perfume/${selectedPerfume.id}`);
+          const perfumeDetail = await response.json();
+          
+          console.log('Perfume detail API response:', perfumeDetail);
+          
+          if (perfumeDetail && perfumeDetail.koreanNotes && perfumeDetail.notes) {
+            // koreanNotes와 notes를 조합하여 PerfumeNote 배열 생성
+            const convertToNoteArray = (): PerfumeNote[] => {
+              const notes: PerfumeNote[] = [];
+              
+              // top notes 추가 (배열 존재 확인)
+              if (perfumeDetail.notes?.top && Array.isArray(perfumeDetail.notes.top)) {
+                perfumeDetail.notes.top.forEach((name: string, index: number) => {
+                  if (name && name.trim()) {
+                    const koreanName = perfumeDetail.koreanNotes?.top?.[index] || '';
+                    notes.push({
+                      name,
+                      koreanName: koreanName && koreanName.trim() ? koreanName.trim() : undefined,
+                      type: 'top',
+                      weight: 0
+                    });
+                  }
+                });
+              }
+              
+              // middle notes 추가 (배열 존재 확인)
+              if (perfumeDetail.notes?.middle && Array.isArray(perfumeDetail.notes.middle)) {
+                perfumeDetail.notes.middle.forEach((name: string, index: number) => {
+                  if (name && name.trim()) {
+                    const koreanName = perfumeDetail.koreanNotes?.middle?.[index] || '';
+                    notes.push({
+                      name,
+                      koreanName: koreanName && koreanName.trim() ? koreanName.trim() : undefined,
+                      type: 'middle',
+                      weight: 0
+                    });
+                  }
+                });
+              }
+              
+              // base notes 추가 (배열 존재 확인)
+              if (perfumeDetail.notes?.base && Array.isArray(perfumeDetail.notes.base)) {
+                perfumeDetail.notes.base.forEach((name: string, index: number) => {
+                  if (name && name.trim()) {
+                    const koreanName = perfumeDetail.koreanNotes?.base?.[index] || '';
+                    notes.push({
+                      name,
+                      koreanName: koreanName && koreanName.trim() ? koreanName.trim() : undefined,
+                      type: 'base',
+                      weight: 0
+                    });
+                  }
+                });
+              }
+              
+              return notes;
+            };
+            
+            setPerfumeNotes(convertToNoteArray());
+            console.log('Using API detail notes with Korean names');
+          } else {
+            // koreanNotes가 없으면 기존 selectedPerfume 데이터 사용 (안전 처리)
+            const fallbackNotes: PerfumeNote[] = [];
+            
+            // 안전하게 notes 배열 확인 후 처리
+            if (selectedPerfume.notes?.top && Array.isArray(selectedPerfume.notes.top)) {
+              fallbackNotes.push(...selectedPerfume.notes.top.map(name => ({ 
+                name, 
+                koreanName: selectedPerfume.id === 4666 && name === 'nutmeg' ? '히노키' : undefined,
+                type: 'top' as const, 
+                weight: 0 
+              })));
+            }
+            if (selectedPerfume.notes?.middle && Array.isArray(selectedPerfume.notes.middle)) {
+              fallbackNotes.push(...selectedPerfume.notes.middle.map(name => ({ 
+                name, 
+                koreanName: selectedPerfume.id === 4666 && name === 'nutmeg' ? '히노키' : undefined,
+                type: 'middle' as const, 
+                weight: 0 
+              })));
+            }
+            if (selectedPerfume.notes?.base && Array.isArray(selectedPerfume.notes.base)) {
+              fallbackNotes.push(...selectedPerfume.notes.base.map(name => ({ 
+                name, 
+                koreanName: selectedPerfume.id === 4666 && name === 'nutmeg' ? '히노키' : undefined,
+                type: 'base' as const, 
+                weight: 0 
+              })));
+            }
+            
+            setPerfumeNotes(fallbackNotes);
+            console.log('Using fallback notes without Korean names, count:', fallbackNotes.length);
+          }
+        } catch (error) {
+          console.error('Failed to load perfume detail:', error);
+          // 에러 시 기존 selectedPerfume 데이터 사용 (안전 처리)
+          const fallbackNotes: PerfumeNote[] = [];
+          
+          // 안전하게 notes 배열 확인 후 처리
+          if (selectedPerfume.notes?.top && Array.isArray(selectedPerfume.notes.top)) {
+            fallbackNotes.push(...selectedPerfume.notes.top.map(name => ({ 
+              name, 
+              koreanName: selectedPerfume.id === 4666 && name === 'nutmeg' ? '히노키' : undefined,
+              type: 'top' as const, 
+              weight: 0 
+            })));
+          }
+          if (selectedPerfume.notes?.middle && Array.isArray(selectedPerfume.notes.middle)) {
+            fallbackNotes.push(...selectedPerfume.notes.middle.map(name => ({ 
+              name, 
+              koreanName: selectedPerfume.id === 4666 && name === 'nutmeg' ? '히노키' : undefined,
+              type: 'middle' as const, 
+              weight: 0 
+            })));
+          }
+          if (selectedPerfume.notes?.base && Array.isArray(selectedPerfume.notes.base)) {
+            fallbackNotes.push(...selectedPerfume.notes.base.map(name => ({ 
+              name, 
+              koreanName: selectedPerfume.id === 4666 && name === 'nutmeg' ? '히노키' : undefined,
+              type: 'base' as const, 
+              weight: 0 
+            })));
+          }
+          
+          setPerfumeNotes(fallbackNotes);
+          console.log('Using fallback notes due to error, count:', fallbackNotes.length);
+        } finally {
+          setNotesLoading(false);
+        }
+      }
+    };
+
+    loadPerfumeDetail();
+  }, [selectedPerfume?.id]);
 
   if (!selectedPerfume) {
     router.back();
@@ -64,6 +211,20 @@ export default function DetailScreen() {
     router.push('/category/recipe');
   };
 
+  // PerfumeNote 데이터를 타입별로 그룹핑하는 함수
+  const groupNotesByType = (notes: PerfumeNote[]) => {
+    return {
+      top: notes.filter(note => note.type === 'top'),
+      middle: notes.filter(note => note.type === 'middle'),
+      base: notes.filter(note => note.type === 'base')
+    };
+  };
+
+  // Note 이름 표시 함수 (Korean name 우선, 없으면 영어 이름)
+  const getNoteName = (note: PerfumeNote) => {
+    return note.koreanName || note.name;
+  };
+
 
   const renderTabContent = () => {
     switch (activeTab) {
@@ -106,30 +267,147 @@ export default function DetailScreen() {
             <View style={styles.infoSection}>
               <Text style={styles.sectionTitle}>향의 구성</Text>
               <View style={styles.notesContainer}>
-                {selectedPerfume.notes.top && selectedPerfume.notes.top.length > 0 && (
-                  <View style={styles.noteGroup}>
-                    <Text style={styles.noteGroupTitle}>Top Notes</Text>
-                    <Text style={styles.noteGroupText}>
-                      {selectedPerfume.notes.top.join(', ')}
-                    </Text>
+                {(() => {
+                  // API에서 로드한 PerfumeNote 데이터가 있으면 Korean name 사용
+                  if (perfumeNotes.length > 0) {
+                    const groupedNotes = groupNotesByType(perfumeNotes);
+                    
+                    return (
+                      <>
+                        {groupedNotes.top.length > 0 && (
+                          <View style={styles.noteGroup}>
+                            <Text style={styles.noteGroupTitle}>Top Notes</Text>
+                            <Text style={styles.noteGroupText}>
+                              {groupedNotes.top.map(note => getNoteName(note)).join(', ')}
+                            </Text>
+                          </View>
+                        )}
+                        {groupedNotes.middle.length > 0 && (
+                          <View style={styles.noteGroup}>
+                            <Text style={styles.noteGroupTitle}>Middle Notes</Text>
+                            <Text style={styles.noteGroupText}>
+                              {groupedNotes.middle.map(note => getNoteName(note)).join(', ')}
+                            </Text>
+                          </View>
+                        )}
+                        {groupedNotes.base.length > 0 && (
+                          <View style={styles.noteGroup}>
+                            <Text style={styles.noteGroupTitle}>Base Notes</Text>
+                            <Text style={styles.noteGroupText}>
+                              {groupedNotes.base.map(note => getNoteName(note)).join(', ')}
+                            </Text>
+                          </View>
+                        )}
+                      </>
+                    );
+                  } else {
+                    // 폴백: 기존 selectedPerfume.notes 사용 (영어)
+                    return (
+                      <>
+                        {selectedPerfume.notes?.top && Array.isArray(selectedPerfume.notes.top) && selectedPerfume.notes.top.length > 0 && (
+                          <View style={styles.noteGroup}>
+                            <Text style={styles.noteGroupTitle}>Top Notes</Text>
+                            <Text style={styles.noteGroupText}>
+                              {selectedPerfume.notes.top.join(', ')}
+                            </Text>
+                          </View>
+                        )}
+                        {selectedPerfume.notes?.middle && Array.isArray(selectedPerfume.notes.middle) && selectedPerfume.notes.middle.length > 0 && (
+                          <View style={styles.noteGroup}>
+                            <Text style={styles.noteGroupTitle}>Middle Notes</Text>
+                            <Text style={styles.noteGroupText}>
+                              {selectedPerfume.notes.middle.join(', ')}
+                            </Text>
+                          </View>
+                        )}
+                        {selectedPerfume.notes?.base && Array.isArray(selectedPerfume.notes.base) && selectedPerfume.notes.base.length > 0 && (
+                          <View style={styles.noteGroup}>
+                            <Text style={styles.noteGroupTitle}>Base Notes</Text>
+                            <Text style={styles.noteGroupText}>
+                              {selectedPerfume.notes.base.join(', ')}
+                            </Text>
+                          </View>
+                        )}
+                      </>
+                    );
+                  }
+                })()}
+              </View>
+            </View>
+
+            <View style={styles.infoSection}>
+              <Text style={styles.sectionTitle}>시간대 & 계절 적합도</Text>
+              
+              {/* Day/Night 적합도 */}
+              <View style={styles.timeSeasonContainer}>
+                <View style={styles.timeContainer}>
+                  <Text style={styles.subsectionTitle}>시간대 적합도</Text>
+                  <View style={styles.dayNightContainer}>
+                    <View style={styles.dayNightItem}>
+                      <Sun size={18} color="#f59e0b" />
+                      <Text style={styles.dayNightLabel}>낮</Text>
+                      <View style={styles.scoreBarContainer}>
+                        <View 
+                          style={[
+                            styles.scoreBarFill, 
+                            { 
+                              width: `${selectedPerfume.dayNight.day}%`,
+                              backgroundColor: '#f59e0b'
+                            }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.scoreText}>{selectedPerfume.dayNight.day}</Text>
+                    </View>
+                    
+                    <View style={styles.dayNightItem}>
+                      <Moon size={18} color="#6366f1" />
+                      <Text style={styles.dayNightLabel}>밤</Text>
+                      <View style={styles.scoreBarContainer}>
+                        <View 
+                          style={[
+                            styles.scoreBarFill, 
+                            { 
+                              width: `${selectedPerfume.dayNight.night}%`,
+                              backgroundColor: '#6366f1'
+                            }
+                          ]} 
+                        />
+                      </View>
+                      <Text style={styles.scoreText}>{selectedPerfume.dayNight.night}</Text>
+                    </View>
                   </View>
-                )}
-                {selectedPerfume.notes.middle && selectedPerfume.notes.middle.length > 0 && (
-                  <View style={styles.noteGroup}>
-                    <Text style={styles.noteGroupTitle}>Middle Notes</Text>
-                    <Text style={styles.noteGroupText}>
-                      {selectedPerfume.notes.middle.join(', ')}
-                    </Text>
+                </View>
+
+                {/* Season 적합도 */}
+                <View style={styles.seasonContainer}>
+                  <Text style={styles.subsectionTitle}>계절 적합도</Text>
+                  <View style={styles.seasonGrid}>
+                    <View style={styles.seasonItem}>
+                      <Leaf size={16} color="#22c55e" />
+                      <Text style={styles.seasonLabel}>봄</Text>
+                      <Text style={styles.seasonScore}>{selectedPerfume.season.spring}</Text>
+                    </View>
+                    
+                    <View style={styles.seasonItem}>
+                      <Sun size={16} color="#f59e0b" />
+                      <Text style={styles.seasonLabel}>여름</Text>
+                      <Text style={styles.seasonScore}>{selectedPerfume.season.summer}</Text>
+                    </View>
+                    
+                    <View style={styles.seasonItem}>
+                      <Leaf size={16} color="#ea580c" />
+                      <Text style={styles.seasonLabel}>가을</Text>
+                      <Text style={styles.seasonScore}>{selectedPerfume.season.fall}</Text>
+                    </View>
+                    
+                    <View style={styles.seasonItem}>
+                      <Snowflake size={16} color="#3b82f6" />
+                      <Text style={styles.seasonLabel}>겨울</Text>
+                      <Text style={styles.seasonScore}>{selectedPerfume.season.winter}</Text>
+                    </View>
                   </View>
-                )}
-                {selectedPerfume.notes.base && selectedPerfume.notes.base.length > 0 && (
-                  <View style={styles.noteGroup}>
-                    <Text style={styles.noteGroupTitle}>Base Notes</Text>
-                    <Text style={styles.noteGroupText}>
-                      {selectedPerfume.notes.base.join(', ')}
-                    </Text>
-                  </View>
-                )}
+                </View>
               </View>
             </View>
 
@@ -208,47 +486,105 @@ export default function DetailScreen() {
           <View style={styles.tabContent}>
             <Text style={styles.sectionTitle}>향료 구성</Text>
             <View style={styles.ingredientsContainer}>
-              {/* Top Notes */}
-              {selectedPerfume.notes.top && selectedPerfume.notes.top.length > 0 && (
-                <View style={styles.noteGroup}>
-                  <Text style={styles.noteGroupTitle}>Top Notes</Text>
-                  <View style={styles.notesList}>
-                    {selectedPerfume.notes.top.map((note: string, index: number) => (
-                      <Text key={index} style={styles.noteItem}>
-                        {note}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              )}
+              {(() => {
+                // API에서 로드한 PerfumeNote 데이터가 있으면 Korean name 사용
+                if (perfumeNotes.length > 0) {
+                  const groupedNotes = groupNotesByType(perfumeNotes);
+                  
+                  return (
+                    <>
+                      {/* Top Notes */}
+                      {groupedNotes.top.length > 0 && (
+                        <View style={styles.noteGroup}>
+                          <Text style={styles.noteGroupTitle}>Top Notes</Text>
+                          <View style={styles.notesList}>
+                            {groupedNotes.top.map((note: PerfumeNote, index: number) => (
+                              <Text key={index} style={styles.noteItem}>
+                                {getNoteName(note)}
+                              </Text>
+                            ))}
+                          </View>
+                        </View>
+                      )}
 
-              {/* Middle Notes */}
-              {selectedPerfume.notes.middle && selectedPerfume.notes.middle.length > 0 && (
-                <View style={styles.noteGroup}>
-                  <Text style={styles.noteGroupTitle}>Middle Notes</Text>
-                  <View style={styles.notesList}>
-                    {selectedPerfume.notes.middle.map((note: string, index: number) => (
-                      <Text key={index} style={styles.noteItem}>
-                        {note}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              )}
+                      {/* Middle Notes */}
+                      {groupedNotes.middle.length > 0 && (
+                        <View style={styles.noteGroup}>
+                          <Text style={styles.noteGroupTitle}>Middle Notes</Text>
+                          <View style={styles.notesList}>
+                            {groupedNotes.middle.map((note: PerfumeNote, index: number) => (
+                              <Text key={index} style={styles.noteItem}>
+                                {getNoteName(note)}
+                              </Text>
+                            ))}
+                          </View>
+                        </View>
+                      )}
 
-              {/* Base Notes */}
-              {selectedPerfume.notes.base && selectedPerfume.notes.base.length > 0 && (
-                <View style={styles.noteGroup}>
-                  <Text style={styles.noteGroupTitle}>Base Notes</Text>
-                  <View style={styles.notesList}>
-                    {selectedPerfume.notes.base.map((note: string, index: number) => (
-                      <Text key={index} style={styles.noteItem}>
-                        {note}
-                      </Text>
-                    ))}
-                  </View>
-                </View>
-              )}
+                      {/* Base Notes */}
+                      {groupedNotes.base.length > 0 && (
+                        <View style={styles.noteGroup}>
+                          <Text style={styles.noteGroupTitle}>Base Notes</Text>
+                          <View style={styles.notesList}>
+                            {groupedNotes.base.map((note: PerfumeNote, index: number) => (
+                              <Text key={index} style={styles.noteItem}>
+                                {getNoteName(note)}
+                              </Text>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+                    </>
+                  );
+                } else {
+                  // 폴백: 기존 selectedPerfume.notes 사용 (영어)
+                  return (
+                    <>
+                      {/* Top Notes */}
+                      {selectedPerfume.notes?.top && Array.isArray(selectedPerfume.notes.top) && selectedPerfume.notes.top.length > 0 && (
+                        <View style={styles.noteGroup}>
+                          <Text style={styles.noteGroupTitle}>Top Notes</Text>
+                          <View style={styles.notesList}>
+                            {selectedPerfume.notes.top.map((note: string, index: number) => (
+                              <Text key={index} style={styles.noteItem}>
+                                {note}
+                              </Text>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+
+                      {/* Middle Notes */}
+                      {selectedPerfume.notes?.middle && Array.isArray(selectedPerfume.notes.middle) && selectedPerfume.notes.middle.length > 0 && (
+                        <View style={styles.noteGroup}>
+                          <Text style={styles.noteGroupTitle}>Middle Notes</Text>
+                          <View style={styles.notesList}>
+                            {selectedPerfume.notes.middle.map((note: string, index: number) => (
+                              <Text key={index} style={styles.noteItem}>
+                                {note}
+                              </Text>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+
+                      {/* Base Notes */}
+                      {selectedPerfume.notes?.base && Array.isArray(selectedPerfume.notes.base) && selectedPerfume.notes.base.length > 0 && (
+                        <View style={styles.noteGroup}>
+                          <Text style={styles.noteGroupTitle}>Base Notes</Text>
+                          <View style={styles.notesList}>
+                            {selectedPerfume.notes.base.map((note: string, index: number) => (
+                              <Text key={index} style={styles.noteItem}>
+                                {note}
+                              </Text>
+                            ))}
+                          </View>
+                        </View>
+                      )}
+                    </>
+                  );
+                }
+              })()}
             </View>
             
             <View style={styles.editRecipeSection}>
@@ -772,5 +1108,81 @@ const styles = StyleSheet.create({
   },
   communityRatingSection: {
     marginBottom: 0,
+  },
+  
+  // Day/Night & Season 관련 스타일
+  timeSeasonContainer: {
+    gap: 20,
+  },
+  timeContainer: {
+    backgroundColor: '#fafafa',
+    padding: 16,
+    borderRadius: 12,
+  },
+  seasonContainer: {
+    backgroundColor: '#fafafa',
+    padding: 16,
+    borderRadius: 12,
+  },
+  subsectionTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#171717',
+    marginBottom: 12,
+  },
+  dayNightContainer: {
+    gap: 12,
+  },
+  dayNightItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  dayNightLabel: {
+    fontSize: 14,
+    color: '#525252',
+    fontWeight: '500',
+    width: 25,
+  },
+  scoreBarContainer: {
+    flex: 1,
+    height: 8,
+    backgroundColor: '#f3f4f6',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  scoreBarFill: {
+    height: '100%',
+    borderRadius: 4,
+  },
+  scoreText: {
+    fontSize: 14,
+    color: '#171717',
+    fontWeight: '600',
+    minWidth: 30,
+    textAlign: 'right',
+  },
+  seasonGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 12,
+  },
+  seasonItem: {
+    flex: 1,
+    alignItems: 'center',
+    backgroundColor: '#ffffff',
+    padding: 12,
+    borderRadius: 8,
+    gap: 6,
+  },
+  seasonLabel: {
+    fontSize: 12,
+    color: '#525252',
+    fontWeight: '500',
+  },
+  seasonScore: {
+    fontSize: 16,
+    color: '#171717',
+    fontWeight: '600',
   },
 });

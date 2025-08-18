@@ -7,25 +7,43 @@ export interface EnvConfig {
   ENV: 'development' | 'staging' | 'production';
   DEVICE_ID: string;
   MAX_SLOTS: number;
+  WEATHER_API_KEY: string;
 }
 
 // 환경변수 읽기 및 검증
 const getEnvVar = (key: string, defaultValue?: string): string => {
-  const value = Constants.expoConfig?.extra?.[key] || process.env[key];
-  if (!value && !defaultValue) {
-    throw new Error(`Environment variable ${key} is required`);
+  try {
+    // EAS 빌드에서는 Constants.expoConfig.extra 우선, 로컬에서는 process.env 사용
+    const value = Constants.expoConfig?.extra?.[key] || 
+                  (typeof process !== 'undefined' ? process.env?.[key] : undefined);
+    
+    if (!value && !defaultValue) {
+      console.warn(`Environment variable ${key} is not set, using empty string`);
+      return '';
+    }
+    return value || defaultValue || '';
+  } catch (error) {
+    console.warn(`Error reading environment variable ${key}:`, error);
+    return defaultValue || '';
   }
-  return value || defaultValue!;
 };
 
 // 환경변수 설정
 export const ENV: EnvConfig = {
-  API_BASE_URL: getEnvVar('EXPO_PUBLIC_API_BASE_URL'),
-  API_TIMEOUT: parseInt(getEnvVar('EXPO_PUBLIC_API_TIMEOUT', '10000'), 10),
-  ENV: getEnvVar('EXPO_PUBLIC_ENV', 'development') as EnvConfig['ENV'],
+  API_BASE_URL: getEnvVar('EXPO_PUBLIC_API_BASE_URL', 'http://3.39.229.189:8081/api'),
+  API_TIMEOUT: parseInt(getEnvVar('EXPO_PUBLIC_API_TIMEOUT', '10000'), 10) || 10000,
+  ENV: (getEnvVar('EXPO_PUBLIC_ENV', 'development') as EnvConfig['ENV']) || 'development',
   DEVICE_ID: getEnvVar('EXPO_PUBLIC_DEVICE_ID', 'moodrop-station-001'),
-  MAX_SLOTS: parseInt(getEnvVar('EXPO_PUBLIC_MAX_SLOTS', '10'), 10),
+  MAX_SLOTS: parseInt(getEnvVar('EXPO_PUBLIC_MAX_SLOTS', '10'), 10) || 10,
+  WEATHER_API_KEY: getEnvVar('Weather_API', 'x1Dmxs1RvFtObms8XR%2BX8kFgfmDQTMbIug78GTCxovSSWbDWME%2BTWD2OqSA68cQSzYrwjwIXhnms7E9NNsXs2w%3D%3D'),
 };
+
+// 디버깅용 - APK에서도 확인 가능하도록 (개발 환경에서만)
+if (ENV.ENV === 'development') {
+  console.log(`API URL: ${ENV.API_BASE_URL}`);
+  // APK에서도 확인 가능하도록 전역 변수로 설정
+  (global as any).__DEBUG_API_URL = ENV.API_BASE_URL;
+}
 
 // 환경별 설정
 export const isDevelopment = ENV.ENV === 'development';

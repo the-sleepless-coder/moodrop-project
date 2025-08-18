@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Modal, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Modal, Animated, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { FlaskConical, Plus, Minus, RefreshCw, Save, X, Trash2, AlertTriangle, CheckCircle } from 'lucide-react-native';
+import { FlaskConical, Plus, Minus, RefreshCw, Save, X, Trash2, AlertTriangle, CheckCircle, Search, Filter, Star } from 'lucide-react-native';
 import Svg, { Polygon, Circle, Path, Defs, LinearGradient as SvgLinearGradient, Stop } from 'react-native-svg';
 import { LinearGradient } from 'expo-linear-gradient';
 import CustomModal, { ModalAction } from '@/components/CustomModal';
+import useStore from '@/store/useStore';
+import noteService, { DeterminedNote, POPULAR_NOTES, NOTE_CATEGORIES } from '@/services/noteService';
 
 const { width } = Dimensions.get('window');
 const CONTAINER_SIZE = Math.min(width, 400); // 더 큰 컨테이너 크기
@@ -24,50 +26,200 @@ interface Ingredient {
 interface AvailableIngredient {
   id: string;
   name: string;
+  koreanName: string;
   color: string;
   category: string;
+  type: 'top' | 'middle' | 'base';
+  isPopular?: boolean;
 }
 
 export default function IngredientSettingsScreen() {
-  // 사용 가능한 향료 라이브러리 (에탄올 포함)
-  const [availableIngredients] = useState<AvailableIngredient[]>([
-    // 향료들
-    { id: 'rose', name: '장미', color: '#d97066', category: '플로럴' },
-    { id: 'jasmine', name: '자스민', color: '#8b5cf6', category: '플로럴' },
-    { id: 'lavender', name: '라벤더', color: '#ec4899', category: '플로럴' },
-    { id: 'vanilla', name: '바닐라', color: '#f59e0b', category: '오리엔탈' },
-    { id: 'musk', name: '머스크', color: '#6b7280', category: '오리엔탈' },
-    { id: 'citrus', name: '시트러스', color: '#f97316', category: '프레시' },
-    { id: 'sandalwood', name: '샌달우드', color: '#8b6f47', category: '우디' },
-    { id: 'patchouli', name: '패촐리', color: '#7c2d12', category: '우디' },
-    { id: 'bergamot', name: '베르가못', color: '#10b981', category: '프레시' },
-    { id: 'cedarwood', name: '시더우드', color: '#92400e', category: '우디' },
-    { id: 'ylang', name: '일랑일랑', color: '#fbbf24', category: '플로럴' },
-    { id: 'amber', name: '앰버', color: '#d97706', category: '오리엔탈' },
-    { id: 'lemon', name: '레몬', color: '#eab308', category: '프레시' },
-    { id: 'neroli', name: '네롤리', color: '#06b6d4', category: '플로럴' },
-    { id: 'oakmoss', name: '오크모스', color: '#059669', category: '우디' },
-    
-    // 베이스 솔루션
-    { id: 'ethanol', name: '에탄올', color: '#3b82f6', category: '베이스' },
-  ]);
+  // zustand store에서 상태와 액션 가져오기
+  const { 
+    deviceIngredients, 
+    updateIngredientAmount, 
+    addIngredientToSlot, 
+    removeIngredientFromSlot, 
+    clearAllIngredients 
+  } = useStore();
 
-  const [ingredients, setIngredients] = useState<Ingredient[]>([
-    { id: '1', name: '장미', slot: 1, amount: 25, maxAmount: 30, color: '#d97066' },
-    { id: '2', name: '자스민', slot: 2, amount: 22, maxAmount: 30, color: '#8b5cf6' },
-    { id: '4', name: '라벤더', slot: 4, amount: 27, maxAmount: 30, color: '#ec4899' },
-    { id: '5', name: '바닐라', slot: 5, amount: 23, maxAmount: 30, color: '#f59e0b' },
-    { id: '6', name: '머스크', slot: 6, amount: 18, maxAmount: 30, color: '#6b7280' },
-    { id: '7', name: '', slot: 7, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
-    { id: '8', name: '', slot: 8, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
-    { id: '10', name: '', slot: 10, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
-    { id: '11', name: '', slot: 11, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
-    { id: '12', name: '', slot: 12, amount: 0, maxAmount: 30, color: '#e5e7eb', isEmpty: true },
-  ]);
+  // API 기반 향료 데이터
+  const [allNotes, setAllNotes] = useState<DeterminedNote[]>([]);
+  const [availableIngredients, setAvailableIngredients] = useState<AvailableIngredient[]>([]);
+  const [filteredIngredients, setFilteredIngredients] = useState<AvailableIngredient[]>([]);
+  const [isLoadingNotes, setIsLoadingNotes] = useState(true);
+  
+  // 검색 및 필터 상태
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [showOnlyPopular, setShowOnlyPopular] = useState(false);
+
+  // Note 색상 매핑 (카테고리별)
+  const getCategoryColor = (categoryId: string): string => {
+    const colorMap: { [key: string]: string } = {
+      'citrus': '#f59e0b',
+      'floral': '#ec4899', 
+      'woody': '#8b6f47',
+      'amber': '#d97706',
+      'oriental': '#6366f1',
+      'spicy': '#ef4444',
+      'fruity': '#10b981',
+      'green': '#059669',
+      'gourmand': '#a855f7',
+      'oceanic': '#06b6d4',
+      'powdery': '#f472b6',
+      'chypre': '#84cc16',
+      'fougere': '#22c55e',
+      'aldehyde': '#64748b',
+      'tobacco_leather': '#7c2d12',
+      'bouquet': '#f97316',
+      'warm': '#dc2626',
+      'other': '#6b7280'
+    };
+    return colorMap[categoryId] || '#6b7280';
+  };
+
+  // API에서 Note 데이터 로드 및 사용자 보유 향료 설정
+  useEffect(() => {
+    const loadNotesAndUserInventory = async () => {
+      setIsLoadingNotes(true);
+      try {
+        // 1. 모든 향료 정보 가져오기
+        const response = await noteService.getAllDeterminedNotes();
+        if (response.success && response.data) {
+          setAllNotes(response.data);
+          
+          // API 데이터를 AvailableIngredient 형태로 변환 (unique notes only)
+          const uniqueNotes = new Map<string, typeof response.data[0]>();
+          
+          // type에 관계없이 name으로 unique하게 만들기
+          response.data.forEach(note => {
+            if (!uniqueNotes.has(note.name)) {
+              uniqueNotes.set(note.name, note);
+            }
+          });
+          
+          const ingredients: AvailableIngredient[] = Array.from(uniqueNotes.values()).map(note => {
+            const categoryId = noteService.categorizeNote(note.name);
+            const category = NOTE_CATEGORIES.find(cat => cat.id === categoryId);
+            const isPopular = POPULAR_NOTES.some(pop => pop.name === note.name);
+            
+            return {
+              id: note.name,
+              name: note.name,
+              koreanName: note.koreanName,
+              color: getCategoryColor(categoryId),
+              category: category?.name || '기타',
+              type: note.type,
+              isPopular
+            };
+          });
+
+          // 에탄올 추가 (베이스 솔루션)
+          ingredients.push({
+            id: 'ethanol',
+            name: 'ethanol',
+            koreanName: '에탄올',
+            color: '#3b82f6',
+            category: '베이스',
+            type: 'base',
+            isPopular: true
+          });
+
+          setAvailableIngredients(ingredients);
+          setFilteredIngredients(ingredients);
+
+          // 2. 사용자 보유 향료 가져와서 슬롯에 자동 할당
+          const userNotesResponse = await noteService.getUserNotes('json');
+          if (userNotesResponse.success && userNotesResponse.data) {
+            console.log('User owned notes:', userNotesResponse.data);
+            
+            // 먼저 모든 슬롯을 비우기
+            clearAllIngredients();
+            
+            // 짧은 지연 후 사용자 보유 향료를 슬롯에 순서대로 할당
+            setTimeout(() => {
+              userNotesResponse.data.forEach((userNote, index) => {
+                // 최대 9개 슬롯까지만 할당 (마지막 슬롯은 히노키용으로 예약)
+                if (index < 9) {
+                  const slotOrder = [1, 2, 4, 5, 6, 7, 8, 10, 11]; // 12번 슬롯 제외
+                  const slotNumber = slotOrder[index];
+                  const slotId = `slot-${slotNumber}`;
+                  
+                  // 해당 향료의 상세 정보 찾기
+                  const ingredientInfo = ingredients.find(ing => ing.name === userNote.name);
+                  if (ingredientInfo) {
+                    const ingredientToAdd = {
+                      id: userNote.name,
+                      name: ingredientInfo.koreanName, // 한국어 이름 사용
+                      color: ingredientInfo.color,
+                      category: ingredientInfo.category
+                    };
+                    
+                    console.log(`Adding ${userNote.name} (${ingredientInfo.koreanName}) to slot ${slotNumber}`);
+                    addIngredientToSlot(slotId, ingredientToAdd);
+                  }
+                }
+              });
+              
+              // 마지막 슬롯(12번)에 히노키 추가
+              const hinokiIngredient = {
+                id: 'hinoki',
+                name: '히노키', // 한국어 이름
+                color: '#22c55e', // 초록색
+                category: '우디'
+              };
+              
+              console.log('Adding 히노키 to slot 12');
+              addIngredientToSlot('slot-12', hinokiIngredient);
+            }, 100);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load notes:', error);
+      } finally {
+        setIsLoadingNotes(false);
+      }
+    };
+
+    loadNotesAndUserInventory();
+  }, [addIngredientToSlot, clearAllIngredients]);
+
+  // 검색 및 필터링
+  useEffect(() => {
+    let filtered = [...availableIngredients];
+
+    // 검색어 필터링
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(ingredient => 
+        ingredient.name.toLowerCase().includes(query) ||
+        ingredient.koreanName.toLowerCase().includes(query)
+      );
+    }
+
+    // 카테고리 필터링
+    if (selectedCategory !== 'all') {
+      filtered = filtered.filter(ingredient => ingredient.category === selectedCategory);
+    }
+
+    // 인기 향료만 표시
+    if (showOnlyPopular) {
+      filtered = filtered.filter(ingredient => ingredient.isPopular);
+    }
+
+    // 이미 사용 중인 향료 제외
+    filtered = filtered.filter(ingredient => 
+      !deviceIngredients.some(slot => slot.name === ingredient.koreanName && !slot.isEmpty)
+    );
+
+    setFilteredIngredients(filtered);
+  }, [searchQuery, selectedCategory, showOnlyPopular, availableIngredients, deviceIngredients]);
   
   const [selectedSlot, setSelectedSlot] = useState<string | null>(null);
   const [showIngredientSelector, setShowIngredientSelector] = useState(false);
   const [showIngredientSettings, setShowIngredientSettings] = useState(false);
+  const [showCategoryFilter, setShowCategoryFilter] = useState(false);
   const [modalVisible, setModalVisible] = useState(false);
   const [modalConfig, setModalConfig] = useState<{
     title: string;
@@ -84,7 +236,7 @@ export default function IngredientSettingsScreen() {
 
   // 중앙부 색상 업데이트 및 애니메이션
   const updateCenterColors = () => {
-    const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+    const activeIngredients = deviceIngredients.filter(ing => !ing.isEmpty);
     if (activeIngredients.length === 0) {
       setCenterColors(['#171717']);
     } else {
@@ -108,7 +260,7 @@ export default function IngredientSettingsScreen() {
 
   // 중앙부 배경색 계산
   const getCenterBackgroundColor = () => {
-    const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+    const activeIngredients = deviceIngredients.filter(ing => !ing.isEmpty);
     if (activeIngredients.length === 0) {
       return '#171717';
     }
@@ -142,7 +294,7 @@ export default function IngredientSettingsScreen() {
 
   // 지속적인 소용돌이 애니메이션 시작
   const startContinuousSwirl = () => {
-    const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+    const activeIngredients = deviceIngredients.filter(ing => !ing.isEmpty);
     if (activeIngredients.length > 0) {
       swirleAnimation.setValue(0);
       Animated.loop(
@@ -167,22 +319,14 @@ export default function IngredientSettingsScreen() {
     } else {
       setIsInitialLoad(false);
       // 초기 로드 후에도 향료가 있으면 소용돌이 시작
-      const activeIngredients = ingredients.filter(ing => !ing.isEmpty);
+      const activeIngredients = deviceIngredients.filter(ing => !ing.isEmpty);
       if (activeIngredients.length > 0) {
         startContinuousSwirl();
       }
     }
-  }, [ingredients, isInitialLoad]);
+  }, [deviceIngredients, isInitialLoad]);
 
-  const updateIngredientAmount = (id: string, newAmount: number) => {
-    setIngredients(prev => 
-      prev.map(ingredient => 
-        ingredient.id === id 
-          ? { ...ingredient, amount: Math.max(0, Math.min(newAmount, ingredient.maxAmount)) }
-          : ingredient
-      )
-    );
-  };
+  // updateIngredientAmount는 store에서 가져옴
 
   const handleClearAll = () => {
     setModalConfig({
@@ -195,15 +339,7 @@ export default function IngredientSettingsScreen() {
           text: '비우기', 
           style: 'destructive',
           onPress: () => {
-            setIngredients(prev => 
-              prev.map(ingredient => ({
-                ...ingredient,
-                name: '',
-                color: '#e5e7eb',
-                isEmpty: true,
-                amount: 0
-              }))
-            );
+            clearAllIngredients();
             setModalConfig({
               title: '완료',
               message: '모든 원료가 제거되었습니다.',
@@ -218,14 +354,87 @@ export default function IngredientSettingsScreen() {
     setModalVisible(true);
   };
 
-  const handleSaveSettings = () => {
-    setModalConfig({
-      title: '설정 저장',
-      message: '원료 설정이 저장되었습니다.',
-      icon: <Save size={32} color="#22c55e" />,
-      actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
-    });
-    setModalVisible(true);
+  const handleSaveSettings = async () => {
+    try {
+      setIsLoadingNotes(true);
+      
+      // 1. 현재 DB에서 사용자 보유 향료 조회
+      const currentUserNotesResponse = await noteService.getUserNotes('json');
+      if (!currentUserNotesResponse.success) {
+        throw new Error('Failed to fetch current user notes');
+      }
+      
+      const currentDbNotes = currentUserNotesResponse.data || [];
+      const currentDbNoteNames = currentDbNotes.map(note => note.name);
+      
+      // 2. 현재 슬롯에 있는 향료들 (빈 슬롯 제외)
+      const currentSlotNotes = deviceIngredients
+        .filter(slot => !slot.isEmpty && slot.name)
+        .map(slot => {
+          // 한국어 이름을 영어 이름으로 변환
+          const ingredient = availableIngredients.find(ing => ing.koreanName === slot.name);
+          return ingredient ? ingredient.name : null;
+        })
+        .filter(name => name !== null);
+      
+      console.log('Current DB notes:', currentDbNoteNames);
+      console.log('Current slot notes:', currentSlotNotes);
+      
+      // 3. 추가할 향료들 (슬롯에는 있지만 DB에는 없는 것들)
+      const notesToAdd = currentSlotNotes.filter(noteName => !currentDbNoteNames.includes(noteName));
+      
+      // 4. 삭제할 향료들 (DB에는 있지만 슬롯에는 없는 것들)
+      const notesToRemove = currentDbNoteNames.filter(noteName => !currentSlotNotes.includes(noteName));
+      
+      console.log('Notes to add:', notesToAdd);
+      console.log('Notes to remove:', notesToRemove);
+      
+      // 5. 추가 작업 수행
+      const addPromises = notesToAdd.map(noteName => 
+        noteService.addUserNote('json', noteName)
+      );
+      
+      // 6. 삭제 작업 수행
+      const removePromises = notesToRemove.map(noteName => 
+        noteService.removeUserNote('json', noteName)
+      );
+      
+      // 7. 모든 작업 병렬 실행
+      const allPromises = [...addPromises, ...removePromises];
+      const results = await Promise.allSettled(allPromises);
+      
+      // 8. 결과 확인
+      const failedOperations = results.filter(result => result.status === 'rejected');
+      
+      if (failedOperations.length > 0) {
+        console.error('Some operations failed:', failedOperations);
+        setModalConfig({
+          title: '저장 오류',
+          message: `일부 향료 설정 저장에 실패했습니다. (${failedOperations.length}개 실패)`,
+          icon: <AlertTriangle size={32} color="#ef4444" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+      } else {
+        setModalConfig({
+          title: '설정 저장 완료',
+          message: `원료 설정이 저장되었습니다.\n추가: ${notesToAdd.length}개, 제거: ${notesToRemove.length}개`,
+          icon: <Save size={32} color="#22c55e" />,
+          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+        });
+      }
+      
+    } catch (error) {
+      console.error('Failed to save settings:', error);
+      setModalConfig({
+        title: '저장 실패',
+        message: '원료 설정 저장 중 오류가 발생했습니다.',
+        icon: <AlertTriangle size={32} color="#ef4444" />,
+        actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
+      });
+    } finally {
+      setIsLoadingNotes(false);
+      setModalVisible(true);
+    }
   };
 
   const getAmountStatus = (amount: number, maxAmount: number) => {
@@ -235,38 +444,36 @@ export default function IngredientSettingsScreen() {
     return { status: '부족', color: '#ef4444' };
   };
 
-  const addIngredientToSlot = (slotId: string, ingredient: AvailableIngredient) => {
-    setIngredients(prev => 
-      prev.map(slot => 
-        slot.id === slotId 
-          ? { 
-              ...slot, 
-              name: ingredient.name, 
-              color: ingredient.color, 
-              isEmpty: false,
-              amount: 30 // 새로 추가할 때 최대치로 설정
-            }
-          : slot
-      )
-    );
+  const handleAddIngredientToSlot = (slotId: string, ingredient: AvailableIngredient) => {
+    // AvailableIngredient를 기존 형태로 변환
+    const ingredientToAdd = {
+      id: ingredient.id,
+      name: ingredient.koreanName, // 한국어 이름 사용
+      color: ingredient.color,
+      category: ingredient.category
+    };
+    addIngredientToSlot(slotId, ingredientToAdd);
     setShowIngredientSelector(false);
     setSelectedSlot(null);
   };
 
-  const removeIngredientFromSlot = (slotId: string) => {
-    setIngredients(prev => 
-      prev.map(slot => 
-        slot.id === slotId 
-          ? { 
-              ...slot, 
-              name: '', 
-              color: '#e5e7eb', 
-              isEmpty: true,
-              amount: 0
-            }
-          : slot
-      )
-    );
+  // 인기 향료 빠른 추가 함수
+  const handleQuickAddPopularNote = (slotId: string, popularNote: typeof POPULAR_NOTES[0]) => {
+    const ingredient = availableIngredients.find(ing => ing.name === popularNote.name);
+    if (ingredient) {
+      handleAddIngredientToSlot(slotId, ingredient);
+    }
+  };
+
+  // 필터 초기화
+  const clearFilters = () => {
+    setSearchQuery('');
+    setSelectedCategory('all');
+    setShowOnlyPopular(false);
+  };
+
+  const handleRemoveIngredientFromSlot = (slotId: string) => {
+    removeIngredientFromSlot(slotId);
     setSelectedSlot(null);
   };
 
@@ -375,7 +582,7 @@ export default function IngredientSettingsScreen() {
     );
   };
 
-  const selectedIngredient = selectedSlot ? ingredients.find(ing => ing.id === selectedSlot) : null;
+  const selectedIngredient = selectedSlot ? deviceIngredients.find(ing => ing.id === selectedSlot) : null;
 
   // 6각형 좌표 계산 (슬롯들이 완전히 들어갈 수 있도록 훨씬 크게)
   const getHexagonPoints = (size: number) => {
@@ -490,7 +697,7 @@ export default function IngredientSettingsScreen() {
             </View>
             
             {/* 10개 파이차트 슬롯 */}
-            {ingredients.map((ingredient) => {
+            {deviceIngredients.map((ingredient) => {
               const position = getSlotPosition(ingredient.slot);
               
               return (
@@ -584,41 +791,161 @@ export default function IngredientSettingsScreen() {
             </TouchableOpacity>
           </View>
           
-          <ScrollView style={styles.modalContent}>
-            {['베이스', '플로럴', '우디', '프레시', '오리엔탈'].map(category => (
-              <View key={category} style={styles.categorySection}>
-                <Text style={styles.categoryTitle}>{category}</Text>
-                <View style={styles.ingredientGrid}>
-                  {availableIngredients
-                    .filter(ingredient => ingredient.category === category)
-                    .filter(ingredient => !ingredients.some(slot => slot.name === ingredient.name && !slot.isEmpty))
-                    .map(ingredient => (
+          {isLoadingNotes ? (
+            <View style={styles.loadingContainer}>
+              <ActivityIndicator size="large" color="#1e40af" />
+              <Text style={styles.loadingText}>향료 정보를 불러오는 중...</Text>
+            </View>
+          ) : (
+            <ScrollView style={styles.modalContent}>
+              {/* 인기 향료 빠른 추가 섹션 */}
+              <View style={styles.popularSection}>
+                <View style={styles.popularHeader}>
+                  <Star size={16} color="#f59e0b" fill="#f59e0b" />
+                  <Text style={styles.popularTitle}>인기 향료</Text>
+                  <Text style={styles.popularSubtitle}>빠른 추가</Text>
+                </View>
+                <ScrollView 
+                  horizontal 
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.popularScrollContent}
+                >
+                  {/* 에탄올 추가 */}
+                  {(() => {
+                    const ethanolIngredient = availableIngredients.find(ing => ing.id === 'ethanol');
+                    if (ethanolIngredient && !deviceIngredients.some(slot => slot.name === ethanolIngredient.koreanName && !slot.isEmpty)) {
+                      return (
+                        <TouchableOpacity
+                          key="ethanol"
+                          style={[styles.popularCard, styles.baseIngredientCard, { borderColor: ethanolIngredient.color }]}
+                          onPress={() => selectedSlot && handleAddIngredientToSlot(selectedSlot, ethanolIngredient)}
+                        >
+                          <View style={[styles.popularDot, { backgroundColor: ethanolIngredient.color }]} />
+                          <Text style={styles.popularName}>{ethanolIngredient.koreanName}</Text>
+                          <Text style={styles.popularCount}>베이스</Text>
+                        </TouchableOpacity>
+                      );
+                    }
+                    return null;
+                  })()}
+                  
+                  {POPULAR_NOTES.slice(0, 15).map(popularNote => {
+                    const ingredient = availableIngredients.find(ing => ing.name === popularNote.name);
+                    if (!ingredient || deviceIngredients.some(slot => slot.name === ingredient.koreanName && !slot.isEmpty)) {
+                      return null;
+                    }
+                    
+                    return (
                       <TouchableOpacity
-                        key={ingredient.id}
-                        style={[
-                          styles.ingredientCard, 
-                          { borderColor: ingredient.color },
-                          // 에탄올은 베이스 재료로 시각적 구분
-                          ingredient.category === '베이스' && styles.baseIngredientCard
-                        ]}
-                        onPress={() => selectedSlot && addIngredientToSlot(selectedSlot, ingredient)}
+                        key={popularNote.name}
+                        style={[styles.popularCard, { borderColor: ingredient.color }]}
+                        onPress={() => selectedSlot && handleQuickAddPopularNote(selectedSlot, popularNote)}
                       >
-                        <View style={[styles.ingredientDot, { backgroundColor: ingredient.color }]} />
+                        <View style={[styles.popularDot, { backgroundColor: ingredient.color }]} />
+                        <Text style={styles.popularName}>{ingredient.koreanName}</Text>
+                        <Text style={styles.popularCount}>{popularNote.count}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+              </View>
+
+              {/* 검색 및 필터 섹션 */}
+              <View style={styles.searchSection}>
+                <View style={styles.searchContainer}>
+                  <Search size={20} color="#737373" />
+                  <TextInput
+                    style={styles.searchInput}
+                    placeholder="향료 이름으로 검색..."
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    placeholderTextColor="#9ca3af"
+                  />
+                  {searchQuery.length > 0 && (
+                    <TouchableOpacity onPress={() => setSearchQuery('')}>
+                      <X size={16} color="#737373" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+
+                {/* 필터 버튼들 */}
+                <View style={styles.filtersContainer}>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+                    <View style={styles.filterChips}>
+                      <TouchableOpacity
+                        style={[styles.filterChip, showOnlyPopular && styles.filterChipActive]}
+                        onPress={() => setShowOnlyPopular(!showOnlyPopular)}
+                      >
+                        <Star size={12} color={showOnlyPopular ? "#ffffff" : "#f59e0b"} fill={showOnlyPopular ? "#ffffff" : "#f59e0b"} />
+                        <Text style={[styles.filterChipText, showOnlyPopular && styles.filterChipTextActive]}>인기</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={[styles.filterChip, selectedCategory !== 'all' && styles.filterChipActive]}
+                        onPress={() => setShowCategoryFilter(true)}
+                      >
+                        <Filter size={12} color={selectedCategory !== 'all' ? "#ffffff" : "#525252"} />
+                        <Text style={[styles.filterChipText, selectedCategory !== 'all' && styles.filterChipTextActive]}>
+                          {selectedCategory === 'all' ? '카테고리' : selectedCategory}
+                        </Text>
+                      </TouchableOpacity>
+
+                      {(searchQuery || selectedCategory !== 'all' || showOnlyPopular) && (
+                        <TouchableOpacity style={styles.clearFiltersButton} onPress={clearFilters}>
+                          <X size={12} color="#ef4444" />
+                          <Text style={styles.clearFiltersText}>초기화</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </ScrollView>
+                </View>
+              </View>
+
+              {/* 통합 향료 목록 */}
+              <View style={styles.categorySection}>
+                <Text style={styles.categoryTitle}>
+                  모든 향료 ({filteredIngredients.length})
+                </Text>
+                <View style={styles.ingredientGrid}>
+                  {filteredIngredients.map(ingredient => (
+                    <TouchableOpacity
+                      key={ingredient.id}
+                      style={[
+                        styles.ingredientCard, 
+                        { borderColor: ingredient.color },
+                        ingredient.category === '베이스' && styles.baseIngredientCard
+                      ]}
+                      onPress={() => selectedSlot && handleAddIngredientToSlot(selectedSlot, ingredient)}
+                    >
+                      <View style={[styles.ingredientDot, { backgroundColor: ingredient.color }]} />
+                      <View style={styles.ingredientInfo}>
                         <Text style={[
                           styles.ingredientName,
                           ingredient.category === '베이스' && styles.baseIngredientName
                         ]}>
-                          {ingredient.name}
+                          {ingredient.koreanName}
                         </Text>
-                        {ingredient.category === '베이스' && (
-                          <Text style={styles.baseIngredientLabel}>베이스</Text>
+                        <Text style={styles.ingredientSubName}>{ingredient.name}</Text>
+                        <Text style={styles.ingredientCategory}>{ingredient.category}</Text>
+                      </View>
+                      <View style={styles.ingredientMeta}>
+                        {ingredient.isPopular && (
+                          <Star size={10} color="#f59e0b" fill="#f59e0b" />
                         )}
-                      </TouchableOpacity>
-                    ))}
+                      </View>
+                    </TouchableOpacity>
+                  ))}
                 </View>
               </View>
-            ))}
-          </ScrollView>
+
+              {filteredIngredients.length === 0 && (
+                <View style={styles.noResultsContainer}>
+                  <Text style={styles.noResultsText}>검색 결과가 없습니다</Text>
+                  <Text style={styles.noResultsSubText}>다른 검색어를 시도해보세요</Text>
+                </View>
+              )}
+            </ScrollView>
+          )}
         </SafeAreaView>
       </Modal>
 
@@ -694,7 +1021,7 @@ export default function IngredientSettingsScreen() {
                 <TouchableOpacity 
                   style={styles.removeButton}
                   onPress={() => {
-                    removeIngredientFromSlot(selectedIngredient.id);
+                    handleRemoveIngredientFromSlot(selectedIngredient.id);
                     setShowIngredientSettings(false);
                   }}
                 >
@@ -705,6 +1032,165 @@ export default function IngredientSettingsScreen() {
             </View>
           )}
         </View>
+      </Modal>
+
+      {/* 카테고리 필터 모달 */}
+      <Modal
+        visible={showCategoryFilter}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setShowCategoryFilter(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>카테고리 선택</Text>
+            <TouchableOpacity onPress={() => setShowCategoryFilter(false)}>
+              <X size={24} color="#737373" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView style={styles.modalContent}>
+            <View style={styles.categoryFilterSection}>
+              {/* 전체 옵션 */}
+              <TouchableOpacity
+                style={[
+                  styles.categoryFilterItem,
+                  selectedCategory === 'all' && styles.categoryFilterItemActive
+                ]}
+                onPress={() => {
+                  setSelectedCategory('all');
+                  setShowCategoryFilter(false);
+                }}
+              >
+                <View style={styles.categoryFilterInfo}>
+                  <Text style={[
+                    styles.categoryFilterName,
+                    selectedCategory === 'all' && styles.categoryFilterNameActive
+                  ]}>
+                    전체 카테고리
+                  </Text>
+                  <Text style={styles.categoryFilterDescription}>모든 향료 표시</Text>
+                </View>
+                {selectedCategory === 'all' && (
+                  <View style={styles.categoryFilterCheck}>
+                    <Text style={styles.categoryFilterCheckMark}>✓</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+
+              {/* 베이스 카테고리 */}
+              {(() => {
+                const baseIngredients = availableIngredients.filter(ingredient => ingredient.category === '베이스');
+                if (baseIngredients.length === 0) return null;
+                
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.categoryFilterItem,
+                      selectedCategory === '베이스' && styles.categoryFilterItemActive
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory('베이스');
+                      setShowCategoryFilter(false);
+                    }}
+                  >
+                    <View style={styles.categoryFilterInfo}>
+                      <Text style={[
+                        styles.categoryFilterName,
+                        selectedCategory === '베이스' && styles.categoryFilterNameActive
+                      ]}>
+                        베이스
+                      </Text>
+                      <Text style={styles.categoryFilterDescription}>
+                        에탄올 등 기본 용매 ({baseIngredients.length}개)
+                      </Text>
+                    </View>
+                    {selectedCategory === '베이스' && (
+                      <View style={styles.categoryFilterCheck}>
+                        <Text style={styles.categoryFilterCheckMark}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })()}
+
+              {/* NOTE_CATEGORIES */}
+              {NOTE_CATEGORIES.map(category => {
+                const categoryIngredients = availableIngredients.filter(ingredient => ingredient.category === category.name);
+                
+                // 향료가 없는 카테고리는 제외
+                if (categoryIngredients.length === 0) return null;
+                
+                return (
+                  <TouchableOpacity
+                    key={category.id}
+                    style={[
+                      styles.categoryFilterItem,
+                      selectedCategory === category.name && styles.categoryFilterItemActive
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory(category.name);
+                      setShowCategoryFilter(false);
+                    }}
+                  >
+                    <View style={styles.categoryFilterInfo}>
+                      <Text style={[
+                        styles.categoryFilterName,
+                        selectedCategory === category.name && styles.categoryFilterNameActive
+                      ]}>
+                        {category.name}
+                      </Text>
+                      <Text style={styles.categoryFilterDescription}>
+                        {category.description} ({categoryIngredients.length}개)
+                      </Text>
+                    </View>
+                    {selectedCategory === category.name && (
+                      <View style={styles.categoryFilterCheck}>
+                        <Text style={styles.categoryFilterCheckMark}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+
+              {/* 기타 카테고리 */}
+              {(() => {
+                const otherIngredients = availableIngredients.filter(ingredient => ingredient.category === '기타');
+                if (otherIngredients.length === 0) return null;
+                
+                return (
+                  <TouchableOpacity
+                    style={[
+                      styles.categoryFilterItem,
+                      selectedCategory === '기타' && styles.categoryFilterItemActive
+                    ]}
+                    onPress={() => {
+                      setSelectedCategory('기타');
+                      setShowCategoryFilter(false);
+                    }}
+                  >
+                    <View style={styles.categoryFilterInfo}>
+                      <Text style={[
+                        styles.categoryFilterName,
+                        selectedCategory === '기타' && styles.categoryFilterNameActive
+                      ]}>
+                        기타
+                      </Text>
+                      <Text style={styles.categoryFilterDescription}>
+                        분류되지 않은 향료 ({otherIngredients.length}개)
+                      </Text>
+                    </View>
+                    {selectedCategory === '기타' && (
+                      <View style={styles.categoryFilterCheck}>
+                        <Text style={styles.categoryFilterCheckMark}>✓</Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                );
+              })()}
+            </View>
+          </ScrollView>
+        </SafeAreaView>
       </Modal>
       
       <CustomModal
@@ -1066,6 +1552,139 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
   },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 40,
+  },
+  loadingText: {
+    fontSize: 16,
+    color: '#525252',
+    marginTop: 16,
+  },
+  popularSection: {
+    marginBottom: 24,
+  },
+  popularHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+    gap: 8,
+  },
+  popularTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#171717',
+  },
+  popularSubtitle: {
+    fontSize: 12,
+    color: '#737373',
+    marginLeft: 'auto',
+  },
+  popularScrollContent: {
+    paddingHorizontal: 4,
+    gap: 12,
+  },
+  popularCard: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    borderWidth: 2,
+    padding: 12,
+    alignItems: 'center',
+    minWidth: 80,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  popularDot: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  popularName: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#171717',
+    textAlign: 'center',
+    marginBottom: 2,
+  },
+  popularCount: {
+    fontSize: 9,
+    color: '#737373',
+    textAlign: 'center',
+  },
+  searchSection: {
+    marginBottom: 24,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#171717',
+    marginLeft: 12,
+    marginRight: 8,
+  },
+  filtersContainer: {
+    marginBottom: 8,
+  },
+  filterChips: {
+    flexDirection: 'row',
+    gap: 8,
+    paddingHorizontal: 4,
+  },
+  filterChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#f8f9fa',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+    gap: 4,
+  },
+  filterChipActive: {
+    backgroundColor: '#1e40af',
+    borderColor: '#1e40af',
+  },
+  filterChipText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#525252',
+  },
+  filterChipTextActive: {
+    color: '#ffffff',
+  },
+  clearFiltersButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fef2f2',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#fecaca',
+    gap: 4,
+  },
+  clearFiltersText: {
+    fontSize: 12,
+    fontWeight: '500',
+    color: '#ef4444',
+  },
   categorySection: {
     marginBottom: 32,
   },
@@ -1084,11 +1703,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#ffffff',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
     borderRadius: 8,
     borderWidth: 2,
     minWidth: '45%',
+    maxWidth: '48%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -1100,11 +1720,52 @@ const styles = StyleSheet.create({
     height: 12,
     borderRadius: 6,
     marginRight: 8,
+    flexShrink: 0,
+  },
+  ingredientInfo: {
+    flex: 1,
+    marginRight: 8,
   },
   ingredientName: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#171717',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  ingredientSubName: {
+    fontSize: 10,
+    color: '#737373',
+    fontStyle: 'italic',
+  },
+  ingredientCategory: {
+    fontSize: 9,
+    color: '#9ca3af',
     fontWeight: '500',
+    marginTop: 1,
+  },
+  ingredientMeta: {
+    alignItems: 'center',
+    gap: 2,
+  },
+  ingredientType: {
+    fontSize: 9,
+    color: '#9ca3af',
+    fontWeight: '500',
+    textTransform: 'uppercase',
+  },
+  noResultsContainer: {
+    alignItems: 'center',
+    padding: 40,
+  },
+  noResultsText: {
+    fontSize: 16,
+    color: '#9ca3af',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  noResultsSubText: {
+    fontSize: 14,
+    color: '#d1d5db',
   },
   // 베이스 재료 (에탄올) 전용 스타일
   baseIngredientCard: {
@@ -1125,5 +1786,50 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
     borderRadius: 4,
     marginLeft: 'auto',
+  },
+  // 카테고리 필터 모달 스타일
+  categoryFilterSection: {
+    paddingBottom: 20,
+  },
+  categoryFilterItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f3f4f6',
+  },
+  categoryFilterItemActive: {
+    backgroundColor: '#eff6ff',
+  },
+  categoryFilterInfo: {
+    flex: 1,
+  },
+  categoryFilterName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#171717',
+    marginBottom: 4,
+  },
+  categoryFilterNameActive: {
+    color: '#1e40af',
+  },
+  categoryFilterDescription: {
+    fontSize: 14,
+    color: '#737373',
+  },
+  categoryFilterCheck: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#1e40af',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  categoryFilterCheckMark: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });

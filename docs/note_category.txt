@@ -1,0 +1,17 @@
+1. 시트러스(Citrus) 계열
+2. 플로럴(Floral) 계열
+3. 우디(Woody) 계열
+​4. 시프레(Chypre) 계열
+5. 그린(Green) 계열
+6. 푸제르(Fougere)계열
+7. 오리엔탈(Oriental) 계열
+8. 앰버(Amber) 계열 
+9. 스파이시(Spicy) 계열
+10. 프루티(Fruity: 과일향) 계열
+11. 알데히드(Aldeehyde) 계열
+12. 오셔닉(Oceanic)계열
+13. 타바코 레더(Tabacco Leather) 계열
+14. 파우더리(Powdery) 계열
+15. 구르망(Gourmand)계열
+16. 부케(Bouquet) 계열
+17. 웜(Warm) 계열

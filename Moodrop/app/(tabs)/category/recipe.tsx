@@ -11,7 +11,7 @@ import CustomModal, { ModalAction } from '@/components/CustomModal';
 import notificationService from '@/services/notificationService';
 
 export default function RecipeScreen() {
-  const { selectedPerfume, addManufacturingJob, setManufacturingStatus, updateManufacturingJob, manufacturingJobs, manufacturingStatus } = useStore();
+  const { selectedPerfume, addManufacturingJob, setManufacturingStatus, updateManufacturingJob, manufacturingJobs, manufacturingStatus, hasEthanol } = useStore();
   const [editMode, setEditMode] = useState(false);
   const [recipe, setRecipe] = useState<{ [key: string]: number }>({});
   const [totalPercentage, setTotalPercentage] = useState(100);
@@ -36,7 +36,7 @@ export default function RecipeScreen() {
           if (response.success && response.data) {
             setPerfumeNotes(response.data);
             
-            // API 데이터를 기본 레시피로 설정
+            // API 데이터를 기본 레시피로 설정 (영어 이름을 키로 사용)
             const initialRecipe: { [key: string]: number } = {};
             response.data.forEach(note => {
               initialRecipe[note.name] = note.weight;
@@ -129,6 +129,25 @@ export default function RecipeScreen() {
     }
   };
 
+  // 향료 이름 표시 함수 (Korean name 우선, 없으면 영어 이름)
+  const getIngredientDisplayName = (ingredientName: string): string => {
+    // 시연용 하드코딩: 육두구/nutmeg -> 히노키
+    if (selectedPerfume?.id === 4666 && (ingredientName === 'nutmeg' || ingredientName === '육두구')) {
+      return '히노키';
+    }
+    
+    const note = perfumeNotes.find(note => note.name === ingredientName);
+    if (note?.koreanName) {
+      // 육두구를 히노키로 대체
+      if (selectedPerfume?.id === 4666 && note.koreanName === '육두구') {
+        return '히노키';
+      }
+      return note.koreanName;
+    }
+    
+    return ingredientName;
+  };
+
 
   const handleStartManufacturing = () => {
     // 현재 제조 중인 작업이 있는지 확인
@@ -143,6 +162,21 @@ export default function RecipeScreen() {
         icon: <FlaskConical size={32} color="#f59e0b" />,
         actions: [
           { text: '확인', style: 'primary', onPress: () => {} }
+        ]
+      });
+      setModalVisible(true);
+      return;
+    }
+    
+    // 에탄올 확인 (기기 원료에 에탄올이 있는지 체크)
+    if (!hasEthanol()) {
+      setModalConfig({
+        title: '에탄올 부족',
+        message: '향수 제조를 위해서는 에탄올이 필요합니다.\n기기 설정에서 에탄올을 추가해주세요.',
+        icon: <AlertTriangle size={32} color="#ef4444" />,
+        actions: [
+          { text: '기기 설정으로 이동', style: 'primary', onPress: () => router.push('/profile/ingredient-settings') },
+          { text: '취소', style: 'cancel', onPress: () => {} }
         ]
       });
       setModalVisible(true);
@@ -198,7 +232,7 @@ export default function RecipeScreen() {
             router.push('/');
             router.replace('/category/');
             
-            // 제조 진행 시뮬레이션 시작 (20초 총 시간)
+            // 제조 진행 시뮬레이션 시작 (40초 총 시간)
             setTimeout(() => {
               updateManufacturingJob(newJob.id, {
                 status: 'manufacturing',
@@ -211,7 +245,7 @@ export default function RecipeScreen() {
                 25,
                 '향료 조합 중...'
               );
-            }, 3000);
+            }, 6000);
             
             // 중간 단계 1
             setTimeout(() => {
@@ -225,7 +259,7 @@ export default function RecipeScreen() {
                 50,
                 '혼합 중...'
               );
-            }, 8000);
+            }, 16000);
             
             // 중간 단계 2
             setTimeout(() => {
@@ -239,7 +273,7 @@ export default function RecipeScreen() {
                 75,
                 '숙성 중...'
               );
-            }, 15000);
+            }, 30000);
             
             // 완료 단계
             setTimeout(() => {
@@ -252,7 +286,7 @@ export default function RecipeScreen() {
               setManufacturingStatus('completed');
               // 완료 알림 표시
               notificationService.showManufacturingCompleteNotification(selectedPerfume.name);
-            }, 20000);
+            }, 40000);
           }
         }
       ]
@@ -262,8 +296,9 @@ export default function RecipeScreen() {
 
   const getIngredientColor = (ingredient: string): string => {
     const colors: { [key: string]: string } = {
+      // 한국어 이름
       '장미': '#d97066',
-      '자스민': '#8b5cf6',
+      '자스민': '#8b5cf6', 
       '피오니': '#ec4899',
       '머스크': '#6b7280',
       '바닐라': '#f59e0b',
@@ -277,8 +312,44 @@ export default function RecipeScreen() {
       '오존': '#06b6d4',
       '앰버': '#d97706',
       '스파이시': '#dc2626',
+      '라즈베리': '#dc2626',
+      '블랙커런트(카시스)': '#7c2d12',
+      '꿀': '#f59e0b',
+      '크림': '#f8fafc',
+      '자두': '#8b5cf6',
+      '플로럴 노트': '#ec4899',
+      '파인애플': '#f97316',
+      '히노키': '#22c55e',
+      '유자': '#f59e0b',
+      '유향': '#8b5cf6',
+      // 영어 이름 (fallback)
+      'rose': '#d97066',
+      'jasmine': '#8b5cf6',
+      'peony': '#ec4899',
+      'musk': '#6b7280',
+      'vanilla': '#f59e0b',
+      'sandalwood': '#8b6f47',
+      'cedarwood': '#059669',
+      'patchouli': '#7c2d12',
+      'vetiver': '#365314',
+      'citrus': '#f97316',
+      'aquatic': '#0ea5e9',
+      'green': '#16a34a',
+      'ozone': '#06b6d4',
+      'amber': '#d97706',
+      'spicy': '#dc2626',
+      'raspberry': '#dc2626',
+      'black currant': '#7c2d12',
+      'honey': '#f59e0b',
+      'cream': '#f8fafc',
+      'plum': '#8b5cf6',
+      'floral notes': '#ec4899',
+      'pineapple': '#f97316',
     };
-    return colors[ingredient] || '#9ca3af';
+    
+    // 한국어 이름 먼저 확인, 없으면 영어 이름 확인
+    const displayName = getIngredientDisplayName(ingredient);
+    return colors[displayName] || colors[ingredient] || '#9ca3af';
   };
 
   return (
@@ -367,7 +438,7 @@ export default function RecipeScreen() {
                         styles.ingredientName,
                         isFromAPI && styles.apiIngredientName
                       ]}>
-                        {ingredient}
+                        {getIngredientDisplayName(ingredient)}
                       </Text>
                     </View>
                     <View style={styles.percentageContainer}>

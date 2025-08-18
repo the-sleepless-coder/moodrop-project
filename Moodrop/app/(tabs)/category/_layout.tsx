@@ -20,14 +20,7 @@ export default function CategoryLayout() {
       <Stack.Screen
         name="index"
         options={{
-          title: '향수 카테고리',
-          headerShown: true,
-        }}
-      />
-      <Stack.Screen
-        name="subcategory"
-        options={{
-          title: '세부 카테고리',
+          title: '무드 선택',
           headerShown: true,
         }}
       />

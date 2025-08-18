@@ -162,7 +162,6 @@ export default function DeviceSettingsScreen() {
                 </View>
                 <View style={styles.deviceInfo}>
                   <Text style={styles.deviceName}>{deviceInfo.name}</Text>
-                  <Text style={styles.deviceModel}>{deviceInfo.model}</Text>
                   <View style={styles.connectionStatus}>
                     <View style={styles.statusDot} />
                     <Text style={styles.statusText}>연결됨</Text>
@@ -170,26 +169,6 @@ export default function DeviceSettingsScreen() {
                 </View>
               </View>
 
-              <View style={styles.deviceDetails}>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>시리얼 번호</Text>
-                  <Text style={styles.detailValue}>{deviceInfo.serialNumber}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>마지막 연결</Text>
-                  <Text style={styles.detailValue}>{deviceInfo.lastConnected}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>배터리</Text>
-                  <Text style={[styles.detailValue, { color: '#22c55e' }]}>
-                    {deviceInfo.batteryLevel}%
-                  </Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>펌웨어 버전</Text>
-                  <Text style={styles.detailValue}>{deviceInfo.firmwareVersion}</Text>
-                </View>
-              </View>
 
               <View style={styles.actionButtons}>
                 <TouchableOpacity 
@@ -198,13 +177,6 @@ export default function DeviceSettingsScreen() {
                 >
                   <Settings size={16} color="#1e40af" />
                   <Text style={styles.updateButtonText}>원료 설정</Text>
-                </TouchableOpacity>
-                
-                <TouchableOpacity 
-                  style={styles.disconnectButton} 
-                  onPress={handleDisconnectDevice}
-                >
-                  <Text style={styles.disconnectButtonText}>연결 해제</Text>
                 </TouchableOpacity>
               </View>
             </View>
@@ -261,35 +233,6 @@ export default function DeviceSettingsScreen() {
           </View>
         )}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>연결 가이드</Text>
-          <View style={styles.guideContainer}>
-            <View style={styles.guideStep}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>1</Text>
-              </View>
-              <Text style={styles.stepText}>Moodrop Station의 전원을 켜주세요</Text>
-            </View>
-            <View style={styles.guideStep}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>2</Text>
-              </View>
-              <Text style={styles.stepText}>블루투스가 활성화되어 있는지 확인하세요</Text>
-            </View>
-            <View style={styles.guideStep}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>3</Text>
-              </View>
-              <Text style={styles.stepText}>기기 스캔 버튼을 눌러 검색하세요</Text>
-            </View>
-            <View style={styles.guideStep}>
-              <View style={styles.stepNumber}>
-                <Text style={styles.stepNumberText}>4</Text>
-              </View>
-              <Text style={styles.stepText}>찾은 기기를 선택하여 연결하세요</Text>
-            </View>
-          </View>
-        </View>
       </ScrollView>
       
       <CustomModal
@@ -412,19 +355,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
   },
-  disconnectButton: {
-    backgroundColor: '#ffffff',
-    borderWidth: 1,
-    borderColor: '#ef4444',
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  disconnectButtonText: {
-    color: '#ef4444',
-    fontSize: 14,
-    fontWeight: '600',
-  },
   disconnectedDeviceCard: {
     backgroundColor: '#fafafa',
     borderRadius: 12,
@@ -507,35 +437,5 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '600',
-  },
-  guideContainer: {
-    backgroundColor: '#fafafa',
-    borderRadius: 12,
-    padding: 20,
-  },
-  guideStep: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  stepNumber: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#1e40af',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  stepNumberText: {
-    color: '#ffffff',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  stepText: {
-    flex: 1,
-    fontSize: 14,
-    color: '#525252',
-    lineHeight: 20,
   },
 });

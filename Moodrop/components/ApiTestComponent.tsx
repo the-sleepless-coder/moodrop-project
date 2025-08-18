@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Alert } from 'react-native';
 import categoryService from '../services/categoryService';
 import { Category, Accord, Perfume } from '../types/category';
+import * as Network from 'expo-network';
 
 export default function ApiTestComponent() {
   const [loading, setLoading] = useState(false);
@@ -14,25 +15,65 @@ export default function ApiTestComponent() {
   const testCategoryMoodAPI = async () => {
     setLoading(true);
     try {
-      console.log('Testing CategoryMood API...');
+      // 1. 네트워크 상태 확인
+      const networkState = await Network.getNetworkStateAsync();
+      console.log('Network State:', networkState);
+      
+      if (!networkState.isConnected) {
+        Alert.alert('네트워크 오류', '인터넷 연결을 확인해주세요.');
+        return;
+      }
+      
+      // 2. 환경변수 상태 확인
+      const { ENV } = require('../config/env');
+      console.log('Current API URL:', ENV.API_BASE_URL);
+      console.log('Current Timeout:', ENV.API_TIMEOUT);
+      
+      // 3. 직접 fetch로 테스트
+      console.log('Testing direct fetch...');
+      const directResponse = await fetch(`${ENV.API_BASE_URL}/categoryMood`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        timeout: 15000,
+      });
+      
+      console.log('Direct fetch status:', directResponse.status);
+      
+      if (!directResponse.ok) {
+        throw new Error(`HTTP ${directResponse.status}: ${directResponse.statusText}`);
+      }
+      
+      const directData = await directResponse.json();
+      console.log('Direct fetch success:', directData.length, 'items');
+      
+      // 4. 서비스 테스트
+      console.log('Testing CategoryMood API via service...');
       const response = await categoryService.getCategoriesWithMoods();
       
-      console.log('Full API Response:', JSON.stringify(response, null, 2));
+      console.log('Service API Response:', JSON.stringify(response, null, 2));
       
       if (response.success && response.data) {
         setCategories(response.data.categories);
         Alert.alert(
           'API 테스트 성공', 
-          `${response.data.categories.length}개 카테고리 조회됨\n첫 번째 카테고리: ${response.data.categories[0]?.name || 'N/A'}`
+          `네트워크: ${networkState.type}\n직접 호출: ${directData.length}개 항목\n서비스: ${response.data.categories.length}개 카테고리`
         );
-        console.log('Categories loaded:', response.data.categories);
       } else {
-        console.log('API Response failed:', response);
-        Alert.alert('API 오류', response.message || response.error || '데이터를 가져올 수 없습니다.');
+        Alert.alert('서비스 API 오류', response.message || response.error || '데이터를 가져올 수 없습니다.');
       }
     } catch (error) {
       console.error('API Test Error:', error);
-      Alert.alert('연결 오류', `API 호출 실패: ${error}`);
+      
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      const errorName = error instanceof Error ? error.name : 'Unknown';
+      
+      Alert.alert(
+        'API TEST Failed', 
+        `Error: ${errorMessage}\nType: ${errorName}\nNetwork: ${networkState?.type || 'unknown'}\nConnected: ${networkState?.isConnected || 'unknown'}`
+      );
     } finally {
       setLoading(false);
     }

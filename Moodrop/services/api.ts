@@ -31,6 +31,8 @@ class ApiClient {
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       'X-Device-ID': ENV.DEVICE_ID,
+      'User-Agent': 'MoodropApp/1.0.0',
+      'Accept': 'application/json, text/plain, */*',
     };
   }
 
@@ -41,6 +43,10 @@ class ApiClient {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     const { method = 'GET', headers = {}, body, timeout = this.timeout } = options;
+
+    console.log(`🌐 API Request: ${method} ${url}`);
+    console.log(`📝 Request body:`, body);
+    console.log(`⏱️ Timeout: ${timeout}ms`);
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeout);
@@ -55,11 +61,16 @@ class ApiClient {
 
       clearTimeout(timeoutId);
 
+      console.log(`✅ Response status: ${response.status} ${response.statusText}`);
+
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Unable to read error response');
+        console.log(`❌ HTTP Error: ${response.status} - ${errorText}`);
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
 
       const data = await response.json();
+      console.log(`📦 Response data:`, data);
       
       // 서버 응답을 ApiResponse 형태로 래핑
       return {
@@ -70,12 +81,17 @@ class ApiClient {
     } catch (error) {
       clearTimeout(timeoutId);
       
+      console.log(`💥 API Error:`, error);
+      
       // 에러도 ApiResponse 형태로 반환
       if (error instanceof Error) {
+        const errorMessage = error.name === 'AbortError' ? 'Request timeout' : error.message;
+        console.log(`🚨 Final error: ${errorMessage}`);
+        
         return {
           success: false,
           error: error.message,
-          message: error.name === 'AbortError' ? 'Request timeout' : error.message
+          message: errorMessage
         } as ApiResponse<T>;
       }
       

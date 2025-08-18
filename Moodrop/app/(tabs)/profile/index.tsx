@@ -7,17 +7,10 @@ import {
   ChevronRight,
   Receipt,
   FlaskConical,
-  Heart,
-  Bell,
-  HelpCircle,
-  Settings,
   CheckCircle,
-  Save,
   Cpu,
   LogOut,
-  Info,
-  Clock,
-  MessageCircle
+  Clock
 } from 'lucide-react-native';
 import useStore from '@/store/useStore';
 import CustomModal, { ModalAction } from '@/components/CustomModal';
@@ -33,10 +26,9 @@ export default function ProfileScreen() {
     icon?: React.ReactNode;
   }>({ title: '', message: '', actions: [] });
   const [stats] = useState({
-    totalPerfumes: 8,
-    favoriteCategory: '플로럴',
-    monthlyUsage: 3,
-    lastAccess: '1시간 전',
+    totalPerfumes: 0,
+    favoriteCategory: '없음',
+    monthlyUsage: 0,
   });
 
 
@@ -62,62 +54,8 @@ export default function ProfileScreen() {
       icon: FlaskConical,
       color: '#8b5cf6',
     },
-    {
-      id: 'favorites',
-      title: '찜한 향수',
-      subtitle: '관심 있는 향수 모음',
-      icon: Heart,
-      color: '#f97316',
-    },
-    {
-      id: 'notifications',
-      title: '알림 설정',
-      subtitle: '제조 완료, 프로모션 알림',
-      icon: Bell,
-      color: '#f59e0b',
-    },
-    {
-      id: 'support',
-      title: '고객 지원',
-      subtitle: '문의사항 및 도움말',
-      icon: HelpCircle,
-      color: '#06b6d4',
-    },
-    {
-      id: 'settings',
-      title: '설정',
-      subtitle: '앱 설정 및 개인정보',
-      icon: Settings,
-      color: '#6b7280',
-    },
   ];
 
-  const recentActivity = [
-    {
-      id: 1,
-      type: 'manufacturing',
-      title: '오션 브리즈 제조 완료',
-      date: '2024.01.15',
-      icon: CheckCircle,
-      color: '#22c55e',
-    },
-    {
-      id: 2,
-      type: 'recipe',
-      title: '로맨틱 가든 레시피 저장',
-      date: '2024.01.14',
-      icon: Save,
-      color: '#3b82f6',
-    },
-    {
-      id: 3,
-      type: 'favorite',
-      title: '미스틱 포레스트 찜하기',
-      date: '2024.01.13',
-      icon: Heart,
-      color: '#ef4444',
-    },
-  ];
 
 
   const handleMenuPress = (menuId: string) => {
@@ -136,42 +74,6 @@ export default function ProfileScreen() {
         break;
       case 'recipes':
         router.push('/profile/my-recipes');
-        break;
-      case 'favorites':
-        setModalConfig({
-          title: '찜한 향수',
-          message: '관심 향수 목록을 확인합니다.',
-          icon: <Heart size={32} color="#ef4444" />,
-          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
-        });
-        setModalVisible(true);
-        break;
-      case 'notifications':
-        setModalConfig({
-          title: '알림 설정',
-          message: '알림 설정을 변경합니다.',
-          icon: <Bell size={32} color="#f59e0b" />,
-          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
-        });
-        setModalVisible(true);
-        break;
-      case 'support':
-        setModalConfig({
-          title: '고객 지원',
-          message: '고객 지원 센터로 이동합니다.',
-          icon: <MessageCircle size={32} color="#22c55e" />,
-          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
-        });
-        setModalVisible(true);
-        break;
-      case 'settings':
-        setModalConfig({
-          title: '설정',
-          message: '앱 설정 화면으로 이동합니다.',
-          icon: <Settings size={32} color="#6b7280" />,
-          actions: [{ text: '확인', style: 'primary', onPress: () => {} }]
-        });
-        setModalVisible(true);
         break;
       default:
         break;
@@ -241,10 +143,6 @@ export default function ProfileScreen() {
               <Text style={styles.statValue}>{stats.monthlyUsage}</Text>
               <Text style={styles.statLabel}>이번 달 제조</Text>
             </View>
-            <View style={styles.statCard}>
-              <Text style={styles.statValue}>{stats.lastAccess}</Text>
-              <Text style={styles.statLabel}>마지막 접속</Text>
-            </View>
           </View>
         </View>
 
@@ -271,22 +169,6 @@ export default function ProfileScreen() {
         </View>
 
 
-        <View style={styles.activitySection}>
-          <Text style={styles.sectionTitle}>최근 활동</Text>
-          <View style={styles.activityContainer}>
-            {recentActivity.map((activity) => (
-              <View key={activity.id} style={styles.activityItem}>
-                <View style={[styles.activityIcon, { backgroundColor: activity.color + '15' }]}>
-                  <activity.icon size={16} color={activity.color} />
-                </View>
-                <View style={styles.activityContent}>
-                  <Text style={styles.activityTitle}>{activity.title}</Text>
-                  <Text style={styles.activityDate}>{activity.date}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        </View>
 
         <View style={styles.appInfoSection}>
           <Text style={styles.sectionTitle}>앱 정보</Text>
@@ -297,7 +179,7 @@ export default function ProfileScreen() {
             </View>
             <View style={styles.appInfoItem}>
               <Text style={styles.appInfoLabel}>개발사</Text>
-              <Text style={styles.appInfoValue}>서울A102</Text>
+              <Text style={styles.appInfoValue}>SKKYHL(서울 A102)</Text>
             </View>
             <TouchableOpacity style={styles.appInfoItem}>
               <Text style={styles.appInfoLabel}>이용약관</Text>
@@ -444,41 +326,6 @@ const styles = StyleSheet.create({
   },
   menuSubtitle: {
     fontSize: 14,
-    color: '#737373',
-  },
-  activitySection: {
-    paddingHorizontal: 24,
-    paddingBottom: 24,
-  },
-  activityContainer: {
-    gap: 12,
-  },
-  activityItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fafafa',
-    padding: 16,
-    borderRadius: 8,
-  },
-  activityIcon: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  activityContent: {
-    flex: 1,
-  },
-  activityTitle: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#171717',
-    marginBottom: 2,
-  },
-  activityDate: {
-    fontSize: 12,
     color: '#737373',
   },
   appInfoSection: {

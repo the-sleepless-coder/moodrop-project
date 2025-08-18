@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { router } from 'expo-router';
 import { 
   Flower2, 
   Clock, 
@@ -9,9 +10,20 @@ import {
   CheckCircle,
   ChevronUp,
   ChevronDown,
-  Timer
+  Timer,
+  Cloud,
+  Sun,
+  CloudRain,
+  Thermometer,
+  Sunrise,
+  Moon,
+  Leaf,
+  Snowflake
 } from 'lucide-react-native';
 import useStore from '@/store/useStore';
+import { ENV, isDevelopment } from '@/config/env';
+import { weatherService } from '@/services/weatherService';
+import { categoryService } from '@/services/categoryService';
 
 interface ManufacturingJob {
   id: string;
@@ -23,13 +35,118 @@ interface ManufacturingJob {
 }
 
 export default function HomeScreen() {
-  const { manufacturingJobs } = useStore();
+  const { 
+    manufacturingJobs, 
+    todayRecommendation, 
+    weatherData, 
+    recommendationLoading,
+    shouldFetchTodayRecommendation,
+    setTodayRecommendation,
+    setWeatherData,
+    setRecommendationLoading,
+    setLastRecommendationDate
+  } = useStore();
   const [expandedJobs, setExpandedJobs] = useState<Set<string>>(new Set());
 
-  const todayPerfume = {
-    name: '플로럴',
-    description: '봄날의 꽃향기 같은 따뜻함',
-    duration: '6-8시간 지속',
+  // 날씨 기반 오늘의 향수 추천 로직
+  useEffect(() => {
+    const fetchTodayRecommendation = async () => {
+      // 이미 오늘 추천이 있으면 skip
+      if (!shouldFetchTodayRecommendation()) {
+        return;
+      }
+
+      setRecommendationLoading(true);
+      
+      try {
+        console.log('Fetching weather-based recommendation...');
+        
+        // 1. 날씨 정보와 무드 가져오기
+        const { weather, moods } = await weatherService.getWeatherBasedMoods();
+        setWeatherData(weather);
+        
+        console.log('Weather moods:', moods);
+        
+        // 2. 카테고리 정보 가져오기 (무드를 ID로 변환하기 위해)
+        const categoriesResponse = await categoryService.getCategoriesWithMoods();
+        if (!categoriesResponse.success) {
+          throw new Error('Failed to fetch categories');
+        }
+        
+        // 3. 무드 이름을 ID로 변환
+        const allMoods = categoriesResponse.data.categories.flatMap(cat => cat.moods);
+        const selectedMoodIds = moods
+          .map(moodName => allMoods.find(mood => mood.name === moodName)?.id)
+          .filter(id => id !== undefined);
+        
+        console.log('Selected mood IDs:', selectedMoodIds);
+        
+        if (selectedMoodIds.length === 0) {
+          throw new Error('No matching moods found');
+        }
+        
+        // 4. Accord 가져오기
+        const accordResponse = await categoryService.getAccordsByMoods(selectedMoodIds.slice(0, 3)); // 최대 3개
+        if (!accordResponse.success || !accordResponse.data?.accords?.length) {
+          throw new Error('No accords found for selected moods');
+        }
+        
+        // 5. 향수 추천 가져오기
+        const accordNames = accordResponse.data.accords.map(accord => accord.accord);
+        const perfumeResponse = await categoryService.getPerfumesByAccords(accordNames, 'weather-user');
+        
+        if (!perfumeResponse.success) {
+          throw new Error('Failed to fetch perfumes');
+        }
+        
+        // 6. 랜덤으로 1개 선택 (Match 우선, 없으면 NoMatch에서)
+        const { Match, NoMatch } = perfumeResponse.data;
+        const availablePerfumes = Match.length > 0 ? Match : NoMatch;
+        
+        if (availablePerfumes.length > 0) {
+          const randomIndex = Math.floor(Math.random() * availablePerfumes.length);
+          const selectedPerfume = availablePerfumes[randomIndex];
+          
+          setTodayRecommendation({
+            ...selectedPerfume,
+            weatherDescription: weather.weather[0]?.description || '맑음',
+            temperature: Math.round(weather.main.temp),
+            location: weather.name,
+            selectedMoods: moods
+          });
+          
+          setLastRecommendationDate(new Date().toISOString());
+          
+          console.log('Today recommendation set:', selectedPerfume.perfumeName);
+        } else {
+          throw new Error('No perfumes found');
+        }
+        
+      } catch (error) {
+        console.error('Failed to fetch weather-based recommendation:', error);
+        // 실패 시 기본 추천
+        setTodayRecommendation({
+          perfumeName: '플로럴 부케',
+          brandName: 'moodrop',
+          description: '날씨 정보를 가져올 수 없어 기본 추천을 제공합니다',
+          weatherDescription: '정보 없음',
+          temperature: '--',
+          location: '위치 정보 없음',
+          selectedMoods: ['따뜻함']
+        });
+      } finally {
+        setRecommendationLoading(false);
+      }
+    };
+
+    fetchTodayRecommendation();
+  }, []);
+
+  // 표시용 오늘의 향수 정보
+  const todayPerfume = todayRecommendation || {
+    name: '로딩 중...',
+    description: '날씨에 맞는 향수를 찾고 있습니다',
+    duration: '',
   };
 
   const tips = [
@@ -67,7 +184,7 @@ export default function HomeScreen() {
       case 'failed':
         return { text: '실패', color: '#ef4444', icon: Timer };
       default:
-        return { text: '알 수 없음', color: '#9ca3af', icon: Timer };
+        return { text: '제작 중..', color: '#9ca3af', icon: Timer };
     }
   };
 
@@ -80,6 +197,60 @@ export default function HomeScreen() {
   const completedJobs = manufacturingJobs
     .filter((job: ManufacturingJob) => job.status === 'completed')
     .slice(0, 2);
+
+  // 향수/브랜드 이름 포매팅 함수들
+  const formatPerfumeName = (name: string) => {
+    if (!name) return '';
+    return name
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  const formatBrandName = (name: string) => {
+    if (!name) return '';
+    return name
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+      .join(' ');
+  };
+
+  // Day/Night 적합도 판단 함수
+  const getDayNightInfo = (dayNight: { day: number; night: number }) => {
+    if (!dayNight) return null;
+    const dayScore = dayNight.day;
+    const nightScore = dayNight.night;
+    
+    if (dayScore > nightScore + 20) {
+      return { icon: Sunrise, color: '#f59e0b', type: 'day' };
+    } else if (nightScore > dayScore + 20) {
+      return { icon: Moon, color: '#6366f1', type: 'night' };
+    } else {
+      return null;
+    }
+  };
+
+  // Season 적합도 판단 함수
+  const getSeasonInfo = (season: { spring: number; summer: number; fall: number; winter: number }) => {
+    if (!season) return null;
+    const seasons = [
+      { key: 'spring', score: season.spring, icon: Leaf, color: '#22c55e' },
+      { key: 'summer', score: season.summer, icon: Sun, color: '#ef4444' },
+      { key: 'fall', score: season.fall, icon: Leaf, color: '#ea580c' },
+      { key: 'winter', score: season.winter, icon: Snowflake, color: '#3b82f6' }
+    ];
+    
+    const maxSeason = seasons.reduce((max, current) => 
+      current.score > max.score ? current : max
+    );
+    
+    if (maxSeason.score >= 70) {
+      return maxSeason;
+    }
+    
+    return null;
+  };
+
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -130,7 +301,7 @@ export default function HomeScreen() {
                     <View style={styles.progressSection}>
                       <View style={styles.progressInfo}>
                         <Text style={styles.progressText}>진행률: {job.progress}%</Text>
-                        <Text style={styles.estimatedTime}>예상 완료: {job.estimatedTime}</Text>
+                        <Text style={styles.estimatedTime}>예상 완료: 45초</Text>
                       </View>
                       <View style={styles.progressBar}>
                         <View 
@@ -176,18 +347,93 @@ export default function HomeScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>오늘의 향수</Text>
-          <View style={styles.todayCard}>
-            <View style={styles.todayCardHeader}>
-              <View style={[styles.todayCardIcon, { backgroundColor: '#1e40af' }]}>
-                <Flower2 size={20} color="#ffffff" />
+          <TouchableOpacity
+            style={styles.todayCard}
+            onPress={() => {
+              if (todayRecommendation) {
+                // 선택된 향수로 설정하고 레시피 페이지로 이동
+                useStore.getState().setSelectedPerfume(todayRecommendation);
+                router.push('/category/recipe');
+              }
+            }}
+            disabled={!todayRecommendation || recommendationLoading}
+          >
+            <View style={styles.perfumeInfo}>
+              <Text style={styles.perfumeName}>
+                {recommendationLoading ? '추천 중...' : formatPerfumeName(todayRecommendation?.perfumeName || todayPerfume.name)}
+              </Text>
+              <Text style={styles.perfumeBrand}>
+                {!recommendationLoading && todayRecommendation ? 
+                  `${formatBrandName(todayRecommendation.brandName)} • ${todayRecommendation.year || 'Unknown'} • ${todayRecommendation.country || 'Unknown'}` :
+                  (recommendationLoading ? '날씨에 맞는 향수를 찾고 있습니다' : (todayRecommendation?.description || todayPerfume.description))
+                }
+              </Text>
+              
+              <View style={styles.perfumeDetails}>
+                {!recommendationLoading && todayRecommendation?.ratingInfo && (
+                  <View style={styles.rating}>
+                    <FlaskConical size={14} color="#f59e0b" fill="#f59e0b" />
+                    <Text style={styles.ratingText}>{todayRecommendation.ratingInfo.ratingVal}</Text>
+                    <Text style={styles.ratingCount}>({todayRecommendation.ratingInfo.ratingCount})</Text>
+                  </View>
+                )}
+                
+                {/* 날씨 정보 */}
+                {todayRecommendation && (
+                  <View style={styles.weatherInfoCompact}>
+                    <View style={styles.weatherItem}>
+                      <Thermometer size={12} color="#1e40af" />
+                      <Text style={styles.weatherTextCompact}>{todayRecommendation.temperature}°C</Text>
+                    </View>
+                    <View style={styles.weatherItem}>
+                      <Cloud size={12} color="#1e40af" />
+                      <Text style={styles.weatherTextCompact}>{todayRecommendation.weatherDescription}</Text>
+                    </View>
+                  </View>
+                )}
+                
+                {/* Day/Night & Season 아이콘 - 있다면 표시 */}
+                {!recommendationLoading && todayRecommendation?.dayNight && todayRecommendation?.season && (
+                  <View style={styles.iconBar}>
+                    {(() => {
+                      const dayNightInfo = getDayNightInfo(todayRecommendation.dayNight);
+                      const seasonInfo = getSeasonInfo(todayRecommendation.season);
+                      
+                      return (
+                        <>
+                          {dayNightInfo && (
+                            <View style={styles.iconItem}>
+                              <dayNightInfo.icon size={12} color={dayNightInfo.color} />
+                            </View>
+                          )}
+                          {seasonInfo && (
+                            <View style={styles.iconItem}>
+                              <seasonInfo.icon size={12} color={seasonInfo.color} />
+                            </View>
+                          )}
+                        </>
+                      );
+                    })()}
+                  </View>
+                )}
               </View>
-              <View style={styles.todayCardInfo}>
-                <Text style={styles.todayCardTitle}>{todayPerfume.name}</Text>
-                <Text style={styles.todayCardDescription}>{todayPerfume.description}</Text>
-              </View>
+              
+              {/* 선택된 무드 표시 */}
+              {todayRecommendation?.selectedMoods && (
+                <View style={styles.moodsContainer}>
+                  <Text style={styles.moodsLabel}>날씨 기반 무드: </Text>
+                  <Text style={styles.moodsText}>{todayRecommendation.selectedMoods.join(', ')}</Text>
+                </View>
+              )}
             </View>
-            <Text style={styles.todayCardDuration}>{todayPerfume.duration}</Text>
-          </View>
+            
+            {!recommendationLoading && todayRecommendation && (
+              <View style={styles.chevronContainer}>
+                <Text style={styles.actionText}>제조하기</Text>
+                <FlaskConical size={18} color="#1e40af" />
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <View style={styles.section}>
@@ -201,7 +447,49 @@ export default function HomeScreen() {
             </View>
           ))}
         </View>
+
+        {/* 디버그 정보 - 백업 (주석 처리) */}
+        {/* 
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>🔧 디버그 정보</Text>
+          <View style={styles.debugCard}>
+            <Text style={styles.debugLabel}>API URL:</Text>
+            <Text style={styles.debugValue}>{ENV.API_BASE_URL}</Text>
+            <Text style={styles.debugLabel}>Environment:</Text>
+            <Text style={styles.debugValue}>{ENV.ENV}</Text>
+            <Text style={styles.debugLabel}>Build Mode:</Text>
+            <Text style={styles.debugValue}>{__DEV__ ? 'Development' : 'Production'}</Text>
+            <Text style={styles.debugLabel}>Recommendation Status:</Text>
+            <Text style={styles.debugValue}>
+              {recommendationLoading ? '로딩 중...' : 
+               todayRecommendation ? `성공: ${todayRecommendation.source || 'unknown'}` : '대기 중'}
+            </Text>
+            {weatherData && (
+              <>
+                <Text style={styles.debugLabel}>Weather Source:</Text>
+                <Text style={styles.debugValue}>{weatherData.source}</Text>
+              </>
+            )}
+            
+            <TouchableOpacity 
+              style={styles.testButton}
+              onPress={async () => {
+                try {
+                  const response = await fetch(`${ENV.API_BASE_URL}/categoryMood`);
+                  const text = await response.text();
+                  alert(`API Test:\nStatus: ${response.status}\nResponse: ${text.substring(0, 200)}...`);
+                } catch (error) {
+                  alert(`API Test Failed:\n${error.message}`);
+                }
+              }}
+            >
+              <Text style={styles.testButtonText}>API 연결 테스트</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+        */}
       </ScrollView>
+      
     </SafeAreaView>
   );
 }
@@ -349,39 +637,128 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   todayCard: {
-    backgroundColor: '#fafafa',
-    padding: 20,
-    borderRadius: 12,
-  },
-  todayCardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    backgroundColor: '#ffffff',
+    padding: 16,
+    borderRadius: 12,
+    borderLeftWidth: 4,
+    borderLeftColor: '#1e40af',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 1,
+    },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
   },
-  todayCardIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-  },
-  todayCardInfo: {
+  perfumeInfo: {
     flex: 1,
   },
-  todayCardTitle: {
+  perfumeName: {
     fontSize: 18,
     fontWeight: '600',
     color: '#171717',
-    marginBottom: 2,
+    marginBottom: 4,
   },
-  todayCardDescription: {
-    fontSize: 14,
-    color: '#525252',
-  },
-  todayCardDuration: {
+  perfumeBrand: {
     fontSize: 13,
     color: '#737373',
+    marginBottom: 8,
+  },
+  perfumeDetails: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 12,
+    marginBottom: 8,
+  },
+  rating: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  ratingText: {
+    fontSize: 14,
+    color: '#171717',
+    marginLeft: 4,
+    fontWeight: '600',
+  },
+  ratingCount: {
+    fontSize: 12,
+    color: '#737373',
+    marginLeft: 4,
+  },
+  weatherInfoCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+  },
+  weatherItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  weatherTextCompact: {
+    fontSize: 11,
+    color: '#1e40af',
+    fontWeight: '500',
+  },
+  iconBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  iconItem: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#f8f9fa',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#e5e7eb',
+  },
+  chevronContainer: {
+    flexDirection: 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingLeft: 12,
+  },
+  actionText: {
+    fontSize: 11,
+    color: '#1e40af',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  moodsContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginTop: 4,
+  },
+  moodsLabel: {
+    fontSize: 11,
+    color: '#737373',
+  },
+  moodsText: {
+    fontSize: 11,
+    color: '#1e40af',
+    fontWeight: '500',
+  },
+  testButton: {
+    backgroundColor: '#1e40af',
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginTop: 12,
+    alignItems: 'center',
+  },
+  testButtonText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '600',
   },
   tipCard: {
     flexDirection: 'row',
@@ -400,5 +777,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#525252',
     lineHeight: 20,
+  },
+  // 디버그 정보 스타일
+  debugCard: {
+    backgroundColor: '#f0f9ff',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#0ea5e9',
+  },
+  debugLabel: {
+    fontSize: 12,
+    color: '#0369a1',
+    fontWeight: '600',
+    marginTop: 8,
+    marginBottom: 2,
+  },
+  debugValue: {
+    fontSize: 14,
+    color: '#1e40af',
+    fontFamily: 'monospace',
+    backgroundColor: '#ffffff',
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e0e7ff',
   },
 });

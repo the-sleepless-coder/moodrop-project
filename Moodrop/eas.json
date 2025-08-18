@@ -1,0 +1,38 @@
+{
+  "cli": {
+    "version": ">= 16.17.4",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal"
+    },
+    "preview": {
+      "distribution": "internal",
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://3.39.229.189:8081/api",
+        "EXPO_PUBLIC_API_TIMEOUT": "10000",
+        "EXPO_PUBLIC_ENV": "development",
+        "EXPO_PUBLIC_DEVICE_ID": "moodrop-station-001",
+        "EXPO_PUBLIC_MAX_SLOTS": "10",
+        "Weather_API": "x1Dmxs1RvFtObms8XR%2BX8kFgfmDQTMbIug78GTCxovSSWbDWME%2BTWD2OqSA68cQSzYrwjwIXhnms7E9NNsXs2w%3D%3D"
+      }
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "http://3.39.229.189:8081/api",
+        "EXPO_PUBLIC_API_TIMEOUT": "10000",
+        "EXPO_PUBLIC_ENV": "production",
+        "EXPO_PUBLIC_DEVICE_ID": "moodrop-station-001",
+        "EXPO_PUBLIC_MAX_SLOTS": "10",
+        "Weather_API": "x1Dmxs1RvFtObms8XR%2BX8kFgfmDQTMbIug78GTCxovSSWbDWME%2BTWD2OqSA68cQSzYrwjwIXhnms7E9NNsXs2w%3D%3D"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}
+
