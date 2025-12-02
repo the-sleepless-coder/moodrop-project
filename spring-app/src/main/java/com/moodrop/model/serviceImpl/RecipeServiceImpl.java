@@ -63,12 +63,15 @@ public class RecipeServiceImpl implements RecipeService{
 	
 	// recipeId로 레시피를 조회한다.
 	@Override
-	public UserRecipeDto selectUserRecipe(int recipeId) {
+	public UserRecipeDto selectUserRecipe(int recipeId) throws SQLException {
 		/**
 		 * recipeId 조회 안되는 문제 해결 필요.
 		 * */
-		UserRecipeDto result = dao.selectRecipeById(recipeId);
-		return result;
+		UserRecipeDto recipe = dao.selectRecipeById(recipeId);
+		if( recipe == null ) throw new SQLException("Recipe Not Found");
+		System.out.println(recipe);
+		
+		return recipe;
 	}
 	
 	// recipe를 수정한다.
@@ -162,22 +165,50 @@ public class RecipeServiceImpl implements RecipeService{
 	
 	
 	/**
+	 * 레시피에 대한 평점을 준다. (델타 방식 - 최적화 버전)
+	 * 전체 평균 재계산 없이 델타 계산만으로 평균 업데이트
+	 * INSERT + UPDATE 2개 쿼리만 실행 (SELECT 불필요)
+	 * @Transactional로 원자성 보장
+	 **/
+	@Override
+	@Transactional
+	public int insertRecipeRatingDelta(String userIdString, int recipeId, int rating) throws SQLException {
+
+		// 평점 범위 검증
+		if (rating < 1 || rating > 5) {
+			throw new IllegalArgumentException("rating은 1~5 사이여야 합니다.");
+		}
+
+		// userId 조회
+		int userId = userDao.selectUserByString(userIdString);
+
+		// 델타 방식으로 INSERT + UPDATE 동시 실행
+		int result = dao.insertRecipeRatingDelta(userId, recipeId, rating);
+
+		if(result != 0) {
+			return result;
+		} else {
+			throw new SQLException("별점 입력에 실패했습니다.");
+		}
+	}
+
+	/**
 	 * 레시피에 대해 이미 계산된 평점 평균을 가져온다.
-	 * @throws SQLException 
+	 * @throws SQLException
 	 ***/
 	@Override
 	public double getRecipeRating(int recipeId) throws SQLException {
 		double result = dao.selectRecipeAverageFromDb(recipeId);
-		
+
 		if(result != 0) {
 			return result;
 		}else {
 			throw new SQLException();
 		}
-		
+
 	}
-	
-	
-	
-	
+
+
+
+
 }

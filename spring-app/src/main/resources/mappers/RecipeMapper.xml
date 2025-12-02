@@ -202,7 +202,28 @@
 		FROM user_perfumes
 		WHERE id = #{recipeId};
 	</select>
-	
+
+	<!--
+	델타 방식 별점 입력 및 평균 업데이트 (최적화 버전)
+	INSERT + UPDATE를 한 번에 처리 (SELECT 불필요)
+	새 평균 = (기존 평균 × 기존 개수 + 새 별점) / (기존 개수 + 1)
+	-->
+	<insert id="insertRecipeRatingDelta">
+		<!-- 1. recipe_rating 테이블에 별점 INSERT -->
+		INSERT INTO recipe_rating(user_id, recipe_id, rating)
+		VALUES (#{userId}, #{recipeId}, #{rating});
+
+		<!-- 2. user_perfumes 테이블의 평균과 개수를 델타 계산으로 UPDATE -->
+		UPDATE user_perfumes
+		SET
+		    rating_average = ROUND(
+		        (rating_average * rating_count + #{rating}) / (rating_count + 1),
+		        2
+		    ),
+		    rating_count = rating_count + 1
+		WHERE id = #{recipeId};
+	</insert>
+
 	<!--
 	<insert id="insertRecipeToUser">
 	</insert>

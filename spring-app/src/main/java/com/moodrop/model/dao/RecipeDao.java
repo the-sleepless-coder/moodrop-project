@@ -52,8 +52,12 @@ public interface RecipeDao {
 	    
 	    // recipe 별점 업데이트 하기.
 	    int updateRecipeAverage(int recipeId, double avg);
-	    
+
 	    // 업데이트한 recipe 별점 가져오기.
 	    double selectRecipeAverageFromDb(int recipeId);
-	    
+
+	    // recipe 별점 주기 (델타 방식 - 최적화 버전)
+	    // INSERT + UPDATE를 한 번에 처리하여 성능 향상
+	    int insertRecipeRatingDelta(int userId, int recipeId, int rating);
+
 }

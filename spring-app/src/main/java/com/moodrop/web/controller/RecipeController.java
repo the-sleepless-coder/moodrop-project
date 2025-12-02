@@ -64,13 +64,14 @@ public class RecipeController {
 	
 	/**
 	 * recipeId로 레시피 조회
+	 * @throws SQLException 
 	 * 
 	 **/
 	@GetMapping("/recipe/{recipeId}")
-	public ResponseEntity<?> getPerfume(@PathVariable("recipeId") Integer recipeId, HttpServletRequest request, HttpServletResponse response){
+	public ResponseEntity<?> getPerfume(@PathVariable("recipeId") Integer recipeId, HttpServletRequest request, HttpServletResponse response) throws SQLException{
 		
-		UserRecipeDto result = service.selectUserRecipe(recipeId);
 		try {			
+			UserRecipeDto result = service.selectUserRecipe(recipeId);
 			return ResponseEntity.ok(result);
 		}catch(Exception e) {
 			e.printStackTrace();
@@ -148,16 +149,37 @@ public class RecipeController {
 	}
 	
 	/**
+	 * 특정 레시피에 대한 별점을 준다. (델타 방식 - 최적화 버전)
+	 * 전체 평균 재계산 없이 델타 계산만으로 평균 업데이트
+	 * @throws SQLException
+	 **/
+	@PostMapping("/recipe/{recipeId}/rating/delta")
+	public ResponseEntity<?> rateRecipeDelta(@PathVariable Integer recipeId, @RequestBody Map<String, Object> body, HttpServletRequest request, HttpServletResponse response) throws SQLException{
+
+		int rating = (Integer)body.get("rating");
+		String userId = (String) body.get("userId");
+
+		int result = service.insertRecipeRatingDelta(userId, recipeId, rating);
+
+		if(result == 1) {
+			return ResponseEntity.ok("Successfully Rated Recipe (Delta Mode)");
+		} else {
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+		}
+
+	}
+
+	/**
 	 * 특정 레시피의 별점 평균을 가져온다.
-	 * **/
+	 **/
 	@GetMapping("/recipe/{recipeId}/rating")
 	public ResponseEntity<?> getRecipeRating(@PathVariable Integer recipeId, HttpServletRequest request, HttpServletResponse response) throws SQLException{
-		
+
 		double result = service.getRecipeRating(recipeId);
-		
+
 		return ResponseEntity.ok(result);
 	}
-	
-	
-	
+
+
+
 }

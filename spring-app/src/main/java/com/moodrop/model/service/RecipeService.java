@@ -13,7 +13,7 @@ public interface RecipeService {
 	int createUserRecipe(UserRecipeDto userRecipe);
 	
 	// 사용자의 레시피를 id로 조회한다.
-	UserRecipeDto selectUserRecipe(int recipeId);
+	UserRecipeDto selectUserRecipe(int recipeId) throws SQLException;
 	
 	// 사용자의 레시피를 수정한다.
 	int updateUserRecipe(UserRecipeDto userRecipe);
@@ -27,11 +27,15 @@ public interface RecipeService {
 	// 특정 recipe에 rating을 부여한다.
 	int insertRecipeRating(String userIdString, int recipeId, int rating) throws SQLException;
 
+	// 특정 recipe에 rating을 부여한다 (델타 방식 - 최적화 버전)
+	// 전체 평균 재계산 없이 델타 값만 반영하여 성능 향상
+	int insertRecipeRatingDelta(String userIdString, int recipeId, int rating) throws SQLException;
+
 	/**
 	 * 레시피에 대해 이미 계산된 평점 평균을 가져온다.
-	 * @throws SQLException 
+	 * @throws SQLException
 	 ***/
 	double getRecipeRating(int recipeId) throws SQLException;
-	
-	
+
+
 }
