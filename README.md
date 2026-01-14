@@ -9,11 +9,11 @@
     · **내가 보유한 원료 기준으로 향수 만들 수 있는지 여부 보여주기**
     · 추천한 배합의 원료를 IoT기기로 송신 후, 해당 원료로 수신한 기기에서 향수 제작
     
-<img width="520" height="274" alt="Pasted image 20260114192250" src="https://github.com/user-attachments/assets/fb4dfbb5-6ea6-4502-856f-b5dec251a399" />
+<img width="800" height="500" alt="Pasted image 20260114192250" src="https://github.com/user-attachments/assets/fb4dfbb5-6ea6-4502-856f-b5dec251a399" />
 
-<img width="518" height="275" alt="Pasted image 20260114192416" src="https://github.com/user-attachments/assets/8fa1f0d3-6ecc-4688-8674-1d661921be82" />
+<img width="800" height="500" alt="Pasted image 20260114192416" src="https://github.com/user-attachments/assets/8fa1f0d3-6ecc-4688-8674-1d661921be82" />
 
-<img width="1033" height="542" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
+<img width="1500" height="750" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
 
 <img width="1034" height="500" alt="Pasted image 20260114192621" src="https://github.com/user-attachments/assets/b4737c5f-fa81-494b-8b1e-8d8bb7e79660" />
 
