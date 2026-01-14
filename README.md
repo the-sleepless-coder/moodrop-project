@@ -3,27 +3,24 @@
 -프로젝트 개요
 :  자신의 감정에 따른 원하는 향수를 만들 수 있는 IoT기기 및 기기 제어 어플리케이션 구현현
 
-
 - 어플리케이션 주요 기능 
     · **향수의 주요 원료에서 나는 향에 따른 느낌을 분류한 무드를 기준으로, 향수에 대한 느낌 선택**
     · 개별 사용자가 선택한 감정의 향수 느낌을 가장 잘 내는 원료 추천 
     · **내가 보유한 원료 기준으로 향수 만들 수 있는지 여부 보여주기**
     · 추천한 배합의 원료를 IoT기기로 송신 후, 해당 원료로 수신한 기기에서 향수 제작
     
-![[Pasted image 20260114192250.png]]
+<img width="520" height="274" alt="Pasted image 20260114192250" src="https://github.com/user-attachments/assets/fb4dfbb5-6ea6-4502-856f-b5dec251a399" />
 
+<img width="518" height="275" alt="Pasted image 20260114192416" src="https://github.com/user-attachments/assets/8fa1f0d3-6ecc-4688-8674-1d661921be82" />
 
-![[Pasted image 20260114192416.png]]
-![[Pasted image 20260114192532.png]]
-![[Pasted image 20260114192621.png]]
+<img width="1033" height="542" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
 
-![[Pasted image 20251224133616.png]]
+<img width="1034" height="500" alt="Pasted image 20260114192621" src="https://github.com/user-attachments/assets/b4737c5f-fa81-494b-8b1e-8d8bb7e79660" />
 
-
-
+<img width="819" height="1581" alt="Pasted image 20251224133616" src="https://github.com/user-attachments/assets/8b214974-025b-4ad7-ad05-5a0b223d8868" />
 
 - 기술 스택
-![[Pasted image 20251224142443.png]]
+<img width="3675" height="2009" alt="Pasted image 20251224142443" src="https://github.com/user-attachments/assets/020c1818-f71a-4b11-80b3-99ece4a4fe15" />
 
 1) Spring Boot 
  웹 백엔드 서버 구축
@@ -78,11 +75,9 @@ Jenkins를 활용한 EC2에 배포하는 CI/CD파이프라인 구축
 
 사용자는 추천 받은 원료의 양을 자기 자신이 원하는 배합에 따라 조정할 수 있다.
 
-
-
-
 - ERD
-![[Pasted image 20260114151612.png]]
+<img width="1177" height="800" alt="Pasted image 20260114151612" src="https://github.com/user-attachments/assets/c109c6e2-3905-4262-a5e4-c16a5a56ceb6" />
+
 
 
 - 참고 사이트
