@@ -67,22 +67,24 @@ Jenkins를 활용한 EC2에 배포하는 CI/CD파이프라인 구축
 [CI/CD]
 <br>
 -Docker Compose를 활용해 Spring Boot 및 MySQL 컨테이너화를 통한, 서버 실행 환경 구축
+
 -GitLab Webhook을 이용한, Jenkins 기반의 Spring Boot 코드 CI/CD 파이프라인 구성
 
 [AI]
 <br>
 사용자가 고른 느낌에 따라 상관 관계가 높은 향조(향수가 내는 대표적인 향의 계열)를 3개 추출.
+
 그리고 IoT기기에 전송되는 원료를 뽑아내기 위해서 해당 향조와 상관 관계가 높은 원료를 Top,Middle,Base(원료에 따른 향의 지속 시간과 원료의 역할에 따른 분류)의 비율을 계산해서 추천.
 
+
 각 원료 별로 골라진 향조를 가장 잘 나타내는 것을 상관관계 수치에 따라서 높은 순으로 뽑아낸다. 
+
 기본적으로 Top, Middle, Base(20%, 40%, 20%)를 배정한다. 그리고 나머지 20%의 원료는 위에서 계산한 원료-향조 상관관계 수치를 이용해, 가중평균하여 남은 비율을 배정한다. 
 
 사용자는 추천 받은 원료의 양을 자기 자신이 원하는 배합에 따라 조정할 수 있다.
 
 ### ERD
 <img width="1177" height="800" alt="Pasted image 20260114151612" src="https://github.com/user-attachments/assets/c109c6e2-3905-4262-a5e4-c16a5a56ceb6" />
-
-
 
 - 참고 사이트
 [1] https://www.fragrantica.com/
