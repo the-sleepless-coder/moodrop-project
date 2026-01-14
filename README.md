@@ -1,27 +1,27 @@
 [ 공통 프로젝트 ]
 
--프로젝트 개요
-:  자신의 감정에 따른 원하는 향수를 만들 수 있는 IoT기기 및 기기 제어 어플리케이션 구현현
+### 프로젝트 개요
+자신의 감정에 따른 원하는 향수를 만들 수 있는 IoT기기 및 기기 제어 어플리케이션 구현현
 
-- 어플리케이션 주요 기능 
+### 어플리케이션 주요 기능 
     · **향수의 주요 원료에서 나는 향에 따른 느낌을 분류한 무드를 기준으로, 향수에 대한 느낌 선택**
     · 개별 사용자가 선택한 감정의 향수 느낌을 가장 잘 내는 원료 추천 
     · **내가 보유한 원료 기준으로 향수 만들 수 있는지 여부 보여주기**
     · 추천한 배합의 원료를 IoT기기로 송신 후, 해당 원료로 수신한 기기에서 향수 제작
 
-    1.감정 선택하기.
+   1. 감정 선택하기
 <img width="800" height="500" alt="Pasted image 20260114192250" src="https://github.com/user-attachments/assets/fb4dfbb5-6ea6-4502-856f-b5dec251a399" />
 
-    2.자신의 감정에 맞는 향수 추천 받기. 
+   2. 자신의 감정에 맞는 향수 추천 받기
 <img width="800" height="500" alt="Pasted image 20260114192416" src="https://github.com/user-attachments/assets/8fa1f0d3-6ecc-4688-8674-1d661921be82" />
 
-  3. 추천 받은 향수에 대한 정보 확인하기
+   3. 추천 받은 향수에 대한 정보 확인하기
 <img width="1500" height="750" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
 
   4. 추천 받은 향수에 대한 원료 비중 확인하기 
    <img width="1031" height="544" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
  
-- 주요 기술 스택
+### 주요 기술 스택
 <img width="3675" height="2009" alt="Pasted image 20251224142443" src="https://github.com/user-attachments/assets/020c1818-f71a-4b11-80b3-99ece4a4fe15" />
 
 1) Spring Boot 
@@ -43,7 +43,7 @@ ERD 생성 및 DB구축
 Docker를 활용한 백엔드 서버 이미지 컨테이너화 
 Jenkins를 활용한 EC2에 배포하는 CI/CD파이프라인 구축
 
-- 본인 구현 사항
+### 본인 구현 사항
 -ERD 구축 및 반정규화를 통한 DB 성능 최적화
 : 평균 평점 계산에서 읽기 성능 최적화를 위한 DB 반정규화 
 
@@ -53,7 +53,7 @@ Jenkins를 활용한 EC2에 배포하는 CI/CD파이프라인 구축
 : 향수의 향조(향수가 내는 대표적인 향의 계열), 브랜드, 평점, 댓글 등 세부 정보까지 저장
 
 
-- 기술적 세부 사항
+### 기술적 세부 사항
 [BackEnd]
 -ERD 구축 및 반정규화를 통한 DB 성능 최적화
 : 평균 평점 계산에서 읽기 성능 최적화를 위한 DB 반정규화 
@@ -77,7 +77,7 @@ Jenkins를 활용한 EC2에 배포하는 CI/CD파이프라인 구축
 
 사용자는 추천 받은 원료의 양을 자기 자신이 원하는 배합에 따라 조정할 수 있다.
 
-- ERD
+### ERD
 <img width="1177" height="800" alt="Pasted image 20260114151612" src="https://github.com/user-attachments/assets/c109c6e2-3905-4262-a5e4-c16a5a56ceb6" />
 
 
