@@ -2,22 +2,22 @@
 자신의 감정에 따른 원하는 향수를 만들 수 있는 IoT기기 및 기기 제어 어플리케이션 구현현
 
 ### 어플리케이션 주요 기능 
-    · **향수의 주요 원료에서 나는 향에 따른 느낌을 분류한 무드를 기준으로, 향수에 대한 느낌 선택**
+    · 향수의 주요 원료에서 나는 향에 따른 느낌을 분류한 무드를 기준으로, 향수에 대한 느낌 선택
     · 개별 사용자가 선택한 감정의 향수 느낌을 가장 잘 내는 원료 추천 
-    · **내가 보유한 원료 기준으로 향수 만들 수 있는지 여부 보여주기**
+    · 내가 보유한 원료 기준으로 향수 만들 수 있는지 여부 보여주기
     · 추천한 배합의 원료를 IoT기기로 송신 후, 해당 원료로 수신한 기기에서 향수 제작
 
    1. 감정 선택하기
-<img width="800" height="650" alt="Pasted image 20260114192250" src="https://github.com/user-attachments/assets/fb4dfbb5-6ea6-4502-856f-b5dec251a399" />
+<img width="800" height="850" alt="Pasted image 20260114192250" src="https://github.com/user-attachments/assets/fb4dfbb5-6ea6-4502-856f-b5dec251a399" />
 
    2. 자신의 감정에 맞는 향수 추천 받기
-<img width="800" height="650" alt="Pasted image 20260114192416" src="https://github.com/user-attachments/assets/8fa1f0d3-6ecc-4688-8674-1d661921be82" />
+<img width="800" height="850" alt="Pasted image 20260114192416" src="https://github.com/user-attachments/assets/8fa1f0d3-6ecc-4688-8674-1d661921be82" />
 
    3. 추천 받은 향수에 대한 정보 확인하기
 <img width="1500" height="850" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
 
   4. 추천 받은 향수에 대한 원료 비중 확인하기 
-   <img width="1031" height="750" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
+   <img width="1031" height="850" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
  
 ### 주요 기술 스택
 <img width="3675" height="2009" alt="Pasted image 20251224142443" src="https://github.com/user-attachments/assets/020c1818-f71a-4b11-80b3-99ece4a4fe15" />
