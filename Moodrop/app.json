@@ -57,7 +57,7 @@
       "eas": {
         "projectId": "1c256861-3d6e-401a-8f76-4d75dacb4ef2"
       },
-      "EXPO_PUBLIC_API_BASE_URL": "http://3.39.229.189:8081/api",
+      "EXPO_PUBLIC_API_BASE_URL": "http://localhost:8080/api",
       "EXPO_PUBLIC_API_TIMEOUT": "10000",
       "EXPO_PUBLIC_ENV": "development",
       "EXPO_PUBLIC_DEVICE_ID": "moodrop-station-001",

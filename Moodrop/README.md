@@ -16,6 +16,28 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start --tunnel
    ```
 
+Method1.
+A) Run the app in Expo Go mode so that the application can be run on the app
+Change to Expo Go Mode 
+So that the app will run in the given app
+
+Scan the QR code
+Click run in Expo go App
+
+B) Make sure the Backend API address is configured properly
+Check the app.json file and change the backend API address(EXPO_PUBLIC_API_BASE_URL)
+
+If the back-end server is not deployed ,
+Use the same Wi-Fi So that the phone can send and API call to the given computer and retrieve data from the backend server which is the computer that you're using
+
+Method2.
+npx expo start --web
+configure the backend api address to localhost:8080 or with the given port number
+
+Use the web page to run the front-end server and the back-end server int the same machine
+
+That will surely reduce the complexity of running the app in the expo go app.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)
