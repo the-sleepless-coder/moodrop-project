@@ -1,5 +1,6 @@
 package com.moodrop.model.domain;
 
+import com.moodrop.entity.Note;
 import jakarta.persistence.*;
 import lombok.*;
 

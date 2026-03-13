@@ -17,7 +17,7 @@ public class DeviceNoteLedger {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(length=64, nullable=false) private String deviceId;
+    @Column(length=100, nullable=false) private String deviceId;
     @Column(nullable=false)            private Long noteId;
     @Column(nullable=false)            private Long slotId;
     @Column(nullable=false)            private Double delta;

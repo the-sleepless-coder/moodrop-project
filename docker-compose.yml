@@ -1,40 +1,97 @@
 version: '3.8'
 
 services:
-  # node_app1:
-  #   build: ./node-app1
-  #   ports:
-  #     - "3001:3000"
 
-  # node_app2:
-  #   build: ./node-app2
-  #   ports:
-  #     - "5001:5000"
-
-  spring_app:
-    build: 
-      context: ./spring-app
+  # ──────────────────────────────────────────
+  # Kafka (KRaft 모드, 단일 브로커)
+  # ──────────────────────────────────────────
+  broker:
+    image: apache/kafka:latest
+    hostname: broker
+    container_name: broker
     ports:
-      - "8081:8080"
-    depends_on:
-      - mysql
+      - "9092:9092"
     environment:
-      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/moodrop
-      SPRING_DATASOURCE_USERNAME: json
-      SPRING_DATASOURCE_PASSWORD: jsonsvalue!
+      KAFKA_BROKER_ID: 1
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://broker:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_NODE_ID: 1
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@broker:29093
+      KAFKA_LISTENERS: PLAINTEXT://broker:29092,CONTROLLER://broker:29093,PLAINTEXT_HOST://0.0.0.0:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
+      CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
 
-  mysql:
-    image: mysql:8.0
-    container_name: my-mysql
+  # ──────────────────────────────────────────
+  # Redis Stack (Redis + RedisInsight UI)
+  # ──────────────────────────────────────────
+  redis:
+    image: redis/redis-stack:latest
+    container_name: redis
     ports:
-      - "3306:3306"
-    environment:
-      MYSQL_ROOT_PASSWORD: jsonsvalue!
-      MYSQL_DATABASE: moodrop
-      MYSQL_USER: json
-      MYSQL_PASSWORD: jsonsvalue!
+      - "6379:6379"   # Redis CLI / 앱 연결
+      - "8001:8001"   # RedisInsight 웹 UI
     volumes:
-      - mysql-data:/var/lib/mysql
+      - redis-data:/data
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────
+  # Elasticsearch (단일 노드, 보안 비활성화)
+  # ──────────────────────────────────────────
+  elasticsearch:
+    #빌드할 docker 파일의 경로와 docker파일 이름을 지정해준다.
+    build:
+      context: ./spring-app
+      dockerfile: Dockerfile.elasticsearch
+    #image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false        # 개발 환경용 (인증 OFF)
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m      # 메모리 제한 (환경에 맞게 조정)
+    ports:
+      - "9200:9200"   # REST API
+      - "9300:9300"   # 노드 간 통신 (단일노드라도 열어둠)
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────
+  # Kibana (Elasticsearch 시각화 UI)
+  # ──────────────────────────────────────────
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.13.4
+    container_name: kibana
+    ports:
+      - "5601:5601"   # Kibana 웹 UI
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+      - xpack.security.enabled=false
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+  # ──────────────────────────────────────────
+  # Captcha API
+  # ──────────────────────────────────────────
+  captcha-api:
+    build:
+      context: ./Backend/captcha-server
+    image: captcha-api:latest
+    container_name: captcha
+    ports:
+      - "8080:8080"
+    environment:
+      CAPTCHA_API_CONFIG: /app/config/captcha.cfg
+    volumes:
+      - ./captcha/captcha.cfg:/app/config/captcha.cfg:ro
 
 volumes:
-  mysql-data:
+  redis-data:
+  es-data:

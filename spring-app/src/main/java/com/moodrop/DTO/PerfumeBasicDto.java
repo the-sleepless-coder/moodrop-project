@@ -1,0 +1,51 @@
+package com.moodrop.DTO;
+
+import com.moodrop.Enums.GenderType;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
+@Getter
+@Setter
+@AllArgsConstructor
+@NoArgsConstructor
+public class PerfumeBasicDto {
+
+    private String name;
+
+    private String brandName;
+
+    private String country;
+
+    private Double ratingVal;
+
+    private Integer ratingCount;
+
+    private String perfumeComment;
+
+    private String perfumeLongevity;
+
+    private Integer perfumeLongevityVotes;
+
+    private String perfumeSillage;
+
+    private Integer perfumeSillageVotes;
+
+    private String season;
+
+    private Integer seasonWeight;
+
+    private String perfumeDayNight;
+
+    private Integer perfumeDayNightWeight;
+
+    private String description;
+
+    private Integer year;
+
+    private GenderType genderType;
+
+    private String descriptionKo;
+}
+

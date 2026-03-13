@@ -9,7 +9,9 @@
 	          typeHandler="com.moodrop.typehandler.JsonToNoteListTypeHandler"/>
 	</resultMap>
 	
-	
+	<!-- 그러니까 DB에서 정보를 조회해서, 어플리케이션 단에서 사용할 수 있는 자료구조로 사용할 수 있도록 한다.
+	     그리고 정보를 DTO의 형태로 가공해서 서로 다른 계층을 넘나들거나, 프론트엔드로 보여준다.
+	 -->
 	<!-- Perfume Id로 perfume의 필요한 모든 정보 조회 -->
 	<!-- Perfume Basic 정보 -->
 	<select id="selectPerfumeBasicByPerfumeId" parameterType="int" resultType="PerfumeBasicDto">
@@ -402,7 +404,7 @@
 </insert> 
 
 DB 컬럼명이 무엇이든 DTO의 name, type으로 매핑
-<resultMap id="NotesDtoMap" type="com.moodrop.model.dto.NotesDto">	
+<resultMap id="NotesDtoMap" type="com.moodrop.dto.NotesDto">
 	<result column="note_name" property="name"/>
 	<result column="name"      property="name"/>
 	<result column="note_type" property="type"/>

@@ -13,6 +13,6 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class DeviceSlotId implements Serializable {
-    @Column(length = 64, nullable = false) private String deviceId;
+    @Column(length = 100, nullable = false) private String deviceId;
     @Column(nullable = false)             private Long slotId;
 }

@@ -15,7 +15,7 @@ import com.moodrop.model.enums.ResponseCMDType;
 import com.moodrop.model.repository.*;
 import com.moodrop.model.service.AsyncDbUpdater;
 import com.moodrop.model.service.PerfumeCommandFactory;
-import com.moodrop.util.WebSocketNotifier;
+import com.moodrop.utils.WebSocketNotifier;
 import jakarta.annotation.PreDestroy;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -26,7 +26,6 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
