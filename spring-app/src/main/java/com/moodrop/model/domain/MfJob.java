@@ -16,7 +16,7 @@ public class MfJob {
     @Column(name="job_id")
     private Long id;
 
-    @Column(name="device_id", length=64, nullable=false) private String deviceId;
+    @Column(name="device_id", length=100, nullable=false) private String deviceId;
     @Column(nullable=false) private String status;
 
     @Column(name="created_at", nullable=false) private LocalDateTime createdAt;

@@ -380,3 +380,24 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+#apache-jmeter
+apache-jmeter/
+result.jtl
+
+#qdrant storage
+qdrant_storage/
+
+# 덤프 파일.
+dump_files/
+
+#ollama 파일
+ollama/
+
+#prometheus
+prometheus.yml
+
+#grafana
+grafana/
+
+

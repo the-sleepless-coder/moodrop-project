@@ -17,7 +17,7 @@ public class MfLog {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name="device_id", length=64, nullable=false) private String deviceId;
+    @Column(name="device_id", length=100, nullable=false) private String deviceId;
     @Column(name="job_id") private Long jobId;
     @Column(nullable=false) private String cmd; // update / manufacture / check
     @Column(nullable=false) private String event;  // request / ack / progress / timeout ...

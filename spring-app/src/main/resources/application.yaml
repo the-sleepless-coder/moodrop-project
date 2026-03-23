@@ -9,12 +9,35 @@ mqtt:
     topic: "perfume/feedback"
     qos: 1
 
-#spring:
-#  datasource:
-#    url: jdbc:mysql://localhost:3306/moodrop
-#    username: json
-#    password: jsonsvalue!
-#    driver-class-name: com.mysql.cj.jdbc.Driver
+spring:
+  config:
+    import: optional:file:.env[.properties]
+  datasource:
+    url: jdbc:mysql://localhost:3306/moodrop
+    username: json
+    password: jsonsvalue!
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+     # Entity의 camelCase <-> Snake Case 
+      naming:
+        physical-strategy: org.hibernate.boot.model.naming.CamelCaseToUnderscoresNamingStrategy
+
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.MySQL8Dialect
+    show-sql: false
+
+  elasticsearch:
+    uris: http://localhost:9200
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
 
 mybatis:
   mapper-locations: classpath*:/mappers/**/*.xml
@@ -24,17 +47,70 @@ mybatis:
     default-fetch-size: 100
     default-statement-timeout: 30
 
-#  jpa:
-#    hibernate:
-#      ddl-auto: update
-#    properties:
-#      hibernate:
-#        format_sql: true
-#        dialect: org.hibernate.dialect.MySQL8Dialect
-#    show-sql: true
-  # sql:
-  #   init:
-  #     mode: always
-  #     separator: //
+server:
+  port: 8080
+  address: 0.0.0.0
+
+management:
+  server:
+    port: 8081
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    tags:
+      application: moodrop
+
+app:
+  es:
+    index:
+      perfume: perfumes_v2
+
+ollama:
+  url: http://localhost:11434
+
+qdrant:
+  url: http://localhost:6333
+
+jwt:
+  secret: bW9vZHJvcC1zZWNyZXQta2V5LWZvci1qd3QtdG9rZW4tZ2VuZXJhdGlvbi0yMDI0
+  access-token-expiration: 1800000      # 30분 (ms)
+  refresh-token-expiration: 604800000   # 7일 (ms)
+
+#환경변수 값 -> Spring Value 값으로 받음.
+openai:
+  secret-key: ${OPENAI_SECRET_KEY}
+
+google:
+  credentials:
+    path: ${GOOGLE_CREDENTIALS_PATH}
+
+aws:
+  s3:
+    access-key: ${AWS_ACCESS_KEY}
+    secret-key: ${AWS_SECRET_KEY}
+    region: ${AWS_REGION}
+    bucket: ${AWS_S3_BUCKET}
+
+image:
+  dir: ${IMAGE_DIR}
+
+scheduler:
+  recipe:
+    view-sync-delay: 5s
+
+  perfume:
+    like-batch-time: "30 1 0 * * *"
+
+  enabled:
+    true
+#   sql:
+#     init:
+#       mode: always
+#       separator: //
 #      data-locations: classpath:data.sql
 

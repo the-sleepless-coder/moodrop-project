@@ -34,6 +34,7 @@ build/
 
 # 환경 설정 파일 (중요!)
 src/main/resources/application*.yml
+.env
 
 
 
@@ -380,3 +381,6 @@ coverage
 *.sw?
 
 *.tsbuildinfo
+
+moodrop.json
+

@@ -1,0 +1,4 @@
+# Dockerfile.elasticsearch
+# nori tokenizer가 깔려져 있는 버전으로 이미지를 생성한다.
+FROM docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+RUN elasticsearch-plugin install --batch analysis-nori
