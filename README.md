@@ -82,7 +82,7 @@ nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화
 
 ·  Elastic Search 역 인덱스 검색 방식을 이용, 읽기 모델로서 검색 성능 향상
 
- - 모든 칼럼을 Elastic Search에 반정규화하여 저장, 역인덱스 검색을 통한 검색 속도 향상
+ -모든 칼럼을 Elastic Search에 반정규화하여 저장, 역인덱스 검색을 통한 검색 속도 향상
 
 ·  Redis를 활용, 조회 수 반영 시 분산 처리 환경 및 Lost update에서 생기는 경쟁 상태를 분산락 / Double Buffering을 통해 해결
 
