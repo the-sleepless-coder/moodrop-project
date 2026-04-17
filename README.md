@@ -17,10 +17,12 @@
 
 
    3. 추천 받은 향수에 대한 정보 확인하기
-<img width="900" height="1100" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
+<img width="740" height="634" alt="image" src="https://github.com/user-attachments/assets/eacac7c1-9921-4a85-a96b-6dc652697404" />
+
 
   4. 추천 받은 향수에 대한 원료 비중 확인하기 
-   <img width="900" height="1100" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
+  <img width="1203" height="254" alt="image" src="https://github.com/user-attachments/assets/21141a1a-91dc-4279-8f43-7cd16b34c1a5" />
+
  
 ### 서버 아키텍처
 <img width="525" height="464" alt="image" src="https://github.com/user-attachments/assets/46c15fe7-3af9-41b2-ac40-453bab79dd76" />
@@ -88,6 +90,8 @@ nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화
 
 ·  VectorDB 활용, 사용자의 개인화된 정보 기반 의미기반 검색 활용 향수 추천 챗봇 구현
 
+·  향수 백엔드 도메인에 대한 ERD 구조 설계
+
 [CI/CD]
 
 ·CI를 위한 통합 -> 테스트 -> 빌드하는 Jenkins 서버와 운영을 위한 EC2서버를 분리할 수 있게 CI/CD 파이프라인을 설계. 
@@ -96,13 +100,14 @@ nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화
 
 [AI]
 
-- 느낌 <-> 향조 <-> 원료 비율 추천
+- 의미 검색 기반 사용자 개인화된 정보를 반영한 향수 추천
 
-사용자가 고른 느낌에 따라 상관 관계가 높은 향조(향수가 내는 대표적인 향의 계열)를 3개 추출.
+ 사용자의 쿼리에 대해 가장 높은 코사인 유사도 수치를 보인 향수 20개를 향수 후보로 지정.
 
-그리고 IoT기기에 전송되는 원료를 뽑아내기 위해서 해당 향조와 상관 관계가 높은 원료를 Top,Middle,Base(원료에 따른 향의 지속 시간과 원료의 역할에 따른 분류)의 비율을 계산해서 추천.
+ 사용자 쿼리의 성별과 일치할 경우, 사용자의 개인화된 정보를 반영한 향수 5개를 최종적으로 추천. 
 
-각 원료 별로 골라진 향조를 가장 잘 나타내는 것을 상관관계 수치에 따라서 높은 순으로 뽑아낸다.
+ Open AI API호출을 통해, 최종적으로 추천된 향수 5개에 대한 총평 및 각각의 향수에 대한 설명을 응답으로 반환.
+ 
 
 - 구체적인 원료 비율 추천 방식
   
