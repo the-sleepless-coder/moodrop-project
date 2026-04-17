@@ -17,10 +17,10 @@
 
 
    3. 추천 받은 향수에 대한 정보 확인하기
-<img width="900" height="1200" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
+<img width="900" height="1100" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
 
   4. 추천 받은 향수에 대한 원료 비중 확인하기 
-   <img width="900" height="1200" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
+   <img width="900" height="1100" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
  
 ### 서버 아키텍처
 <img width="525" height="464" alt="image" src="https://github.com/user-attachments/assets/46c15fe7-3af9-41b2-ac40-453bab79dd76" />
@@ -51,11 +51,11 @@ nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화
 
 향수 원 데이터 저장
 
-7) React Native
+6) React Native
 
 모바일 앱 제작
 
-9) Docker/Jenkins
+7) Docker/Jenkins
    
 -Docker를 활용한 백엔드 서버 이미지 컨테이너화 
 
