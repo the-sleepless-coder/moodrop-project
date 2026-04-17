@@ -9,16 +9,18 @@
     · 추천한 배합의 원료를 IoT기기로 송신 후, 해당 원료로 수신한 기기에서 향수 제작
 
    1. 감정 선택하기
-<img width="800" height="950" alt="Pasted image 20260114192250" src="https://github.com/user-attachments/assets/fb4dfbb5-6ea6-4502-856f-b5dec251a399" />
+<img width="819" height="1144" alt="image" src="https://github.com/user-attachments/assets/c5d29da9-ccb9-47d6-b504-b5b3764e0091" />
+
 
    2. 자신의 감정에 맞는 향수 추천 받기
-<img width="800" height="950" alt="Pasted image 20260114192416" src="https://github.com/user-attachments/assets/8fa1f0d3-6ecc-4688-8674-1d661921be82" />
+<img width="923" height="1114" alt="image" src="https://github.com/user-attachments/assets/72c0b6b4-d6d4-4998-a73e-3c7fc7cdb738" />
+
 
    3. 추천 받은 향수에 대한 정보 확인하기
-<img width="1500" height="950" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
+<img width="900" height="1200" alt="Pasted image 20260114192532" src="https://github.com/user-attachments/assets/158553ab-3517-4b7e-b4c4-74c1bfa81576" />
 
   4. 추천 받은 향수에 대한 원료 비중 확인하기 
-   <img width="1031" height="950" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
+   <img width="900" height="1200" alt="image" src="https://github.com/user-attachments/assets/198c7edf-85fa-4369-8a88-b91f50e6286f" />
  
 ### 서버 아키텍처
 <img width="525" height="464" alt="image" src="https://github.com/user-attachments/assets/46c15fe7-3af9-41b2-ac40-453bab79dd76" />
@@ -46,12 +48,15 @@
 nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화함. 영어 중심 모델이라서 한국어 임베딩에 조금 약하지만, 범용성 측면에서 쓰기 좋은 모델임.
 
 5) MySQL
-ERD 생성 / DB구축
 
-6) React Native
+향수 원 데이터 저장
+
+7) React Native
+
 모바일 앱 제작
 
-7) Docker/Jenkins
+9) Docker/Jenkins
+   
 -Docker를 활용한 백엔드 서버 이미지 컨테이너화 
 
 -Jenkins를 활용한 EC2에 배포하는 CI/CD파이프라인 구축
