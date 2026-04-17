@@ -116,7 +116,8 @@ nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화
 사용자는 추천 받은 원료의 양을 자기 자신이 원하는 배합에 따라 조정할 수 있다.
 
 ### ERD
-<img width="1223" height="827" alt="스크린샷 2026-04-17 203030" src="https://github.com/user-attachments/assets/9e1cad10-05d6-4e49-92a0-2644455e1b57" />
+<img width="1397" height="900" alt="image" src="https://github.com/user-attachments/assets/e1382aa8-d820-452b-a650-aa9178a4f93d" />
+
 
 
 - 참고 사이트
