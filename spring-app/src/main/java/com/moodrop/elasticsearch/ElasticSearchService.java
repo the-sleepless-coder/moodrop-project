@@ -1,6 +1,7 @@
 package com.moodrop.elasticsearch;
 
 import co.elastic.clients.elasticsearch._types.aggregations.Aggregation;
+import co.elastic.clients.elasticsearch._types.query_dsl.ChildScoreMode;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import com.moodrop.DTO.EsIdRangeDto;
 import lombok.RequiredArgsConstructor;
@@ -154,6 +155,145 @@ public class ElasticSearchService {
         Query boolQuery = Query.of(q -> q.bool(b -> b
                 .must(finalMusts)
                 .filter(finalFilters)));
+
+        NativeQuery nativeQuery = NativeQuery.builder()
+                .withQuery(boolQuery)
+                .withMaxResults(maxResultNum)
+                .build();
+
+        SearchHits<PerfumeEsDocument> hits =
+                elasticsearchOperations.search(nativeQuery, PerfumeEsDocument.class);
+
+        return hits.stream()
+                .map(SearchHit::getContent)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * 필드별 차등 가중치(should + boost) 검색.
+     * - name: boost 10 (부분일치) / 15 (완전일치)
+     * - brand: boost 7
+     * - accords(향조): boost 4
+     * - notes(원료): boost 2
+     * - description/comments: boost 1
+     * 하드 필터(gender, country, year 등)는 기존 filter()와 동일하게 유지.
+     */
+    public List<PerfumeEsDocument> withBoostFilter(PerfumeFilterRequest req) {
+        List<Query> filters = new ArrayList<>();
+        List<Query> shoulds = new ArrayList<>();
+
+        // ── name: boost 10 (부분일치) + boost 15 (완전일치) ──────────
+        if (hasValue(req.getName())) {
+            String name = req.getName();
+            shoulds.add(Query.of(q -> q.match(m -> m
+                    .field("name")
+                    .query(name)
+                    .boost(10f))));
+            shoulds.add(Query.of(q -> q.term(t -> t
+                    .field("name")
+                    .value(name)
+                    .boost(15f))));
+        }
+
+        // ── brand: boost 7 ────────────────────────────────────────
+        if (hasValue(req.getBrand())) {
+            String brand = req.getBrand();
+            shoulds.add(Query.of(q -> q.term(t -> t
+                    .field("brand")
+                    .value(brand)
+                    .boost(7f))));
+        }
+
+        // ── accords(향조): boost 4, nested ────────────────────────
+        if (req.getAccords() != null) {
+            for (String accord : req.getAccords()) {
+                shoulds.add(Query.of(q -> q.nested(n -> n
+                        .path("accords")
+                        .query(nq -> nq.term(t -> t
+                                .field("accords.name")
+                                .value(accord)
+                                .boost(4f)))
+                        .scoreMode(ChildScoreMode.Max))));
+            }
+        }
+
+        // ── notes(원료): boost 2, nested ──────────────────────────
+        if (req.getNotes() != null) {
+            for (String note : req.getNotes()) {
+                shoulds.add(Query.of(q -> q.nested(n -> n
+                        .path("notes")
+                        .query(nq -> nq.term(t -> t
+                                .field("notes.name")
+                                .value(note)
+                                .boost(2f)))
+                        .scoreMode(ChildScoreMode.Max))));
+            }
+        }
+
+        // ── description/comments: boost 1 ─────────────────────────
+        if (hasValue(req.getLanguage()) && hasValue(req.getTextType()) && hasValue(req.getTextQuery())) {
+            String field = resolveField(req.getLanguage(), req.getTextType());
+            String textQuery = req.getTextQuery();
+            shoulds.add(Query.of(q -> q.match(m -> m
+                    .field(field)
+                    .query(textQuery)
+                    .boost(1f))));
+        }
+
+        // ── 하드 필터 (스코어 무관) ────────────────────────────────
+        if (req.getRatingMin() != null || req.getRatingMax() != null) {
+            Double min = req.getRatingMin();
+            Double max = req.getRatingMax();
+            filters.add(Query.of(q -> q.range(r -> r.number(n -> {
+                n.field("rating.value");
+                if (min != null) n.gte(min);
+                if (max != null) n.lte(max);
+                return n;
+            }))));
+        }
+
+        if (hasValue(req.getGender())) {
+            String gender = req.getGender();
+            filters.add(Query.of(q -> q.term(t -> t.field("gender").value(gender))));
+        }
+
+        if (hasValue(req.getCountry())) {
+            String country = req.getCountry();
+            filters.add(Query.of(q -> q.term(t -> t.field("country").value(country))));
+        }
+
+        if (req.getYear() != null) {
+            int year = req.getYear();
+            filters.add(Query.of(q -> q.term(t -> t.field("year").value(year))));
+        }
+
+        if (hasValue(req.getSeason())) {
+            String season = req.getSeason();
+            filters.add(Query.of(q -> q.term(t -> t.field("season.season").value(season))));
+        }
+
+        if (hasValue(req.getDayNight())) {
+            String dayNight = req.getDayNight();
+            filters.add(Query.of(q -> q.term(t -> t.field("dayNight.day_night").value(dayNight))));
+        }
+
+        if (hasValue(req.getSillage())) {
+            String sillage = req.getSillage();
+            filters.add(Query.of(q -> q.term(t -> t.field("sillage.strength").value(sillage))));
+        }
+
+        if (hasValue(req.getLongevity())) {
+            String longevity = req.getLongevity();
+            filters.add(Query.of(q -> q.term(t -> t.field("longevity.length").value(longevity))));
+        }
+
+        List<Query> finalShoulds = shoulds;
+        List<Query> finalFilters = filters;
+
+        Query boolQuery = Query.of(q -> q.bool(b -> b
+                .should(finalShoulds)
+                .filter(finalFilters)
+                .minimumShouldMatch("1")));
 
         NativeQuery nativeQuery = NativeQuery.builder()
                 .withQuery(boolQuery)

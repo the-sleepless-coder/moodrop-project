@@ -75,8 +75,8 @@ public interface UserPerfumesRepository extends JpaRepository<UserPerfumes, Inte
     @Modifying
     @Transactional
     @Query("""
-        UPDATE UserPerfumes up 
-        SET up.viewCount = up.viewCount + 1 
+        UPDATE UserPerfumes up
+        SET up.viewCount = up.viewCount + :delta
         WHERE up.id = :recipeId
     """
     )

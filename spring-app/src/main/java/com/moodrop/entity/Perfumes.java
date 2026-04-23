@@ -52,7 +52,16 @@ public class Perfumes {
     private boolean imageStatus;
 
     @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean thumbnailStatus;
+
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean translationStatus;
+
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean esStatus;
+
+    @Column(nullable = false, columnDefinition = "TINYINT(1) DEFAULT 0")
+    private boolean qdrantStatus;
 
 }
 
