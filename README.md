@@ -118,11 +118,6 @@ AI        : Ollama (nomic-embed-text) · OpenAI API
 Client    : React Native · IoT Device
 Infra     : Docker · Docker Hub · Jenkins · AWS EC2 · JMeter
 ```
- 
-## License
- 
-None declared — personal project.
- 
 
 1) Spring Boot 
  
@@ -159,7 +154,6 @@ nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화
 -Docker를 활용한 백엔드 서버 이미지 컨테이너화 
 
 -Jenkins를 활용한 EC2에 배포하는 CI/CD파이프라인 구축
-
 
 
 ### 기술적 세부 사항
@@ -202,6 +196,10 @@ nomic-embed-text 모델을 이용해 한국어/영어 향수 정보를 벡터화
 
 ### ERD
 <img width="1397" height="900" alt="image" src="https://github.com/user-attachments/assets/e1382aa8-d820-452b-a650-aa9178a4f93d" />
+
+## License
+ 
+None declared — personal project.
 
 - 참고 사이트
 [1] https://www.fragrantica.com/
